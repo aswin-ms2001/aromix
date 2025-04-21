@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('partials/head') %>
+  <title>Aromix | Home</title>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <img src="/images/banner.jpg" alt="Banner" class="img-fluid w-100 rounded">
+  </section>
+
+  <!-- Intro Message -->
+  <div class="text-center my-5">
+    <div class="bg-warning p-4 rounded w-75 mx-auto">
+      <p class="mb-0">
+        Discover an exquisite collection... 100% authentic perfumes delivered right to your door!
+      </p>
+    </div>
+    <button class="btn btn-dark mt-3">Discover All</button>
+  </div>
+
+  <!-- Shop by Brand -->
+  <section class="text-center my-5">
+    <h2>SHOP BY BRAND</h2>
+    <div class="d-flex justify-content-center gap-5 mt-4">
+      <img src="../public/images/" alt="Tom Ford">
+      <img src="../public/images/free_shipping.png" alt="Gucci">
+      <img src="../public/images/free_shipping.png" alt="Dior">
+    </div>
+  </section>
+
+  <!-- Top Buying Perfumes -->
+  <section class="container my-5">
+    <h2 class="text-center mb-4">Top Buying Perfumes</h2>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+      <% products.forEach(product => { %>
+        <div class="col">
+          <div class="card h-100 text-center">
+            <img src="/images/<%= product.image %>" class="card-img-top" alt="<%= product.name %>">
+            <div class="card-body">
+              <h5 class="card-title"><%= product.name %></h5>
+              <p><%= product.volume %> ml</p>
+              <p class="text-muted">₹<%= product.price %></p>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </section>
+
+  <!-- New Launch -->
+  <section class="text-center my-5 bg-dark text-white py-5">
+    <h2>New Launch</h2>
+    <img src="/images/sauvage.png" class="img-fluid my-3" alt="Sauvage">
+    <p>Dior Sauvage... long-lasting, masculine experience.</p>
+  </section>
+
+  <!-- Express Checkout -->
+  <section class="container text-center my-5">
+    <div class="d-flex justify-content-around">
+      <div><img src="../public/images/free_shipping.png" alt="Free Shipping"><p>Free 2-Day Shipping</p></div>
+      <div><img src="../public/images/express_checkout.png" alt="Express Checkout"><p>Express Checkout</p></div>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+</body>
+</html>
