@@ -1,0 +1,51 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Form Card Styling */
+.card {
+  background-color: #2e0e46;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Form Label and Input */
+label.form-label {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+input.form-control {
+  border-radius: 10px;
+  padding: 0.75rem;
+  background-color: #3d3d3d;
+  color: #ffffff;
+  border: none;
+}
+
+input.form-control::placeholder {
+  color: #cccccc;
+}
+
+input.form-control:focus {
+  background-color: #3d3d3d;
+  color: #ffffff;
+  border: 1px solid #ff6f61;
+  box-shadow: none;
+}
+
+/* Save Button Styling */
+.btn-add-category {
+  background-color: #ff4500;
+  color: #fff;
+  padding: 0.6rem 1.5rem;
+  border-radius: 10px;
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+.btn-add-category:hover {
+  background-color: #e13d00;
+  color: #fff;
+}

@@ -1,0 +1,10 @@
+input[name="otp"] {
+    letter-spacing: 5px;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+  }
+  .btn-link {
+    text-decoration: underline;
+    font-size: 0.9rem;
+  }

@@ -1,0 +1,19 @@
+.login-container {
+    max-width: 900px;
+    background-color: #fff;
+  }
+  
+  .logo-section {
+    background-color: #b0b8c1; /* Same as the image bg */
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+  }
+  
+  .logo-img {
+    max-width: 200px;
+  }
+  
+  .form-section {
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+  }

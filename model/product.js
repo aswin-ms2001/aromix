@@ -1,42 +1,36 @@
 import mongoose from "mongoose";
 
+
+const variantSchema = new mongoose.Schema({
+  volume: { type: Number, required: true },
+  price: { type: Number, required: true },
+  stock: { type: Number, required: true, min: 0 },
+  images: { type: [String], required: true }, 
+  description: { type: String, required: true } 
+}, { _id: true });
+
+
 const productSchema = new mongoose.Schema({
-    name:{
-        type: String,
-        required: true,
-        trim : true,
-    },
-    price:{
-        type: Number,
-        required: true,
-        min: [0,"Price must be greater than 0"],
+  name: { type: String, required: true, trim: true },
+  categoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Category"
+  },
+  categoryName:{
+    type: String,
+    required: true
+  },
+  blocked:{
+    type: Boolean,
+    default: false
+  },
+  gender: { type: String, required: true, trim: true },
+  variants: [variantSchema]
+},
+  {
+  timestamps: true 
+}
+);
 
-    },
-    catergory:{
-        type: String,
-        required: true,
-        enum: ["Woody","Citrus","Floral","Fruity","Floral","Oriental","Fresh"]
-    },
-    image:{
-        type:[String],
-        required: true,
-    },
-    stock:{
-        type: Number,
-        required: true,
-        min: [0,"Stock must be greater than or equal to 0"],
-    
-    },
-    description:{
-        type: String,
-        required: true,
-        trim : true
-    },
-    createdAt:{
-        type: Date,
-        default: Date.now
-    }
-})
-
-const product = mongoose.model("Product", productSchema);
-export default product;
+const Product = mongoose.model("Product", productSchema);
+export default Product;

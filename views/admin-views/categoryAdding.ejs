@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Category | Aromix</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/admin-css/adminCategoryAdding.css">
+  <link rel="stylesheet" href="/css/admin-css/sidebar.css">
+</head>
+<body>
+
+<div class="d-flex">
+  <!-- Sidebar Include -->
+  <%- include('./partials/sidebar') %>
+
+  <!-- Main Content -->
+  <div class="flex-grow-1 p-4" style="background-color: #1b1b1b; min-height: 100vh;">
+    <!-- Header -->
+    <div class="mb-4">
+      <h2 class="text-white">Add New Category</h2>
+    </div>
+
+    <!-- Add Category Form -->
+    <div class="card p-4" style="background-color: #2e0e46; border-radius: 20px; max-width: 600px; margin: auto;">
+      <form action="/adminCategory/add-category" method="POST">
+        <div class="mb-3">
+          <label for="categoryName" class="form-label text-white">Category Name</label>
+          <input type="text" class="form-control" id="categoryName" name="categoryName" placeholder="Enter category name" required>
+        </div>
+        <div class="d-flex justify-content-end">
+          <button type="submit" class="btn btn-add-category">Save</button>
+        </div>
+      </form>
+        <% if (typeof message !=='undefined' ) { %>
+            <div class="alert <%= success ? 'alert-success' : 'alert-danger' %> mt-3" role="alert">
+                <%= message %>
+            </div>
+        <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

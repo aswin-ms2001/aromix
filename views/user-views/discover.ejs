@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our Products | Aromix</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+  <script>
+    window.addEventListener("pageshow", function (event) {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    });
+  </script>
+
+  <link rel="stylesheet" href="/css/user-css/products.css" />
+  <link rel="stylesheet" href="/css/user-css/sidebar.css">
+</head>
+<body>
+
+  <%- include('./partials/header') %>
+
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Sidebar for filters -->
+      <div class="col-md-3">
+        <div class="sidebar p-3 bg-light rounded" style="width: 250px;">
+          <h5 class="sidebar-title">Aromix</h5>
+
+          <!-- Unified Filter/Search/Sort Form -->
+          <form class="mb-3" method="GET" action="/users-products/discover">
+
+            <!-- Search -->
+            <div class="d-flex ms-1 mb-3">
+              <input class="form-control me-2" type="search" name="search" placeholder="Search..." value="<%= typeof search !== 'undefined' ? search : '' %>" />
+              <button class="btn btn-outline-dark" type="submit">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+
+            <hr>
+
+            <!-- Sort -->
+            <h6 class="sidebar-subtitle">Sort By</h6>
+            <select class="form-select form-select-sm mb-3" name="sort" onchange="this.form.submit()">
+              <option value="">-- Select --</option>
+              <option value="asc" <%= sort === 'asc' ? 'selected' : '' %>>Name (A–Z)</option>
+              <option value="desc" <%= sort === 'desc' ? 'selected' : '' %>>Name (Z–A)</option>
+              <option value="lowToHigh" <%= sort === 'lowToHigh' ? 'selected' : '' %>>Price (Low to High)</option>
+              <option value="highToLow" <%= sort === 'highToLow' ? 'selected' : '' %>>Price (High to Low)</option>
+            </select>
+
+            <hr>
+
+            <!-- Categories -->
+            <h6 class="sidebar-subtitle">Categories</h6>
+            <ul class="list-unstyled mb-3">
+              <% categories.forEach(category => { %>
+                <li>
+                  <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input me-2" name="categories" value="<%= category._id %>"
+                      <%= (Array.isArray(selectedCategories) && selectedCategories.includes(category._id.toString())) ? 'checked' : '' %> >
+                    <%= category.name %>
+                  </label>
+                </li>
+              <% }); %>
+            </ul>
+
+            <hr>
+
+            <!-- Price -->
+            <h6 class="sidebar-subtitle">Price</h6>
+            <div class="d-flex gap-2 mb-1">
+              <input type="number" id="minPrice" name="minPrice" placeholder="Min" class="form-control form-control-sm"
+                value="<%= typeof minPrice !== 'undefined' ? minPrice : '' %>">
+              <input type="number" id="maxPrice" name="maxPrice" placeholder="Max" class="form-control form-control-sm"
+                value="<%= typeof maxPrice !== 'undefined' ? maxPrice : '' %>">
+            </div>
+            <div id="price-error" class="text-danger small mb-2" style="display: none;"></div>
+
+            <button class="btn btn-dark btn-sm w-100" type="submit" onclick="return validatePrice()">Apply Filters</button>
+
+            <hr>
+
+            <!-- Optional Navigation -->
+            <ul class="list-unstyled sidebar-nav">
+              <li><a href="/" class="sidebar-link">Home</a></li>
+              <li><a href="/cart" class="sidebar-link">Cart</a></li>
+              <li><a href="/wishlist" class="sidebar-link">Wishlist</a></li>
+              <li><a href="/orders" class="sidebar-link">Orders</a></li>
+              <li><a href="/profile" class="sidebar-link">Profile</a></li>
+            </ul>
+
+            <hr>
+
+            <!-- Pagination Links with Preserved Filters -->
+            <%
+              const query = new URLSearchParams();
+              if (typeof search !== 'undefined' && search) query.append('search', search);
+              if (typeof sort !== 'undefined' && sort) query.append('sort', sort);
+              if (typeof minPrice !== 'undefined' && minPrice) query.append('minPrice', minPrice);
+              if (typeof maxPrice !== 'undefined' && maxPrice) query.append('maxPrice', maxPrice);
+              if (Array.isArray(selectedCategories)) {
+                selectedCategories.forEach(cat => query.append('categories', cat));
+              }
+              const queryString = query.toString();
+            %>
+          </form>
+        </div>
+      </div>
+
+      <!-- Main content -->
+      <div class="col-md-9 px-4">
+        <h2 class="text-center fw-bold my-4">Our Complete Collection</h2>
+        <p class="text-center text-muted mb-5">
+          Discover our wide range of high-quality products, curated to meet all your needs
+        </p>
+
+        <!-- Product Grid -->
+        <% if (products.length === 0) { %>
+          <div class="alert alert-warning text-center w-100" role="alert">
+            No products are available at the moment.
+          </div>
+        <% } else { %>
+          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+            <% products.forEach(p => { %>
+              <div class="col">
+                <a href="/users-products/products/<%= p._id %>" class="text-decoration-none text-dark">
+                  <div class="card h-100 shadow-sm">
+                    <img src="<%= p.image %>" class="card-img-top" alt="<%= p.name %>">
+                    <div class="card-body">
+                      <h6 class="fw-bold"><%= p.name %></h6>
+                      <p class="mb-1"><%= p.volume %> ml</p>
+                      <p class="text-primary fw-semibold">₹<%= p.price %></p>
+                    </div>
+                  </div>
+                </a>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center mt-4">
+          <div>
+            Page <%= currentPage %> of <%= totalPages %>
+          </div>
+          <div>
+            <% if (currentPage > 1) { %>
+              <a href="?page=<%= currentPage - 1 %><%= queryString ? '&' + queryString : '' %>" class="btn btn-outline-dark btn-sm">Previous</a>
+            <% } %>
+
+            <% if (currentPage < totalPages) { %>
+              <a href="?page=<%= currentPage + 1 %><%= queryString ? '&' + queryString : '' %>" class="btn btn-outline-dark btn-sm">Next</a>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Bottom Banner -->
+        <div class="mt-5">
+          <div class="position-relative">
+            <img src="/images/tomfordbanner.png" class="img-fluid w-100 rounded" alt="New Launch - Tom Ford">
+            <div class="position-absolute text-white" style="top: 20%; left: 10%; max-width: 400px;">
+              <h3 class="fw-bold">New Launch</h3>
+              <h1 class="display-6 fw-bold">TOM FORD <br> BLACK ORCHID</h1>
+              <a href="#" class="btn btn-light mt-3">DISCOVER NOW</a>
+              <p class="mt-3">
+                Featuring a rich blend of black truffle, exotic orchid, and decadent dark chocolate accords.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <%- include('./partials/footer') %>
+
+  <script>
+    function validatePrice() {
+      const minInput = document.getElementById('minPrice');
+      const maxInput = document.getElementById('maxPrice');
+      const errorDiv = document.getElementById('price-error');
+
+      const minPrice = parseFloat(minInput.value);
+      const maxPrice = parseFloat(maxInput.value);
+
+      errorDiv.style.display = 'none';
+      errorDiv.innerText = '';
+
+      if (!isNaN(minPrice) && minPrice <= 0) {
+        errorDiv.innerText = 'Minimum price must be greater than 0.';
+        errorDiv.style.display = 'block';
+        return false;
+      }
+
+      if (!isNaN(maxPrice) && maxPrice <= 0) {
+        errorDiv.innerText = 'Maximum price must be greater than 0.';
+        errorDiv.style.display = 'block';
+        return false;
+      }
+
+      if (!isNaN(minPrice) && !isNaN(maxPrice) && maxPrice <= minPrice) {
+        errorDiv.innerText = 'Maximum price must be greater than minimum price.';
+        errorDiv.style.display = 'block';
+        return false;
+      }
+
+      return true;
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

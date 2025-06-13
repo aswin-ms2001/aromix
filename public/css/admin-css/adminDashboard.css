@@ -1,0 +1,57 @@
+body {
+    background-color: #1b1b1b;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  .card-stat {
+    border-radius: 12px;
+    color: white;
+    padding: 20px;
+    height: 100px;
+  }
+  
+  .revenue {
+    background-color: #8e44ad;
+  }
+  
+  .orders {
+    background-color: #c0392b;
+  }
+  
+  .sold {
+    background-color: #27ae60;
+  }
+  
+  .customers {
+    background-color: #8e44ad;
+  }
+
+
+  
+.card-stat {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.card-stat:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+}
+
+/* Button hover effects */
+.btn-light:hover {
+  background-color: #f8f9fa;
+  color: #000;
+  box-shadow: 0 5px 15px rgba(255, 255, 255, 0.2);
+}
+
+/* Anchor hover */
+a:hover {
+  text-decoration: underline;
+  color: #ffc107;
+}
+
+.card canvas:hover {
+  cursor: crosshair;
+  filter: brightness(1.1);
+}

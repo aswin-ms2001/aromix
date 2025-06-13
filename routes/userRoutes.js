@@ -1,0 +1,33 @@
+import express from "express";
+import * as userController from "../controller/userController.js";
+import { userSessionMiddleware } from "../config/session.js";
+import { ensureAuthenticated} from "../middleware/authMiddleware/userAuthMiddleware.js";
+import passport from "../config/passport.js"
+import currentUser from "../middleware/userIdentification/currentUser.js";
+
+const userRoutes = express.Router();
+
+userRoutes.use(userSessionMiddleware);
+userRoutes.use(passport.initialize());
+userRoutes.use(passport.session());
+userRoutes.use(currentUser);
+
+userRoutes.get("/login",userController.userloginPage);
+userRoutes.post("/login", userController.postLogin);
+userRoutes.get("/google",userController.googleAuthentication);
+userRoutes.get("/google/callback",userController.googleRedirect);
+userRoutes.get("/signup",userController.signupPage);
+userRoutes.post("/signup",userController.signup);
+userRoutes.post("/verifyOtp",userController.verifyOtp);
+userRoutes.post("/resendOtp",userController.resentOtp);
+userRoutes.get("/logoutPage", ensureAuthenticated,userController.logoutPage);
+userRoutes.post("/logout", ensureAuthenticated,userController.logout);
+userRoutes.get("/forgot-password",userController.forgotPasswordGet);
+userRoutes.post("/forgot-password",userController.forgotPasswordPost);
+userRoutes.post("/verify-reset-otp",userController.verifyResetOtp);
+userRoutes.put("/update-password",userController.updatePassword);
+userRoutes.post("/resendResetOtp",userController.resendResetOtp)
+
+
+
+export default userRoutes;

@@ -1,0 +1,10 @@
+.sidebar-link {
+transition: background-color 0.3s ease, padding-left 0.3s ease;
+}
+
+.sidebar-link:hover {
+    background-color: #343a40;
+    padding-left: 1.5rem;
+    text-decoration: none;
+}
+

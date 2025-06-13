@@ -1,0 +1,51 @@
+<!-- <header class="bg-light py-2 px-4 d-flex justify-content-between align-items-center">
+  <div class="text-primary small"> -->
+    <!-- <i class="bi bi-tag-fill"></i> 30% off storewide — Limited time! <a href="#" class="text-decoration-none ms-1">Shop Now</a> -->
+  <!-- </div>
+  <div>
+    <i class="bi bi-person-circle me-2"></i> <span>Hello, Mi!</span>
+  </div>
+</header> -->
+
+<header class="bg-light py-2 px-4 d-flex justify-content-between align-items-center border-bottom">
+  <div class="text-primary small">
+    <!-- Example promo text -->
+    <!-- <i class="bi bi-tag-fill"></i> 30% off storewide — <a href="#" class="text-decoration-none ms-1">Shop Now</a> -->
+  </div>
+
+  <div class="dropdown">
+    <button class="btn btn-light dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+      <i class="bi bi-person-circle me-2 fs-5"></i>
+      <% if (currentUser) { %>
+        <span>Hello, <%= currentUser.name %>!</span>
+      <% } else { %>
+        <span>Hello, Guest</span>
+      <% } %>
+    </button>
+
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+      <% if (currentUser) { %>
+        <li><a class="dropdown-item" href="/users/profile">Profile</a></li>
+        <li><a class="dropdown-item text-danger" href="/users/logoutPage">Logout</a></li>
+      <% } else { %>
+        <li><a class="dropdown-item" href="/users/login">Login</a></li>
+        <li><a class="dropdown-item" href="/users/signup">Signup</a></li>
+      <% } %>
+    </ul>
+  </div>
+</header>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-white px-4 shadow-sm">
+  <a class="navbar-brand fw-bold" href="/">Aromix</a>
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarUser" aria-controls="navbarUser" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarUser">
+    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+      <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+      <li class="nav-item"><a class="nav-link" href="/users-products/discover">Perfume</a></li>
+      <li class="nav-item"><a class="nav-link" href="#">Sale</a></li>
+    </ul>
+
+  </div>
+</nav>
