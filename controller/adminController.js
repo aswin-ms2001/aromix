@@ -438,7 +438,9 @@ export const editProductPost = [
 
           images.push(imageUrl || null);
         }
-
+        if(req.body[`variants[${i}].price`]<=0){
+          return res.status(500).json({ message: "Product Price Cant be less than zero" })
+        }
         variantsData.push({
           volume: req.body[`variants[${i}].volume`],
           price: req.body[`variants[${i}].price`],

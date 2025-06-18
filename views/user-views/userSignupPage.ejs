@@ -67,69 +67,107 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- Toggle Password Scripts -->
-  <script>
-    // Toggle Password Visibility
-    const togglePassword = document.querySelector("#togglePassword");
-    const passwordInput = document.querySelector("#password");
-    const icon = togglePassword.querySelector("i");
+<script>
+  const togglePassword = document.querySelector("#togglePassword");
+  const passwordInput = document.querySelector("#password");
+  const icon = togglePassword.querySelector("i");
 
-    togglePassword.addEventListener("click", () => {
-      const isPassword = passwordInput.type === "password";
-      passwordInput.type = isPassword ? "text" : "password";
-      icon.classList.toggle("fa-eye");
-      icon.classList.toggle("fa-eye-slash");
-    });
+  togglePassword.addEventListener("click", () => {
+    const isPassword = passwordInput.type === "password";
+    passwordInput.type = isPassword ? "text" : "password";
+    icon.classList.toggle("fa-eye");
+    icon.classList.toggle("fa-eye-slash");
+  });
 
-    // Toggle Confirm Password Visibility
-    const toggleConfirmPassword = document.querySelector("#toggleConfirmPassword");
-    const confirmPasswordInput = document.querySelector("#confirmPassword");
-    const iconConfirm = toggleConfirmPassword.querySelector("i");
+  const toggleConfirmPassword = document.querySelector("#toggleConfirmPassword");
+  const confirmPasswordInput = document.querySelector("#confirmPassword");
+  const iconConfirm = toggleConfirmPassword.querySelector("i");
 
-    toggleConfirmPassword.addEventListener("click", () => {
-      const isPassword = confirmPasswordInput.type === "password";
-      confirmPasswordInput.type = isPassword ? "text" : "password";
-      iconConfirm.classList.toggle("fa-eye");
-      iconConfirm.classList.toggle("fa-eye-slash");
-    });
+  toggleConfirmPassword.addEventListener("click", () => {
+    const isPassword = confirmPasswordInput.type === "password";
+    confirmPasswordInput.type = isPassword ? "text" : "password";
+    iconConfirm.classList.toggle("fa-eye");
+    iconConfirm.classList.toggle("fa-eye-slash");
+  });
 
-    // Email Validation Regex - stricter, checks @, domain and extension length
-    function isValidEmail(email) {
-      // This regex checks:
-      //  - valid characters before @
-      //  - domain with at least 3 chars
-      //  - TLD 2-6 chars (like .com, .museum)
-      const re = /^[^\s@]+@[^\s@]{3,}\.[a-zA-Z]{2,6}$/;
-      return re.test(email);
+  const isValidEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]{3,}\.[a-zA-Z]{2,6}$/;
+    return re.test(email);
+  };
+
+  const signupForm = document.querySelector("#signupForm");
+  const fullnameField = document.querySelector("input[name='fullname']");
+  const emailField = document.querySelector("#email");
+  const passwordField = document.querySelector("#password");
+  const confirmPasswordField = document.querySelector("#confirmPassword");
+
+  const emailError = document.querySelector("#emailError");
+  const confirmPasswordError = document.querySelector("#confirmPasswordError");
+
+  const showError = (field, message) => {
+    let errorDiv = field.parentElement.querySelector(".field-error");
+    if (!errorDiv) {
+      errorDiv = document.createElement("div");
+      errorDiv.className = "text-danger small mt-1 field-error";
+      field.parentElement.appendChild(errorDiv);
+    }
+    errorDiv.innerText = message;
+    errorDiv.style.display = "block";
+  };
+
+  const hideError = (field) => {
+    const errorDiv = field.parentElement.querySelector(".field-error");
+    if (errorDiv) {
+      errorDiv.style.display = "none";
+    }
+  };
+
+  signupForm.addEventListener("submit", (e) => {
+    let valid = true;
+
+    // Clear all custom error messages first
+    document.querySelectorAll(".field-error").forEach(el => el.remove());
+
+    // Full Name
+    if (fullnameField.value.trim() === "") {
+      showError(fullnameField, "Please enter your full name.");
+      valid = false;
     }
 
-    const signupForm = document.querySelector("#signupForm");
-    const emailField = document.querySelector("#email");
-    const emailError = document.querySelector("#emailError");
-    const confirmPasswordError = document.querySelector("#confirmPasswordError");
+    // Email
+    if (emailField.value.trim() === "") {
+      emailError.innerText = "Please enter your email.";
+      emailError.style.display = "block";
+      valid = false;
+    } else if (!isValidEmail(emailField.value.trim())) {
+      emailError.innerText = "Please enter a valid email address.";
+      emailError.style.display = "block";
+      valid = false;
+    } else {
+      emailError.style.display = "none";
+    }
 
-    signupForm.addEventListener("submit", (e) => {
-      let valid = true;
+    // Password
+    if (passwordField.value.trim() === "") {
+      showError(passwordField, "Please enter a password.");
+      valid = false;
+    }
 
-      // Validate email
-      if (!isValidEmail(emailField.value.trim())) {
-        emailError.style.display = "block";
-        valid = false;
-      } else {
-        emailError.style.display = "none";
-      }
+    // Confirm Password
+    if (confirmPasswordField.value.trim() === "") {
+      showError(confirmPasswordField, "Please confirm your password.");
+      confirmPasswordError.style.display = "none";
+      valid = false;
+    } else if (passwordField.value !== confirmPasswordField.value) {
+      confirmPasswordError.style.display = "block";
+      valid = false;
+    } else {
+      confirmPasswordError.style.display = "none";
+    }
 
-      // Validate confirm password
-      if (passwordInput.value !== confirmPasswordInput.value) {
-        confirmPasswordError.style.display = "block";
-        valid = false;
-      } else {
-        confirmPasswordError.style.display = "none";
-      }
+    if (!valid) e.preventDefault();
+  });
+</script>
 
-      if (!valid) {
-        e.preventDefault(); // prevent form submission if validation fails
-      }
-    });
-  </script>
 </body>
 </html>

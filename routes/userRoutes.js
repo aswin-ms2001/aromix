@@ -2,6 +2,7 @@ import express from "express";
 import * as userController from "../controller/userController.js";
 import { userSessionMiddleware } from "../config/session.js";
 import { ensureAuthenticated} from "../middleware/authMiddleware/userAuthMiddleware.js";
+import { userLoginSession } from "../middleware/loginSessionHandler/loginSessionHandlerUser.js";
 import passport from "../config/passport.js"
 import currentUser from "../middleware/userIdentification/currentUser.js";
 
@@ -12,9 +13,9 @@ userRoutes.use(passport.initialize());
 userRoutes.use(passport.session());
 userRoutes.use(currentUser);
 
-userRoutes.get("/login",userController.userloginPage);
+userRoutes.get("/login",userLoginSession,userController.userloginPage);
 userRoutes.post("/login", userController.postLogin);
-userRoutes.get("/google",userController.googleAuthentication);
+userRoutes.get("/google",userLoginSession,userController.googleAuthentication);
 userRoutes.get("/google/callback",userController.googleRedirect);
 userRoutes.get("/signup",userController.signupPage);
 userRoutes.post("/signup",userController.signup);
