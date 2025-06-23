@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit Profile | Aromix</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- <link rel="stylesheet" href="/css/user-css/account.css" /> -->
+</head>
+<body>
+
+  <%- include('../../partials/header') %>
+
+  <div class="container my-5">
+    <div class="row">
+      
+      <!-- Sidebar -->
+      <div class="col-md-3 mb-4">
+        <%- include('../partials/side-bar') %>
+      </div>
+
+      <!-- Profile Form -->
+      <div class="col-md-9">
+        <p class="text-muted mb-2">Home / <strong>My Account</strong></p>
+        <div class="card p-4 shadow-sm border-0" style="background-color: #fdfdfd;">
+          <h5 class="fw-bold mb-3 text-danger">Edit Your Profile</h5>
+
+          <!-- Name & Phone -->
+          <div class="p-3 rounded mb-4" style="background-color: #fffbe6;">
+            <div class="row align-items-end">
+              <div class="col-md-6">
+                <label class="form-label">Name</label>
+                <input type="text" id="nameInput" class="form-control" value="<%= user.name %>" readonly>
+                <div id="nameError" class="text-danger" style="min-height: 1em;"></div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Phone Number</label>
+                <input type="tel" id="phoneInput" class="form-control" value="<%= user.phoneNumber %>" maxlength="10" readonly>
+                <div id="phoneError" class="text-danger" style="min-height: 1em;"></div>
+              </div>
+              <div class="col-auto mt-3">
+                <button class="btn btn-outline-secondary btn-sm" id="editNamePhoneBtn">Edit</button>
+                <button class="btn btn-success btn-sm d-none" id="saveNamePhoneBtn">Save</button>
+                <button class="btn btn-danger btn-sm d-none" id="cancelNamePhoneBtn">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="p-3 rounded mb-4" style="background-color: #e9f7ef;">
+            <div class="row align-items-end">
+              <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input type="email" id="emailInput" class="form-control" value="<%= user.email %>" readonly>
+                <div id="emailError" class="text-danger mt-1" style="min-height: 1em;"></div>
+              </div>
+              <div class="col-auto mt-3">
+                <% if (user.authType === 'local') { %>
+                  <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editEmailModal">Edit Email</button>
+                <% } %>
+                
+              </div>
+            </div>
+          </div>
+
+          <!-- Password -->
+           
+          <% if (user.authType === 'local') { %>
+            <!-- Password Section -->
+             
+            <div class="p-3 rounded mb-4" style="background-color: #f0f4ff;">
+              <div class="row mb-2">
+                <div class="col-md-6">
+                  <div class="position-relative">
+                    <input type="password" class="form-control d-none" id="currentPassword" placeholder="Current Password">
+                    <i class="bi bi-eye-slash position-absolute top-50 end-0 translate-middle-y me-3 d-none toggle-password" data-target="currentPassword" style="cursor: pointer;"></i>
+                  </div>
+                  <div id="currentPasswordError" class="text-danger" style="min-height: 1em;"></div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="position-relative">
+                    <input type="password" class="form-control d-none" id="newPassword" placeholder="New Password">
+                    <i class="bi bi-eye-slash position-absolute top-50 end-0 translate-middle-y me-3 d-none toggle-password" data-target="newPassword" style="cursor: pointer;"></i>
+                  </div>
+                  <div id="newPasswordError" class="text-danger" style="min-height: 1em;"></div>
+                </div>
+              </div>
+
+              <!-- Confirm password -->
+              <div class="row mb-2">
+                <div class="col-md-6">
+                  <div class="position-relative">
+                    <input type="password" class="form-control d-none" id="confirmPassword" placeholder="Confirm Password">
+                    <i class="bi bi-eye-slash position-absolute top-50 end-0 translate-middle-y me-3 d-none toggle-password" data-target="confirmPassword" style="cursor: pointer;"></i>
+                  </div>
+                  <div id="confirmPasswordError" class="text-danger" style="min-height: 1em;"></div>
+                </div>
+              </div>
+
+              <div class="mt-3">
+                <button class="btn btn-outline-secondary btn-sm" id="editPasswordBtn">Edit Password</button>
+                <button class="btn btn-success btn-sm d-none" id="savePasswordBtn">Save</button>
+                <button class="btn btn-danger btn-sm d-none" id="cancelPasswordBtn">Cancel</button>
+              </div>
+            </div>
+          <% } %>
+
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Email Editing -->
+  <div class="modal fade" id="editEmailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Email</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="email" id="newEmailInput" class="form-control" placeholder="Enter new email">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary btn-sm" id="confirmEmailChangeBtn">Send Verification</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- OTP Verification Modal -->
+  <div class="modal fade" id="otpModal" tabindex="-1" aria-labelledby="otpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content p-3">
+        <div class="modal-header">
+          <h5 class="modal-title" id="otpModalLabel">Verify OTP</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="otpCancelBtn"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2">An OTP has been sent to your registered email.</p>
+          <input type="text" id="otpInput" class="form-control" placeholder="Enter OTP">
+          <div id="otpError" class="text-danger mt-1" style="min-height: 1em;"></div>
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <span id="otpTimer" class="text-muted small">01:00</span>
+            <button class="btn btn-link btn-sm" id="resendOtpBtn" disabled>Resend OTP</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary btn-sm" id="verifyOtpBtn">Verify OTP</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <%- include('../../partials/footer') %>
+
+  <!-- Centered Toast Container -->
+  <div class="position-fixed top-50 start-50 translate-middle p-3" style="z-index: 1055">
+    <div id="liveToast" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true" style="max-width: 500px; min-height: 10vh;">
+      <div class="d-flex">
+        <div class="toast-body" id="toastMsg">Success!</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  
+
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Inputs & Buttons
+  
+    // Toggle show/hide password
+    let otpCountdown;
+    let otpTimeLeft = 60;
+    const otpTimerEl = document.getElementById("otpTimer");
+    const resendOtpBtn = document.getElementById("resendOtpBtn");
+    const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+    const otpInput = document.getElementById("otpInput");
+    const otpError = document.getElementById("otpError");
+
+  function startOtpTimer() {
+    // Clear any existing interval before starting a new one
+    if (otpCountdown) clearInterval(otpCountdown);
+
+    otpTimeLeft = 60;
+    resendOtpBtn.disabled = true;
+    verifyOtpBtn.disabled = false;
+    updateOtpTimerDisplay();
+
+    otpCountdown = setInterval(() => {
+      otpTimeLeft--;
+      updateOtpTimerDisplay();
+
+      if (otpTimeLeft <= 0) {
+        clearInterval(otpCountdown);  
+        otpCountdown = null;          
+        resendOtpBtn.disabled = false;
+        verifyOtpBtn.disabled = true;
+      }
+    }, 1000);
+  }
+
+
+    function updateOtpTimerDisplay() {
+      const minutes = Math.floor(otpTimeLeft / 60).toString().padStart(2, '0');
+      const seconds = (otpTimeLeft % 60).toString().padStart(2, '0');
+      otpTimerEl.textContent = `${minutes}:${seconds}`;
+    }
+
+    resendOtpBtn.addEventListener("click", async () => {
+      try {
+        const user = JSON.parse('<%- JSON.stringify(user) %>') ;
+        const res = await axios.put('/users-profile/send-password-otp/<%- user.id%>');
+        if (res.data.success) {
+          otpInput.value = "";
+          otpError.textContent = "";
+          startOtpTimer();
+          showToast("OTP resent successfully", "success");
+        }
+
+      } catch (err) {
+        showToast("Failed to resend OTP", "danger");
+      }
+    });
+
+    verifyOtpBtn.addEventListener("click", async () => {
+      const otp = otpInput.value.trim();
+      if (!otp) {
+        otpError.textContent = "Please enter OTP";
+        return;
+      }
+      otpError.textContent = "";
+
+      try {
+        const current = document.getElementById("currentPassword").value.trim();
+        const newPwd = document.getElementById("newPassword").value.trim();
+        // const user = JSON.parse(JSON.stringify(''));
+        const res = await axios.put("/users-profile/verify-password-otp/<%-user.id%>", { otp, currentPassword: current, newPassword: newPwd });
+
+        if (res.data.success) {
+          showToast("Password updated successfully!", "success");
+          otpInput.value = ""
+          const modal = bootstrap.Modal.getInstance(document.getElementById("otpModal"));
+          modal.hide();
+          return;
+        } else {
+          otpError.textContent = "Invalid OTP";
+          return;
+        }
+      } catch (err) {
+        const stauts = err.response?.status;
+        const message = err.response?.data?.message || "Unexpected Error";
+        if(stauts===400|| stauts===409){
+          showToast(message,"warning");
+          return;
+        }else if(stauts===401 || stauts===404){
+          showToast(message,"danger");
+          return;
+        }else if(stauts===410 ){
+          showToast(message,"info");
+          return;
+        }else{
+          showToast("Something went Wrong. Please try Again","danger");
+          return;
+        }
+        
+        // otpError.textContent = "Verification failed";
+      }
+    });
+
+
+    document.querySelectorAll('.toggle-password').forEach(icon => {
+      icon.addEventListener('click', () => {
+        const inputId = icon.getAttribute('data-target');
+        const input = document.getElementById(inputId);
+
+        if (input.type === "password") {
+          input.type = "text";
+          icon.classList.remove("bi-eye-slash");
+          icon.classList.add("bi-eye");
+        } else {
+          input.type = "password";
+          icon.classList.remove("bi-eye");
+          icon.classList.add("bi-eye-slash");
+        }
+      });
+    });
+
+    const nameInput = document.getElementById("nameInput");
+    const phoneInput = document.getElementById("phoneInput");
+    const editBtn = document.getElementById("editNamePhoneBtn");
+    const saveBtn = document.getElementById("saveNamePhoneBtn");
+    const cancelBtn = document.getElementById("cancelNamePhoneBtn");
+
+    const phoneError = phoneInput.nextElementSibling;
+    const nameError = document.createElement("div");
+    nameError.classList.add("text-danger");
+    nameInput.parentNode.appendChild(nameError);
+
+    function showToast(message, type = 'primary') {
+      const toastEl = document.getElementById('liveToast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.textContent = message;
+      toastEl.className = `toast align-items-center text-bg-${type} border-0`;
+      const toast = new bootstrap.Toast(toastEl);
+      toast.show();
+    }
+
+    // Name & Phone blur validation
+    nameInput.addEventListener("blur", () => {
+      nameError.textContent = nameInput.value.trim() ? "" : "Name cannot be empty.";
+    });
+
+    phoneInput.addEventListener("blur", () => {
+      const pattern = /^[0-9]{10}$/;
+      if (!phoneInput.value.trim()) {
+        phoneError.textContent = "Phone number cannot be empty.";
+      } else if (!pattern.test(phoneInput.value)) {
+        phoneError.textContent = "Phone number must be 10 digits.";
+      } else {
+        phoneError.textContent = "";
+      }
+    });
+
+    editBtn.addEventListener("click", () => {
+      nameInput.removeAttribute("readonly");
+      phoneInput.removeAttribute("readonly");
+      editBtn.classList.add("d-none");
+      saveBtn.classList.remove("d-none");
+      cancelBtn.classList.remove("d-none");
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      nameInput.value = "<%= user.name %>";
+      phoneInput.value = "<%= user.phoneNumber %>";
+      nameInput.setAttribute("readonly", true);
+      phoneInput.setAttribute("readonly", true);
+      nameError.textContent = "";
+      phoneError.textContent = "";
+      saveBtn.classList.add("d-none");
+      cancelBtn.classList.add("d-none");
+      editBtn.classList.remove("d-none");
+    });
+
+    saveBtn.addEventListener("click", async () => {
+      const pattern = /^[0-9]{10}$/;
+      if (!nameInput.value.trim()) {
+        nameError.textContent = "Name cannot be empty.";
+        return;
+      }
+      if (!phoneInput.value.trim()) {
+        phoneError.textContent = "Phone number cannot be empty.";
+        return;
+      }
+      if (!pattern.test(phoneInput.value)) {
+        phoneError.textContent = "Phone number must be 10 digits Number.";
+        return;
+      }
+
+      try {
+        await axios.post('/profile/update/name-phone', {
+          name: nameInput.value,
+          phone: phoneInput.value
+        });
+        showToast("Updated successfully!", "success");
+        setTimeout(() => location.reload(), 1500);
+      } catch (err) {
+        showToast("Error updating info.", "danger");
+      }
+    });
+
+    // Email validation
+    const newEmailInput = document.getElementById("newEmailInput");
+    const confirmEmailChangeBtn = document.getElementById("confirmEmailChangeBtn");
+    const emailError = document.createElement("div");
+    emailError.classList.add("text-danger", "mt-2");
+    newEmailInput.parentNode.appendChild(emailError);
+
+    confirmEmailChangeBtn.addEventListener("click", async () => {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+;
+      if (!newEmailInput.value.trim()) {
+        emailError.textContent = "Email cannot be empty.";
+        return;
+      }
+      if (!emailPattern.test(newEmailInput.value)) {
+        emailError.textContent = "Invalid email format.";
+        return;
+      }
+      emailError.textContent = "";
+      try {
+        await axios.post('/profile/email-verification', { email: newEmailInput.value });
+        showToast("Verification email sent!", "success");
+      } catch (err) {
+        showToast("Failed to send verification email.", "danger");
+      }
+    });
+
+    // Password section
+    const editPwdBtn = document.getElementById("editPasswordBtn");
+    const savePwdBtn = document.getElementById("savePasswordBtn");
+    const cancelPwdBtn = document.getElementById("cancelPasswordBtn");
+    const pwdFields = ["currentPassword", "newPassword", "confirmPassword"];
+    const pwdErrors = {};
+
+    pwdFields.forEach(id => {
+      const el = document.getElementById(id);
+      const errorDiv = document.createElement("div");
+      errorDiv.classList.add("text-danger", "mt-1");
+      el.parentNode.appendChild(errorDiv);
+      pwdErrors[id] = errorDiv;
+    });
+
+    editPwdBtn.addEventListener("click", () => {
+      pwdFields.forEach(id => {
+        document.getElementById(id).classList.remove("d-none");
+        const eye = document.querySelector(`.toggle-password[data-target="${id}"]`);
+        if (eye) eye.classList.remove("d-none");
+      });
+      editPwdBtn.classList.add("d-none");
+      savePwdBtn.classList.remove("d-none");
+      cancelPwdBtn.classList.remove("d-none");
+    });
+
+
+    cancelPwdBtn.addEventListener("click", () => {
+      pwdFields.forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.add("d-none");
+        el.value = '';
+
+        
+        const eye = document.querySelector(`.toggle-password[data-target="${id}"]`);
+        if (eye) eye.classList.add("d-none");
+
+        
+        pwdErrors[id].textContent = "";
+      });
+
+      savePwdBtn.classList.add("d-none");
+      cancelPwdBtn.classList.add("d-none");
+      editPwdBtn.classList.remove("d-none");
+    });
+
+    savePwdBtn.addEventListener("click", async () => {
+      const current = document.getElementById("currentPassword").value.trim();
+      const newPwd = document.getElementById("newPassword").value.trim();
+      const confirmPwd = document.getElementById("confirmPassword").value.trim();
+      let valid = true;
+
+      if (!current) {
+        pwdErrors.currentPassword.textContent = "Current password is required.";
+        valid = false;
+      } else pwdErrors.currentPassword.textContent = "";
+
+      if (!newPwd) {
+        pwdErrors.newPassword.textContent = "New password is required.";
+        valid = false;
+      } else pwdErrors.newPassword.textContent = "";
+
+      if (!confirmPwd) {
+        pwdErrors.confirmPassword.textContent = "Please confirm your password.";
+        valid = false;
+      } else if (newPwd !== confirmPwd) {
+        pwdErrors.confirmPassword.textContent = "Passwords do not match.";
+        valid = false;
+      } else if (current && newPwd === current) {
+        pwdErrors.confirmPassword.textContent = "New password must be different from current password.";
+        valid = false;
+      } else {
+        pwdErrors.confirmPassword.textContent = "";
+      }
+
+      if (!valid) return;
+
+      try {
+        // const user = JSON.parse('') ;
+        // 
+        const res = await axios.put('/users-profile/send-password-otp/<%- user.id%>',{current});
+        if (res.data.success) {
+          // showToast("OTP sent successfully!", "success");
+          const otpModal = new bootstrap.Modal(document.getElementById("otpModal"));
+          otpModal.show();
+          startOtpTimer();
+        }
+      } catch (error) {
+        if (error.response && error.response.data && error.response.data.message) {
+          showToast(error.response.data.message, "danger"); // "User not found"
+        } else {
+          showToast("Something went wrong", "danger");
+        }
+      }
+    });
+
+  });
+</script>
+
+</body>
+</html>
