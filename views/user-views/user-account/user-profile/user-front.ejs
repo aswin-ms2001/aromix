@@ -158,6 +158,33 @@
   </div>
 
 
+    <!-- OTP Verification Modal Email -->
+  <div class="modal fade" id="otpEmailModal" tabindex="-1" aria-labelledby="otpEmailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content p-3">
+        <div class="modal-header">
+          <h5 class="modal-title" id="otpEmailModalLabel">Verify OTP</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="otpEmailCancelBtn"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2">An OTP has been sent to your registered email.</p>
+          <input type="text" id="otpEmailInput" class="form-control" placeholder="Enter OTP">
+          <div id="otpEmailError" class="text-danger mt-1" style="min-height: 1em;"></div>
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <span id="otpEmailTimer" class="text-muted small">01:00</span>
+            <button class="btn btn-link btn-sm" id="resendEmailOtpBtn" disabled>Resend OTP</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary btn-sm" id="verifyEmailOtpBtn">Verify OTP</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+ 
   <%- include('../../partials/footer') %>
 
   <!-- Centered Toast Container -->
@@ -186,6 +213,108 @@
     const verifyOtpBtn = document.getElementById("verifyOtpBtn");
     const otpInput = document.getElementById("otpInput");
     const otpError = document.getElementById("otpError");
+   
+    // Email Modal logic
+    const emailOtp = document.getElementById("otpEmailInput");
+    const otpEmailError = document.getElementById("otpEmailError");
+    const emailResendOtpBtn = document.getElementById("resendEmailOtpBtn");
+    const verifyOtpEmailBtn = document.getElementById("verifyEmailOtpBtn");
+    const otpEmailTimer = document.getElementById("otpEmailTimer");
+
+        // Email validation
+    const newEmailInput = document.getElementById("newEmailInput");
+    const confirmEmailChangeBtn = document.getElementById("confirmEmailChangeBtn");
+
+    let  emailTimeCounter;
+    let emailOtpTimeLeft = 60;
+    
+    emailResendOtpBtn.addEventListener("click",async ()=>{
+      try{
+        const res = await axios.put('/users-profile/send-email-verification/<%-user.id%>', { email: newEmailInput.value });
+        if(res.data.success){
+          emailOtp.value = "";
+          otpEmailError.textContent = "";
+          runEmailOtpTimer()
+          showToast(res.data.message,"success");
+        }
+      }catch(err){
+        console.log(err);
+        if(error.response && error.response.data && error.response.data.message){
+          showToast(error.response.data.message,"danger");
+        }else{
+          showToast("Failed To Resend Otp","danger");
+        }
+        
+      }
+    })
+
+    function runEmailOtpTimer(){
+      if(emailTimeCounter) clearInterval(emailTimeCounter);
+      emailOtpTimeLeft=60;
+      emailResendOtpBtn.disabled = true;
+      verifyOtpEmailBtn.disabled = false;
+      updateEmailTimer()
+      emailTimeCounter = setInterval(()=>{
+        emailOtpTimeLeft--;
+        updateEmailTimer();
+        
+        if(emailOtpTimeLeft<=0){
+          clearInterval(emailTimeCounter);
+          emailTimeCounter = null;
+          emailResendOtpBtn.disabled = false;
+          verifyOtpEmailBtn.disabled = true; 
+        }
+      },1000)
+    }
+
+    function updateEmailTimer(){
+      const minutes = `${Math.floor(emailOtpTimeLeft/60)}`.padStart(2,"0");
+      const seconds = `${emailOtpTimeLeft%60}`.padStart(2,"0");
+      otpEmailTimer.textContent = minutes+ ":" + seconds;
+    }
+
+    verifyOtpEmailBtn.addEventListener("click",async ()=>{
+      const otp = emailOtp.value.trim();
+      const email = newEmailInput.value.trim();
+      console.log(otp,"hai",email);
+      if(!otp){
+        otpEmailError.textContent = "Please Enter Otp";
+        return;
+      };
+      if(!/^\d{6}$/.test(otp)){
+        otpEmailError.textContent = "Enter Valid 6 digit OTP";
+        console.log("this is for otp Email error")
+        return;
+      }
+      otpEmailError.textContent = "";
+      if(!email){
+        const emailOtpModalEl = document.getElementById("otpEmailModal");
+        const emailOtpModal = bootstrap.Modal.getInstance(emailOtpModalEl);
+        if(emailOtpModal) emailOtpModal.hide();
+        showToast("Reenter the New Email,and Send Verificaton Again","danger");
+        return;
+      }
+      try{
+        const res = await axios.put('/users-profile/update-user-email/<%-user.id%>',{otp,email});
+        if(res.data.success){
+          showToast(res.data.message,"success");
+          setTimeout(()=>{
+            location.reload();
+          },2000)
+          emailOtp.value = "";
+          newEmailInput.value = "";
+          return;
+        }
+      }catch(error){
+        console.log(error);
+        if(error.response&& error.response.data&& error.response.data.message){
+          showToast(error.response.data.message,"danger");
+        }else{
+          showToast("Something Went Wrong","danger");
+        }
+      }
+    })
+
 
   function startOtpTimer() {
     // Clear any existing interval before starting a new one
@@ -218,7 +347,6 @@
 
     resendOtpBtn.addEventListener("click", async () => {
       try {
-        const user = JSON.parse('<%- JSON.stringify(user) %>') ;
         const res = await axios.put('/users-profile/send-password-otp/<%- user.id%>');
         if (res.data.success) {
           otpInput.value = "";
@@ -295,6 +423,7 @@
       });
     });
 
+    //Name and Phone number Edit
     const nameInput = document.getElementById("nameInput");
     const phoneInput = document.getElementById("phoneInput");
     const editBtn = document.getElementById("editNamePhoneBtn");
@@ -352,42 +481,87 @@
     });
 
     saveBtn.addEventListener("click", async () => {
-      const pattern = /^[0-9]{10}$/;
-      if (!nameInput.value.trim()) {
-        nameError.textContent = "Name cannot be empty.";
-        return;
-      }
-      if (!phoneInput.value.trim()) {
+      const nameVal = nameInput.value.trim();
+      const phoneVal = phoneInput.value.trim();
+      const namePattern = /^[A-Za-z.\s]{3,40}$/;
+      const phonePattern = /^[0-9]{10}$/;
+
+      let hasError = false;
+
+      
+    // Name validation
+    if (!nameVal) {
+      nameError.textContent = "Name cannot be empty.";
+      hasError = true;
+    } else if (nameVal.length < 3) {
+      nameError.textContent = "Name must be at least 3 characters.";
+      hasError = true;
+    } else if (nameVal.length > 40) {
+      nameError.textContent = "Name cannot exceed 40 characters.";
+      hasError = true;
+    } else if (!namePattern.test(nameVal)) {
+      nameError.textContent = "Only letters, spaces, and periods are allowed.";
+      hasError = true;
+    } else if (/^[.\s]/.test(nameVal) || /[.\s]$/.test(nameVal)) {
+      nameError.textContent = "Name cannot start or end with a dot or space.";
+      hasError = true;
+    } else if (/\.\.|  /.test(nameVal)) {
+      nameError.textContent = "Name cannot contain consecutive dots or spaces.";
+      hasError = true;
+    } else {
+      nameError.textContent = "";
+    }
+
+
+      // Phone validation
+      if (!phoneVal) {
         phoneError.textContent = "Phone number cannot be empty.";
-        return;
-      }
-      if (!pattern.test(phoneInput.value)) {
-        phoneError.textContent = "Phone number must be 10 digits Number.";
-        return;
+        hasError = true;
+      } else if (!phonePattern.test(phoneVal)) {
+        phoneError.textContent = "Phone number must be 10 digits.";
+        hasError = true;
+      } else {
+        phoneError.textContent = "";
       }
 
+      // Stop request if any error found
+      if (hasError) return;
+
+   
       try {
-        await axios.post('/profile/update/name-phone', {
-          name: nameInput.value,
-          phone: phoneInput.value
+        const res = await axios.put('/users-profile/update-user-name-phone/<%-user.id%>', {
+          name: nameVal,
+          phone: phoneVal
         });
-        showToast("Updated successfully!", "success");
-        setTimeout(() => location.reload(), 1500);
+
+      
+        if(res.data.success){
+          showToast(res.data.message, "success");
+          setTimeout(() => location.reload(), 1500);
+          return;
+        }
+
       } catch (err) {
-        showToast("Error updating info.", "danger");
+        console.log("Error")
+        if(err.response && err.response.data && err.response.data.message){
+          showToast(err.response.data.message, "danger");
+          return;
+        }else{
+          showToast("Error updating info.", "danger");
+          return;
+        }
+        
       }
     });
 
-    // Email validation
-    const newEmailInput = document.getElementById("newEmailInput");
-    const confirmEmailChangeBtn = document.getElementById("confirmEmailChangeBtn");
+
+    //Email Error
     const emailError = document.createElement("div");
     emailError.classList.add("text-danger", "mt-2");
     newEmailInput.parentNode.appendChild(emailError);
 
     confirmEmailChangeBtn.addEventListener("click", async () => {
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-;
       if (!newEmailInput.value.trim()) {
         emailError.textContent = "Email cannot be empty.";
         return;
@@ -398,9 +572,19 @@
       }
       emailError.textContent = "";
       try {
-        await axios.post('/profile/email-verification', { email: newEmailInput.value });
-        showToast("Verification email sent!", "success");
+        const res = await axios.put('/users-profile/send-email-verification/<%-user.id%>', { email: newEmailInput.value });
+        if(res.data.success){
+          showToast(res.data.message, "success");
+
+          const otpEmailModal = new bootstrap.Modal(document.getElementById("otpEmailModal"));
+          otpEmailModal.show();
+          console.log("before run function")
+          runEmailOtpTimer();
+          console.log("after run function")
+        }
+        
       } catch (err) {
+        console.log(err)
         showToast("Failed to send verification email.", "danger");
       }
     });

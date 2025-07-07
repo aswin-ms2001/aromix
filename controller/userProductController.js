@@ -168,7 +168,7 @@ export const discoverPage = async (req, res) => {
 
   } catch (err) {
     console.error("Error in discoverPage:", err);
-    res.status(500).send("Internal Server Error");
+    res.status(500).render("error");
   }
 };
 

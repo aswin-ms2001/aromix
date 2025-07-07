@@ -37,4 +37,5 @@ export async function sendOtpPassword(email,otp) {
     };
 
     await transporter.sendMail(mailOptions);
-}
+};
+

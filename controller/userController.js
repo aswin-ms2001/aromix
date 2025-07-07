@@ -113,6 +113,7 @@ export const signup = async (req,res)=>{
         return res.render("user-views/login.ejs")
     }
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log(otp);
     const otpExpires = Date.now() + 60 * 1000; // 1 minute
 
     const hashedPassword = await bcrypt.hash(password,10);

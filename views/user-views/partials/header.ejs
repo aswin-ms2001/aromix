@@ -25,7 +25,7 @@
 
     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
       <% if (currentUser) { %>
-        <li><a class="dropdown-item" href="/users/profile">Profile</a></li>
+        <li><a class="dropdown-item" href="/users-profile/profile-front/<%= currentUser._id %>">Account</a></li>
         <li><a class="dropdown-item text-danger" href="/users/logoutPage">Logout</a></li>
       <% } else { %>
         <li><a class="dropdown-item" href="/users/login">Login</a></li>

@@ -14,6 +14,9 @@ userProfile.use(currentUser);
 
 userProfile.get("/profile-front/:id",ensureAuthenticated,userProfileContoller.userProfileFront);
 userProfile.put('/send-password-otp/:id',ensureAuthenticated,userProfileContoller.userPasswordOtp);
-userProfile.put("/verify-password-otp/:id",ensureAuthenticated,userProfileContoller.userPasswordVerification)
+userProfile.put("/verify-password-otp/:id",ensureAuthenticated,userProfileContoller.userPasswordVerification);
+userProfile.put('/send-email-verification/:id',ensureAuthenticated,userProfileContoller.userEmailVerification);
+userProfile.put("/update-user-email/:id",ensureAuthenticated,userProfileContoller.updateUserEmail)
+userProfile.put("/update-user-name-phone/:id",ensureAuthenticated,userProfileContoller.updateUserNameAndPhone)
 
 export default userProfile;

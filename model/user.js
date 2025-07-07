@@ -26,6 +26,11 @@ const userSchema = new mongoose.Schema({
         enum:["local","google"],
         require:true
     },
+    phoneNumber:{
+        type:String,
+        default:null,
+        trim:true
+    },
     otp:{
         type:String,
         trim:true
