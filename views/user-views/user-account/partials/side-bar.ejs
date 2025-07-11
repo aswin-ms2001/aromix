@@ -1,12 +1,9 @@
 <div class="list-group">
-  <a href="/profile" class="list-group-item list-group-item-action <%= activePage === 'profile' ? 'active' : '' %>">
+  <a href="/users-profile/profile-front/<%- user.id %>" class="list-group-item list-group-item-action <%= activePage === 'profile' ? 'active' : '' %>">
     My Profile
   </a>
-  <a href="/address-book" class="list-group-item list-group-item-action <%= activePage === 'addressBook' ? 'active' : '' %>">
+  <a href="/users-address/address-front/<%- user.id %>" class="list-group-item list-group-item-action <%= activePage === 'addressBook' ? 'active' : '' %>">
     Address Book
-  </a>
-  <a href="/address/add" class="list-group-item list-group-item-action <%= activePage === 'addAddress' ? 'active' : '' %>">
-    Add New Address
   </a>
   <a href="/wallet" class="list-group-item list-group-item-action <%= activePage === 'wallet' ? 'active' : '' %>">
     Wallet
