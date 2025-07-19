@@ -140,7 +140,7 @@ export const updateCartQuantity = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid action" });
     }
 
-    
+   
     const cartItem = await Cart.findById(cartId).populate({
       path: "productId",
       select: "blocked categoryId variants",
@@ -151,7 +151,7 @@ export const updateCartQuantity = async (req, res) => {
       return res.status(404).json({ success: false, message: "Cart item not found" });
     }
 
-  
+   
     if (cartItem.productId.blocked || (cartItem.productId.categoryId && cartItem.productId.categoryId.blocked)) {
       return res.status(403).json({
         success: false,
@@ -160,7 +160,7 @@ export const updateCartQuantity = async (req, res) => {
       });
     }
 
-
+    
     const variant = cartItem.productId.variants.id(cartItem.variantId);
     if (!variant) {
       return res.status(404).json({ success: false, message: "Variant not found" });
@@ -168,7 +168,7 @@ export const updateCartQuantity = async (req, res) => {
 
     let newQuantity = cartItem.quantity;
 
-  
+
     if (action === "increment") {
       if (newQuantity >= 10) {
         return res.status(400).json({ success: false, message: "Max quantity limit reached" });
@@ -184,13 +184,13 @@ export const updateCartQuantity = async (req, res) => {
       newQuantity--;
     }
 
-
+    
     cartItem.quantity = newQuantity;
     await cartItem.save();
 
     const itemTotal = variant.price * newQuantity;
 
- 
+    
     const userCart = await Cart.find({ userId }).populate({
       path: "productId",
       select: "variants"

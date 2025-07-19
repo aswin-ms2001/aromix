@@ -166,6 +166,9 @@
       } catch (err) {
         if(err.response?.data?.redirect){
           showToast(err.response?.data?.message || "Product or category is Blocked", "danger");
+          setTimeout(()=>{
+            window.location.href = err.response?.data?.redirect;
+          },2000)
         }else{
           showToast(err.response?.data?.message || "Error updating quantity", "danger");
         }
@@ -199,6 +202,9 @@
   } catch (err) {
     if (err.response?.data?.redirect) {
       showToast(err.response?.data?.message || "Product or category is Blocked", "danger");
+      setTimeout(()=>{
+        window.location.href = err.response?.data?.redirect;
+      },2000)
     } else {
       showToast(err.response?.data?.message || "Error removing item", "danger");
     }
