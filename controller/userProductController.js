@@ -3,10 +3,14 @@ import User from "../model/user.js";
 import Product from "../model/product.js";
 import Category from "../model/category.js"
 import mongoose from "mongoose";
+import { getRelatedProducts } from "./services/userServices/relatedProductServices.js";
+import { getWishlistVariantIds } from "./services/userServices/wishlistServices.js";
 // import { productDetails } from "./adminController.js";
 
 export const discoverPage = async (req, res) => {
   try {
+    const id = req.user._id;
+    if(!id) return res.status(500).render("error");
     const page = parseInt(req.query.page) || 1;
     const limit = 6;
     const skip = (page - 1) * limit;
@@ -148,13 +152,14 @@ export const discoverPage = async (req, res) => {
       { $match: { filteredVariants: { $ne: [] } } },
       { $count: "total" }
     ]);
-
+    const user = await User.findById(id);
     const totalProducts = totalCountAgg[0]?.total || 0;
     const totalPages = Math.ceil(totalProducts / limit);
 
     const categories = await Category.find({ blocked: false });
 
     res.render("user-views/discover.ejs", {
+      user,
       products,
       currentPage: page,
       totalPages,
@@ -174,8 +179,10 @@ export const discoverPage = async (req, res) => {
 
 export const productDetails = async (req, res) => {
   try {
+    const userId = req.user._id;
     const productId = req.params.id;
-
+    const variantId = req.query.variantId || null;
+    console.log(variantId)
     const productAggregation = await Product.aggregate([
       {
         $match: { _id: new mongoose.Types.ObjectId(productId), blocked: false }
@@ -196,50 +203,20 @@ export const productDetails = async (req, res) => {
       }
     ]);
 
-    console.log(productAggregation);
+  
     const product = productAggregation[0];
 
     if (!product) {
       return res.status(404).render("error", { message: "Product not found or has been blocked" });
     }
 
-    const relatedProducts = await Product.aggregate([
-      {
-        $match: {
-          _id: { $ne: product._id },
-          categoryId: product.categoryId,
-          blocked: false
-        }
-      },
-      {
-        $lookup: {
-          from: "categories",
-          localField: "categoryId",
-          foreignField: "_id",
-          as: "category"
-        }
-      },
-      { $unwind: "$category" },
-      {
-        $match: {
-          "category.blocked": false
-        }
-      },
-      { $limit: 4 },
-      {
-        $project: {
-          name: 1,
-          variants: 1,
-          image: { $arrayElemAt: ["$variants.images", 0] },
-          price: { $arrayElemAt: ["$variants.price", 0] },
-          volume: { $arrayElemAt: ["$variants.volume", 0] }
-        }
-      }
-    ]);
-
+    const relatedProducts = await getRelatedProducts(product);
+    const wishlistVariantIds = await getWishlistVariantIds(userId,productId)
     res.render("user-views/productDetails", {
       product,
-      relatedProducts
+      relatedProducts,
+      wishlistVariantIds,
+      variantId
     });
 
   } catch (error) {

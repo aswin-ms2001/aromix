@@ -1,8 +1,8 @@
 <div class="list-group">
-  <a href="/users-profile/profile-front/<%- user.id %>" class="list-group-item list-group-item-action <%= activePage === 'profile' ? 'active' : '' %>">
+  <a href="/users-profile/profile-front/<%- currentUser._id %>" class="list-group-item list-group-item-action <%= activePage === 'profile' ? 'active' : '' %>">
     My Profile
   </a>
-  <a href="/users-address/address-front/<%- user.id %>" class="list-group-item list-group-item-action <%= activePage === 'addressBook' ? 'active' : '' %>">
+  <a href="/users-address/address-front/<%- currentUser._id %>" class="list-group-item list-group-item-action <%= activePage === 'addressBook' ? 'active' : '' %>">
     Address Book
   </a>
   <a href="/wallet" class="list-group-item list-group-item-action <%= activePage === 'wallet' ? 'active' : '' %>">
@@ -11,7 +11,10 @@
   <a href="/coupons" class="list-group-item list-group-item-action <%= activePage === 'coupons' ? 'active' : '' %>">
     Coupons
   </a>
-  <a href="/cart" class="list-group-item list-group-item-action <%= activePage === 'cart' ? 'active' : '' %>">
+  <a href="/users-wishlist/user-wishlist-front" class="list-group-item list-group-item-action <%= activePage === 'wishlist' ? 'active' : '' %>">
+    Wishlist
+  </a>
+  <a href="/users-cart/user-cart-front" class="list-group-item list-group-item-action <%= activePage === 'cart' ? 'active' : '' %>">
     Cart
   </a>
 </div>

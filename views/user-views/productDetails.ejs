@@ -38,7 +38,13 @@
 
     <!-- Product Info -->
     <div class="col-md-5">
-      <h4 id="product-name"><%= product.name %></h4>
+      <div class="d-flex align-items-center justify-content-between">
+        <h4 id="product-name" class="me-3"><%= product.name %></h4>
+        <button id="wishlist-btn" class="btn btn-outline-danger" title="Add to Wishlist">
+          <i class="bi bi-heart" id="wishlist-icon"></i>
+        </button>
+      </div>
+
       <p class="text-muted">
         (150 Reviews) |
         <span id="stock-status" class="<%= product.variants[0].stock > 0 ? 'text-success' : 'text-danger' %>">
@@ -76,8 +82,8 @@
       </div>
 
       <div class="mb-3 d-flex gap-2">
-        <button class="btn btn-danger">Buy Now</button>
-        <button class="btn btn-warning">Add To Cart</button>
+        <button class="btn btn-danger" id="buy-now-btn">Buy Now</button>
+        <button class="btn btn-warning" id="add-to-cart-btn">Add To Cart</button>
       </div>
 
       <div class="input-group w-50 mb-4">
@@ -125,6 +131,16 @@
 
 <%- include('./partials/footer') %>
 
+<div id="toast-container" style="
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 1055;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+"></div>
+
 <script>
   window.addEventListener("pageshow", function (event) {
     if (event.persisted) {
@@ -133,12 +149,28 @@
   });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<!-- Inject Wishlist & Product Data -->
+<script type="application/json" id="wishlist-data">
+  <%- JSON.stringify(wishlistVariantIds || []) %>
+</script>
 <script type="application/json" id="product-data">
   <%- JSON.stringify(product) %>
 </script>
+
+<script type="application/json" id="variantId-data">
+  <%- JSON.stringify(variantId) %>
+</script>
+<!-- JS Logic -->
 <script>
-  const product = JSON.parse(document.getElementById('product-data').textContent)
+  document.addEventListener("DOMContentLoaded",()=>{
+  const product = JSON.parse(document.getElementById('product-data').textContent);
+  const wishlistVariantIds = JSON.parse(document.getElementById('wishlist-data').textContent);
+  const variantId = JSON.parse(document.getElementById('variantId-data').textContent);
   const variants = product.variants;
+  console.log(variants)
+  console.log(variantId)
   let currentIndex = 0;
 
   const priceEl = document.getElementById("product-price");
@@ -147,6 +179,8 @@
   const mainImage = document.getElementById("main-product-image");
   const thumbnailWrapper = document.getElementById("thumbnail-wrapper");
   const variantBtns = document.querySelectorAll(".variant-btn");
+  const wishlistBtn = document.getElementById("wishlist-btn");
+  const wishlistIcon = document.getElementById("wishlist-icon");
 
   function updateVariant(index) {
     const variant = variants[index];
@@ -172,6 +206,11 @@
       thumb.onclick = () => { mainImage.src = img; };
       thumbnailWrapper.appendChild(thumb);
     });
+
+    // Wishlist Icon Update
+    const isInWishlist = wishlistVariantIds.includes(variant._id);
+    wishlistIcon.className = isInWishlist ? "bi bi-heart-fill text-danger" : "bi bi-heart";
+    wishlistBtn.title = isInWishlist ? "Remove from Wishlist" : "Add to Wishlist";
   }
 
   variantBtns.forEach((btn) => {
@@ -181,7 +220,132 @@
     });
   });
 
-  updateVariant(0);
+wishlistBtn.addEventListener("click", async () => {
+  const variant = variants[currentIndex];
+  const isInWishlist = wishlistVariantIds.includes(variant._id);
+
+  if (isInWishlist) {
+    // ✅ Remove from wishlist
+    try {
+      const response = await axios.delete(`/users-wishlist/delete-from-wishlist/${product._id}/${variant._id}`);
+      if (response.data.success) {
+        wishlistVariantIds.splice(wishlistVariantIds.indexOf(variant._id), 1);
+        showToast(response.data.message || "Item removed from wishlist", "warning");
+      }
+    } catch (err) {
+      if (err.response?.data?.redirect) {
+        showToast(err.response.data.message || "Item is blocked", "danger");
+        setTimeout(() => (window.location.href = err.response.data.redirect), 2000);
+      } else if (err.response?.data?.message) {
+        showToast(err.response.data.message, "danger");
+      } else {
+        showToast("Failed to remove from wishlist", "danger");
+      }
+    }
+  } else {
+    // ✅ Add to wishlist
+    try {
+      const response = await axios.post(`/users-wishlist/add-to-wishlist/${product._id}/${variant._id}`);
+      if (response.data.success) {
+        wishlistVariantIds.push(variant._id);
+        showToast(response.data.message || "Item added to wishlist", "success");
+      }
+    } catch (err) {
+      if (err.response?.data?.redirect) {
+        showToast(err.response.data.message || "Item is blocked", "danger");
+        setTimeout(() => (window.location.href = err.response.data.redirect), 2000);
+      } else if (err.response?.data?.message) {
+        showToast(err.response.data.message, "danger");
+      } else {
+        showToast("An unexpected error occurred", "danger");
+      }
+    }
+  }
+
+
+  updateVariant(currentIndex);
+});
+
+  document.getElementById("add-to-cart-btn").addEventListener("click", async () => {
+    const variant = variants[currentIndex];
+    const quantity = parseInt(document.querySelector(".form-control.text-center").value);
+    console.log("Add to Cart:", variant._id, "Qty:", quantity);
+    try{
+      console.log(product._id,variant._id)
+    const response = await axios.post(`/users-cart/user-add-cart/${product._id}/${variant._id}`);
+    if(response.data.success){
+      showToast(response.data.message,"success")
+    }
+    }catch(err){
+      if (err.response?.data?.redirect) {
+        showToast(err.response.data.message || "Item is blocked", "danger");
+        setTimeout(() => (window.location.href = err.response.data.redirect), 2000);
+      } else if (err.response?.data?.message) {
+        showToast(err.response.data.message, "danger");
+      } else {
+        showToast("An unexpected error occurred", "danger");
+      }
+    }
+  });
+
+  document.getElementById("buy-now-btn").addEventListener("click", async() => {
+    const variant = variants[currentIndex];
+    const quantity = parseInt(document.querySelector(".form-control.text-center").value);
+    console.log("Buy Now:", variant._id, "Qty:", quantity);
+
+    
+  });
+
+function showToast(message, type = "primary", duration = 3000) {
+  // ✅ Find or create toast container
+  let toastContainer = document.getElementById("toast-container");
+  if (!toastContainer) {
+    toastContainer = document.createElement("div");
+    toastContainer.id = "toast-container";
+    toastContainer.className = "toast-container position-fixed top-0 end-0 p-3";
+    toastContainer.style.zIndex = "9999";
+    document.body.appendChild(toastContainer);
+  }
+
+  // ✅ Create toast element
+  const toast = document.createElement("div");
+  toast.className = `toast align-items-center text-bg-${type} border-0 show`;
+  toast.setAttribute("role", "alert");
+  toast.setAttribute("aria-live", "assertive");
+  toast.setAttribute("aria-atomic", "true");
+
+  toast.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">${message}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  `;
+
+  toastContainer.appendChild(toast);
+
+  // ✅ Auto-remove after duration
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300); // Remove after fade-out
+  }, duration);
+}
+
+
+  if (variantId) {
+    const updateIndex = variants.findIndex(v => v._id === variantId);
+    if (updateIndex !== -1) {
+      updateVariant(updateIndex);
+    } else {
+      updateVariant(0); // fallback if no match found
+    }
+  } else {
+    updateVariant(0);
+  }
+    
+  
+
+  })
+  
 </script>
 </body>
 </html>
