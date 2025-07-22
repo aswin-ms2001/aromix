@@ -13,6 +13,7 @@ import userProfile from './userProfileRoutes.js';
 import userAddress from './userAddressRoutes.js';
 import userCart from './userCartRoutes.js';
 import userWishlist from './userWishlistRoutes.js';
+import userOder from './userOderRoutes.js';
 import { userSessionMiddleware } from "../config/session.js";
 const userDetails = [userSessionMiddleware,passport.initialize(),passport.session(),currentUser]
 
@@ -30,7 +31,8 @@ router.use("/users-products", userProducts);
 router.use("/users-profile",userProfile);
 router.use("/users-address",userAddress);
 router.use("/users-cart",userCart);
-router.use("/users-wishlist",userWishlist)
+router.use("/users-wishlist",userWishlist);
+router.use("/user-oder",userOder)
 
 // router.use('/orders', orderRoutes);
 

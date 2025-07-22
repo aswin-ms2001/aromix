@@ -94,7 +94,7 @@
 
                       <!-- Total -->
                       <td id="total-<%= item._id %>" class="fw-bold text-success text-center">
-                        ₹ <%= item.variant.price * item.quantity %>
+                        ₹ <%= item.itemTotal %>
                       </td>
 
                       <!-- Remove -->
@@ -213,7 +213,7 @@
 
 
     function proceedToCheckout() {
-      window.location.href = '/checkout';
+      window.location.href = '/user-oder/user-checkout';
     }
   </script>
 </body>

@@ -193,11 +193,20 @@ export const updateCartQuantity = async (req, res) => {
     
     const userCart = await Cart.find({ userId }).populate({
       path: "productId",
-      select: "variants"
+      select: "variants blocked categoryId",
+      populate: {
+        path:"categoryId",
+        select:"blocked"
+      }
+
     });
 
     let subtotal = 0;
     for (const item of userCart) {
+      console.log(item)
+      if(item.productId.blocked||item.productId.categoryId.blocked){
+        continue;
+      }
       const cartVariant = item.productId.variants.id(item.variantId);
       if (cartVariant) {
         subtotal += cartVariant.price * item.quantity;
@@ -252,11 +261,18 @@ export const deleteCart = async (req, res) => {
   
     const userCart = await Cart.find({ userId }).populate({
       path: "productId",
-      select: "variants"
+      select: "variants blocked categoryId",
+      populate: {
+        path: "categoryId",
+        select: "blocked"
+      }
     });
 
     let subtotal = 0;
     for (const item of userCart) {
+      if (item.productId.blocked || item.productId.categoryId.blocked) {
+        continue;
+      }
       const variant = item.productId.variants.id(item.variantId);
       if (variant) {
         subtotal += variant.price * item.quantity;
