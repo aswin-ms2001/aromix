@@ -384,13 +384,18 @@ export const editProductPost = [
         return `${folder}/${fileName}`;
       }
 
+      // Fetch existing product
       const existingProduct = await Product.findById(productId);
       const oldCategoryId = existingProduct.categoryId.toString();
+      const updatedVariants = [];
 
-      const variantsData = [];
       let i = 0;
-
       while (req.body[`variants[${i}].volume`] !== undefined) {
+        const variantId = req.body[`variants[${i}]._id`] || null;
+        const existingVariant = variantId
+          ? existingProduct.variants.id(variantId)
+          : null;
+
         const existingImages = toArray(req.body[`variants[${i}].existingImages[]`]);
         const images = [];
 
@@ -438,28 +443,43 @@ export const editProductPost = [
 
           images.push(imageUrl || null);
         }
-        if(req.body[`variants[${i}].price`]<=0){
-          return res.status(500).json({ message: "Product Price Cant be less than zero" })
+
+        if (req.body[`variants[${i}].price`] <= 0) {
+          return res.status(400).json({ message: "Product price cannot be zero or less" });
         }
-        variantsData.push({
-          volume: req.body[`variants[${i}].volume`],
-          price: req.body[`variants[${i}].price`],
-          stock: req.body[`variants[${i}].stock`],
-          description: req.body[`variants[${i}].description`],
-          images,
-        });
+
+        if (existingVariant) {
+          //  Update existing variant (retain _id)
+          existingVariant.volume = req.body[`variants[${i}].volume`];
+          existingVariant.price = req.body[`variants[${i}].price`];
+          existingVariant.stock = req.body[`variants[${i}].stock`];
+          existingVariant.description = req.body[`variants[${i}].description`];
+          existingVariant.images = images;
+          updatedVariants.push(existingVariant);
+        } else {
+          //  Add new variant
+          updatedVariants.push({
+            volume: req.body[`variants[${i}].volume`],
+            price: req.body[`variants[${i}].price`],
+            stock: req.body[`variants[${i}].stock`],
+            description: req.body[`variants[${i}].description`],
+            images,
+          });
+        }
 
         i++;
       }
 
-      await Product.findByIdAndUpdate(productId, {
-        name,
-        gender,
-        categoryId: newCategoryId,
-        categoryName: newCategoryName,
-        variants: variantsData,
-      });
+      //  Save changes
+      existingProduct.name = name;
+      existingProduct.gender = gender;
+      existingProduct.categoryId = newCategoryId;
+      existingProduct.categoryName = newCategoryName;
+      existingProduct.variants = updatedVariants;
 
+      await existingProduct.save();
+
+      //  Update category references if category changed
       if (oldCategoryId !== newCategoryId) {
         await Category.findByIdAndUpdate(oldCategoryId, {
           $pull: { products: productId },
@@ -470,8 +490,7 @@ export const editProductPost = [
         });
       }
 
-      res.status(200).json({ message: "Product and categories updated successfully" });
-
+      res.status(200).json({ message: "Product updated successfully" });
     } catch (err) {
       console.error("Error updating product:", err);
       res.status(500).json({ error: "Internal server error" });
