@@ -53,6 +53,7 @@
 
           <% product.variants.forEach((variant, vIndex) => { %>
             <div class="border p-3 mb-4 rounded" style="background-color: #47195f;">
+              <input type="hidden" name="variants[<%= vIndex %>]._id" value="<%= variant._id %>" />
               <div class="row g-3">
                 <div class="row">
                   <div class="col-md-4">
