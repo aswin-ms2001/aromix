@@ -14,6 +14,7 @@
       border-radius: 6px;
       padding: 15px;
       border: 1px solid #ddd;
+      position: relative;
     }
     .address-scroll {
       display: flex;
@@ -27,6 +28,15 @@
     .address-scroll::-webkit-scrollbar-thumb {
       background: #ccc;
       border-radius: 4px;
+    }
+    .selected-address {
+      border: 2px solid #28a745 !important;
+      background: #f9fff9;
+    }
+    .badge.bg-success {
+      position: absolute;
+      top: 8px;
+      right: 8px;
     }
   </style>
 </head>
@@ -52,22 +62,31 @@
         <div class="card p-4 mb-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="text-danger fw-bold">Delivery Address</h5>
-            <button class="btn btn-outline-danger btn-sm" onclick="window.location.href='/users-address/manage'">Manage Addresses</button>
+            <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#addAddressModal">+ Add New</button>
           </div>
 
           <% if (addresses && addresses.length > 0) { %>
-            <div class="address-scroll">
+            <div class="address-scroll" id="addressList">
               <% addresses.forEach(addr => { %>
-                <div class="address-card <%= addr.isDefault ? 'border border-danger' : '' %>">
+                <div class="address-card <%= addr.isDefault ? 'border border-danger' : '' %>" id="address-<%= addr._id %>">
+                  <% if(addr.isDefault){ %>
+                    <span class="badge bg-success">Default</span>
+                  <% } %>
                   <h6><%= addr.name %></h6>
                   <p class="mb-1"><%= addr.house %>, <%= addr.street %></p>
                   <p class="mb-1"><%= addr.city %>, <%= addr.state %></p>
                   <p class="mb-1"><%= addr.country %> - <%= addr.pincode %></p>
                   <small class="text-muted">Mobile: <%= addr.mobile %></small>
-                  <div class="mt-2">
-                    <button class="btn btn-outline-danger btn-sm w-100" onclick="selectOrderAddress('<%= addr._id %>')">
-                      <%= addr.isDefault ? 'Default Address' : 'Deliver Here' %>
+                  <div class="mt-2 d-grid gap-1">
+                    <button class="btn btn-outline-success btn-sm" onclick="selectForDelivery('<%= addr._id %>')">
+                      Deliver Here
                     </button>
+                    <button class="btn btn-outline-primary btn-sm" data-address='<%- JSON.stringify(addr) %>' onclick='handleOpenEditModal(this)'>
+                      Edit
+                    </button>
+                    <% if(!addr.isDefault){ %>
+                      <button class="btn btn-outline-warning btn-sm" onclick="setDefault('<%= addr._id %>')">Set Default</button>
+                    <% } %>
                   </div>
                 </div>
               <% }) %>
@@ -93,16 +112,6 @@
             <label class="form-check-label text-muted" for="card">Credit/Debit Card (Coming Soon)</label>
           </div>
         </div>
-
-        <!-- Apply Coupon -->
-        <div class="card p-4 shadow-sm">
-          <h5 class="text-danger fw-bold mb-3">Apply Coupon</h5>
-          <div class="input-group">
-            <input type="text" class="form-control" placeholder="Enter Coupon Code" disabled>
-            <button class="btn btn-outline-danger" disabled>Apply</button>
-          </div>
-          <small class="text-muted">Coupon feature coming soon!</small>
-        </div>
       </div>
 
       <!-- ✅ Right: Order Summary -->
@@ -126,73 +135,566 @@
           <hr>
           <h5 class="d-flex justify-content-between fw-bold">Total: <span>₹<%= subtotal > 1000 ? subtotal : subtotal + 50 %></span></h5>
           <button class="btn btn-danger w-100 mt-3" onclick="placeOrder()">Place Order</button>
-          <button class="btn btn-outline-secondary w-100 mt-2" onclick="window.location.href='/users-products/discover'">Return to Shop</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ✅ Modal: Address Required -->
-  <div class="modal fade" id="addressModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content p-3">
-        <div class="modal-body text-center">
-          <p class="fs-5 text-danger mb-3">Please add or select an address before placing the order.</p>
-          <button class="btn btn-danger" onclick="window.location.href='/users-address/manage'">Add Address</button>
-        </div>
+<!-- Add Address Modal -->
+<div class="modal fade" id="addAddressModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content p-3">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Address</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addForm">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="addName">Name</label>
+              <input name="name" id="addName" class="form-control" >
+              <div class="text-danger small" id="addNameError"></div>
+            </div>
+            <div class="col-md-6">
+              <label for="addHouse">House Name</label>
+              <input name="house" id="addHouse" class="form-control" >
+              <div class="text-danger small" id="addHouseError"></div>
+            </div>
+            <div class="col-md-6">
+              <label for="addStreet">Locality / Street</label>
+              <input name="street" id="addStreet" class="form-control" >
+              <div class="text-danger small" id="addStreetError"></div>
+            </div>
+            <div class="col-md-6">
+              <label for="addCity">Town / City / District</label>
+              <input name="city" id="addCity" class="form-control" >
+              <div class="text-danger small" id="addCityError"></div>
+            </div>
+            <div class="col-md-6">
+              <label for="addState">State</label>
+              <input name="state" id="addState" class="form-control" >
+              <div class="text-danger small" id="addStateError"></div>
+            </div>
+            <div class="col-md-6">
+              <label for="addCountry">Country</label>
+              <input name="country" id="addCountry" class="form-control" >
+              <div class="text-danger small" id="addCountryError"></div>
+            </div>
+            <div class="col-md-6">
+              <label for="addMobile">Mobile Number</label>
+              <input name="mobile" id="addMobile" class="form-control" maxlength="10" >
+              <div class="text-danger small" id="addMobileError"></div>
+            </div>
+            <div class="col-md-6">
+              <label for="addPincode">Pincode</label>
+              <input name="pincode" id="addPincode" class="form-control" maxlength="6" >
+              <div class="text-danger small" id="addPincodeError"></div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end mt-3">
+            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-danger" type="submit">Save</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
+</div>
+
+ <!-- Edit Address Modal -->
+<div class="modal fade" id="editAddressModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content p-3">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Address</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm">
+          <input type="hidden" name="_id" id="editId">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="editName">Name</label>
+              <input name="name" id="editName" class="form-control" >
+              <div class="text-danger small" id="editNameError"></div>
+            </div>
+            <div class="col-md-6">
+              <label for="editHouse">House Name</label>
+              <input name="house" id="editHouse" class="form-control" >
+              <div class="text-danger small" id="editHouseError"></div>
+            </div>
+            <div class="col-md-6">
+              <label for="editStreet">Locality / Street</label>
+              <input name="street" id="editStreet" class="form-control" >
+              <div class="text-danger small" id="editStreetError"></div>
+            </div>
+            <div class="col-md-6">
+              <label for="editCity">Town / City / District</label>
+              <input name="city" id="editCity" class="form-control" >
+              <div class="text-danger small" id="editCityError"></div>
+            </div>
+            <div class="col-md-6">
+              <label for="editState">State</label>
+              <input name="state" id="editState" class="form-control" >
+              <div class="text-danger small" id="editStateError"></div>
+            </div>
+            <div class="col-md-6">
+              <label for="editCountry">Country</label>
+              <input name="country" id="editCountry" class="form-control" >
+              <div class="text-danger small" id="editCountryError"></div>
+            </div>
+            <div class="col-md-6">
+              <label for="editMobile">Mobile Number</label>
+              <input name="mobile" id="editMobile" class="form-control" maxlength="10" >
+              <div class="text-danger small" id="editMobileError"></div>
+            </div>
+            <div class="col-md-6">
+              <label for="editPincode">Pincode</label>
+              <input name="pincode" id="editPincode" class="form-control" maxlength="6" >
+              <div class="text-danger small" id="editPincodeError"></div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end mt-3">
+            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-danger" type="submit">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 
   <%- include('../partials/footer') %>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
   <script>
     let selectedAddressId = "<%= defaultAddress ? defaultAddress._id : '' %>";
+    console.log(selectedAddressId);
 
-    function selectOrderAddress(addressId) {
+    function selectForDelivery(addressId) {
+      document.querySelectorAll(".address-card").forEach(card => card.classList.remove("selected-address"));
+      const selectedCard = document.getElementById(`address-${addressId}`);
+      selectedCard.classList.add("selected-address");
       selectedAddressId = addressId;
+      console.log(selectedAddressId)
       showToast("Address selected for delivery", "success");
     }
 
-    function placeOrder() {
-      if (!selectedAddressId) {
-        const modal = new bootstrap.Modal(document.getElementById('addressModal'));
-        modal.show();
-        return;
+    // ✅ Add Address
+document.getElementById("addForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  // Clear previous errors
+  document.querySelectorAll("#addForm .text-danger").forEach(el => el.textContent = "");
+
+
+  try {
+    let payload = Object.fromEntries(new FormData(this).entries());
+    ["name", "house", "street", "city", "state", "country"].forEach((field)=>{
+      if(payload[field]){
+        payload[field] = capitalizeWords(payload[field]) 
       }
-
-      const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-
-      axios.post('/users-order/place-order', {
-        addressId: selectedAddressId,
-        paymentMethod
-      })
-      .then(res => {
-        if (res.data.success) {
-          showToast(res.data.message, "success");
-          setTimeout(() => window.location.href = '/order-confirmation', 1500);
-        }
-      })
-      .catch(err => {
-        showToast(err.response?.data?.message || "Something went wrong", "danger");
-      });
+    })
+    let hasError = false;
+    const addressPattern = /^(?!\s)(?!.*\s$)[A-Za-z0-9]+(?:\s[A-Za-z0-9]+)*$/;
+    console.log(payload);
+    console.log
+    // --- Name ---
+    if (!payload.name) {
+      document.getElementById("addNameError").textContent = "Name cannot be empty.";
+      hasError = true;
+    } else if (!/^[A-Za-z.\s]{3,40}$/.test(payload.name)) {
+      document.getElementById("addNameError").textContent = "Only letters, spaces, and periods allowed (3–40 chars).";
+      hasError = true;
+    } else if (/^[.\s]/.test(payload.name) || /[.\s]$/.test(payload.name)) {
+      document.getElementById("addNameError").textContent = "Name cannot start or end with dot or space.";
+      hasError = true;
+    } else if (/\.\.|  /.test(payload.name)) {
+      document.getElementById("addNameError").textContent = "No consecutive dots or spaces allowed.";
+      hasError = true;
     }
 
-    function showToast(message, type = "primary") {
+    // --- House ---
+    if (!payload.house) {
+      document.getElementById("addHouseError").textContent = "House name is required.";
+      hasError = true;
+    } else if (!addressPattern.test(payload.house)) {
+      document.getElementById("addHouseError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
+      hasError = true;
+    }
+
+    // --- Street ---
+    if (!payload.street) {
+      document.getElementById("addStreetError").textContent = "Street is required.";
+      hasError = true;
+    } else if (!addressPattern.test(payload.street)) {
+      document.getElementById("addStreetError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
+      hasError = true;
+    }
+
+    // --- City ---
+    if (!payload.city) {
+      document.getElementById("addCityError").textContent = "City is required.";
+      hasError = true;
+    } else if (!addressPattern.test(payload.city)) {
+      document.getElementById("addCityError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
+      hasError = true;
+    }
+
+    // --- State ---
+    if (!payload.state) {
+      document.getElementById("addStateError").textContent = "State is required.";
+      hasError = true;
+    } else if (!addressPattern.test(payload.state)) {
+      document.getElementById("addStateError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
+      hasError = true;
+    }
+
+    // --- Country ---
+    if (!payload.country) {
+      document.getElementById("addCountryError").textContent = "Country is required.";
+      hasError = true;
+    } else if (!addressPattern.test(payload.country)) {
+      document.getElementById("addCountryError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
+      hasError = true;
+    }
+
+    // --- Mobile ---
+    if (!payload.mobile) {
+      document.getElementById("addMobileError").textContent = "Mobile number is required.";
+      hasError = true;
+    } else if (!/^[0-9]{10}$/.test(payload.mobile)) {
+      document.getElementById("addMobileError").textContent = "Mobile number must be 10 digits.";
+      hasError = true;
+    }
+
+    // --- Pincode ---
+    if (!payload.pincode) {
+      document.getElementById("addPincodeError").textContent = "Pincode is required.";
+      hasError = true;
+    } else if (!/^\d{6}$/.test(payload.pincode)) {
+      document.getElementById("addPincodeError").textContent = "Pincode must be 6 digits.";
+      hasError = true;
+    }
+
+    // Stop if validation failed
+    if (hasError) return;
+
+    // ✅ Proceed with Axios request if no errors
+    const res = await axios.post('/users-address/create-new-address/<%- currentUser._id %>', payload);
+    if (res.data.success) {
+      appendAddressToDOM(res.data.address);
+      bootstrap.Modal.getInstance(document.getElementById("addAddressModal")).hide();
+      this.reset();
+      showToast(res.data.message || "Address added successfully", "success");
+    }
+  } catch (err) {
+    const errors = err.response?.data?.errors;
+    if (errors) {
+      // Loop backend errors and display
+      Object.entries(errors).forEach(([key, message]) => {
+        const errorElement = document.getElementById(`add${capitalize(key)}Error`);
+        if (errorElement) errorElement.textContent = message;
+      });
+    } else {
+      showToast(err.response?.data?.message || "Something went wrong", "danger");
+    }
+  }
+});
+
+    
+
+    function handleOpenEditModal(button){
+      const data = JSON.parse(button.getAttribute("data-address"))
+      openEditModal(data)
+  
+    }
+    // ✅ Edit Modal Prefill
+    function openEditModal(address){
+      console.log("Entered openEdit modal function")
+      const form = document.getElementById("editForm");
+      for(let key in address){
+        if(form[key]) form[key].value = address[key];
+      }
+      form.setAttribute("data-id",address._id);
+      new bootstrap.Modal(document.getElementById("editAddressModal")).show();
+    }
+
+    // ✅ Edit Address
+document.getElementById("editForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const addressId = document.getElementById("editForm").getAttribute("data-id");
+  // Clear previous errors
+  document.querySelectorAll("#editForm .text-danger").forEach(el => el.textContent = "");
+
+  try {
+    let payload = Object.fromEntries(new FormData(this).entries());
+
+    // ✅ Capitalize selected fields
+    ["name", "house", "street", "city", "state", "country"].forEach(field => {
+      if (payload[field]) {
+        payload[field] = capitalizeWords(payload[field]);
+      }
+    });
+
+    console.log(payload);
+    let hasError = false;
+    const addressPattern = /^(?!\s)(?!.*\s$)[A-Za-z0-9]+(?:\s[A-Za-z0-9]+)*$/;
+
+    // ✅ Validations
+
+    // --- Name ---
+    if (!payload.name) {
+      document.getElementById("editNameError").textContent = "Name cannot be empty.";
+      hasError = true;
+    } else if (!/^[A-Za-z.\s]{3,40}$/.test(payload.name)) {
+      document.getElementById("editNameError").textContent = "Only letters, spaces, and periods allowed (3–40 chars).";
+      hasError = true;
+    } else if (/^[.\s]/.test(payload.name) || /[.\s]$/.test(payload.name)) {
+      document.getElementById("editNameError").textContent = "Name cannot start or end with dot or space.";
+      hasError = true;
+    } else if (/\.\.|  /.test(payload.name)) {
+      document.getElementById("editNameError").textContent = "No consecutive dots or spaces allowed.";
+      hasError = true;
+    }
+
+    // --- House ---
+    if (!payload.house) {
+      document.getElementById("editHouseError").textContent = "House name is required.";
+      hasError = true;
+    } else if (!addressPattern.test(payload.house)) {
+      document.getElementById("editHouseError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
+      hasError = true;
+    }
+
+    // --- Street ---
+    if (!payload.street) {
+      document.getElementById("editStreetError").textContent = "Street is required.";
+      hasError = true;
+    } else if (!addressPattern.test(payload.street)) {
+      document.getElementById("editStreetError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
+      hasError = true;
+    }
+
+    // --- City ---
+    if (!payload.city) {
+      document.getElementById("editCityError").textContent = "City is required.";
+      hasError = true;
+    } else if (!addressPattern.test(payload.city)) {
+      document.getElementById("editCityError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
+      hasError = true;
+    }
+
+    // --- State ---
+    if (!payload.state) {
+      document.getElementById("editStateError").textContent = "State is required.";
+      hasError = true;
+    } else if (!addressPattern.test(payload.state)) {
+      document.getElementById("editStateError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
+      hasError = true;
+    }
+
+    // --- Country ---
+    if (!payload.country) {
+      document.getElementById("editCountryError").textContent = "Country is required.";
+      hasError = true;
+    } else if (!addressPattern.test(payload.country)) {
+      document.getElementById("editCountryError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
+      hasError = true;
+    }
+
+    // --- Mobile ---
+    if (!payload.mobile) {
+      document.getElementById("editMobileError").textContent = "Mobile number is required.";
+      hasError = true;
+    } else if (!/^[0-9]{10}$/.test(payload.mobile)) {
+      document.getElementById("editMobileError").textContent = "Mobile number must be 10 digits.";
+      hasError = true;
+    }
+
+    // --- Pincode ---
+    if (!payload.pincode) {
+      document.getElementById("editPincodeError").textContent = "Pincode is required.";
+      hasError = true;
+    } else if (!/^\d{6}$/.test(payload.pincode)) {
+      document.getElementById("editPincodeError").textContent = "Pincode must be 6 digits.";
+      hasError = true;
+    }
+
+    // ✅ Stop if validation failed
+    if (hasError) return;
+
+    // ✅ Send Axios PUT request for update
+    const res = await axios.put(`/users-address/edit-address/<%- currentUser._id %>`, {payload,addressId});
+
+    if (res.data.success) {
+      updateAddressInDOM(res.data.address); // ✅ Update DOM dynamically
+      bootstrap.Modal.getInstance(document.getElementById("editAddressModal")).hide();
+      this.reset();
+      showToast(res.data.message || "Address updated successfully", "success");
+    }
+  } catch (err) {
+    const errors = err.response?.data?.errors;
+    if (errors) {
+      Object.entries(errors).forEach(([key, message]) => {
+        const errorElement = document.getElementById(`edit${capitalize(key)}Error`);
+        if (errorElement) errorElement.textContent = message;
+      });
+    } else {
+      showToast(err.response?.data?.message || "Something went wrong", "danger");
+    }
+  }
+});
+
+
+    // ✅ Set Default
+async function setDefault(id) {
+  try {
+    const res = await axios.patch(`/users-address/set-default-address/<%- currentUser._id %>`, { selectedDefaultAddressId: id });
+
+    if (res.data.success) {
+      // ✅ Reset all cards first
+      document.querySelectorAll(".address-card").forEach(card => {
+        card.classList.remove("border", "border-danger");
+        const badge = card.querySelector(".badge.bg-success");
+        if (badge) badge.remove();
+
+        // If button does not exist, add it back
+        let btn = card.querySelector(".btn-outline-warning");
+        if (!btn) {
+          const cardId = card.id.replace("address-", "");
+          const btnHtml = `<button class="btn btn-outline-warning btn-sm" onclick="setDefault('${cardId}')">Set Default</button>`;
+          const btnContainer = card.querySelector(".d-grid");
+          if (btnContainer) btnContainer.insertAdjacentHTML("beforeend", btnHtml);
+        } else {
+          btn.style.display = "block"; // Show all buttons
+        }
+      });
+
+      // ✅ Now update badge and style for the new default
+      const selectedCard = document.getElementById(`address-${id}`);
+      if (selectedCard) {
+        selectedCard.classList.add("border", "border-danger");
+
+        // ✅ Add Default badge
+        updateDefaultBadge(id);
+
+        // ✅ Hide Set Default button for this card
+        const btn = selectedCard.querySelector(".btn-outline-warning");
+        if (btn) btn.style.display = "none";
+      }
+
+      showToast("Default address updated", "success");
+    } else {
+      showToast("Some Error Occurred", "danger");
+    }
+  } catch (err) {
+    showToast(err.response?.data?.message || "Some Error Occurred", "danger");
+  }
+}
+
+    // ✅ DOM Helpers
+    function appendAddressToDOM(address){
+      const html = `
+        <div class="address-card" id="address-${address._id}">
+          ${address.isDefault ? '<span class="badge bg-success">Default</span>' : ''}
+          <h6>${address.name}</h6>
+          <p class="mb-1">${address.house}, ${address.street}</p>
+          <p class="mb-1">${address.city}, ${address.state}</p>
+          <p class="mb-1">${address.country} - ${address.pincode}</p>
+          <small class="text-muted">Mobile: ${address.mobile}</small>
+          <div class="mt-2 d-grid gap-1">
+            <button class="btn btn-outline-success btn-sm" onclick="selectForDelivery('${address._id}')">Deliver Here</button>
+            <button class="btn btn-outline-primary btn-sm" onclick='openEditModal(${JSON.stringify(address)})'>Edit</button>
+            ${!address.isDefault ? `<button class="btn btn-outline-warning btn-sm" onclick="setDefault('${address._id}')">Set Default</button>` : ''}
+          </div>
+        </div>`;
+      document.getElementById("addressList").insertAdjacentHTML("beforeend", html);
+    }
+
+    function updateAddressInDOM(address){
+      const card = document.getElementById(`address-${address._id}`);
+      card.innerHTML = `
+        ${address.isDefault ? '<span class="badge bg-success">Default</span>' : ''}
+        <h6>${address.name}</h6>
+        <p class="mb-1">${address.house}, ${address.street}</p>
+        <p class="mb-1">${address.city}, ${address.state}</p>
+        <p class="mb-1">${address.country} - ${address.pincode}</p>
+        <small class="text-muted">Mobile: ${address.mobile}</small>
+        <div class="mt-2 d-grid gap-1">
+          <button class="btn btn-outline-success btn-sm" onclick="selectForDelivery('${address._id}')">Deliver Here</button>
+          <button class="btn btn-outline-primary btn-sm" onclick='openEditModal(${JSON.stringify(address)})'>Edit</button>
+          ${!address.isDefault ? `<button class="btn btn-outline-warning btn-sm" onclick="setDefault('${address._id}')">Set Default</button>` : ''}
+        </div>`;
+    }
+
+    function updateDefaultBadge(id){
+      document.querySelectorAll(".badge.bg-success").forEach(el=>el.remove());
+      const card = document.getElementById(`address-${id}`);
+      card.insertAdjacentHTML("afterbegin", '<span class="badge bg-success">Default</span>');
+    }
+
+  function capitalizeWords(str) {
+    return str
+      .toLowerCase()
+      .split(" ")
+      .filter(word => word.trim() !== "")
+      .map(word => word[0].toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+  const cartItems = '<%- JSON.stringify(cart) %>';
+async function placeOrder() {
+  try {
+    const cart = JSON.parse(cartItems);
+    const paymentMethod = document.querySelector("input[name=paymentMethod]:checked").value;
+
+    console.log("Selected Payment Method:", paymentMethod);
+
+    // Send request to backend
+    const res = await axios.post("/user-oder/oder", {
+      cart,
+      selectedAddressId,
+      paymentMethod
+    });
+
+    if (res.data.success) {
+      //  Show success toast
+      showToast(res.data.message, "success");
+
+      //  Redirect after short delay
+      setTimeout(() => {
+        window.location.href = res.data.redirect;
+      }, 2000);
+    }
+  } catch (err) {
+    console.error("Error placing order:", err);
+
+    //  Show error toast with backend message
+    const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
+    showToast(errorMessage, "danger");
+
+    //  If there are out-of-stock items, display them
+    if (err.response?.data?.outOfStockItems) {
+      console.warn("Out of stock items:", err.response.data.outOfStockItems);
+      err.response.data.outOfStockItems.forEach(item => {
+        showToast(`${item} is out of stock`, "warning");
+      });
+    }
+  }
+}
+
+    function showToast(message, type="primary"){
       const toast = document.createElement("div");
       toast.className = `toast align-items-center text-white bg-${type} border-0 show position-fixed bottom-0 end-0 m-3`;
-      toast.role = "alert";
-      toast.style.zIndex = "1055";
-      toast.style.minWidth = "300px";
-      toast.innerHTML = `
-        <div class="d-flex">
-          <div class="toast-body">${message}</div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>`;
+      toast.innerHTML = `<div class="d-flex"><div class="toast-body">${message}</div>
+      <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
       document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
+      setTimeout(()=>toast.remove(),3000);
     }
   </script>
 </body>

@@ -4,6 +4,7 @@ import { userSessionMiddleware } from "../config/session.js";
 import { ensureAuthenticated} from "../middleware/authMiddleware/userAuthMiddleware.js";
 import passport from "../config/passport.js";
 import currentUser from "../middleware/userIdentification/currentUser.js";
+import { validateUserIdMatch } from "../middleware/validationUserIdMatch/validationUserIdMatch.js";
 
 const userProfile = express.Router();
 
@@ -12,7 +13,7 @@ userProfile.use(passport.initialize());
 userProfile.use(passport.session());
 userProfile.use(currentUser);
 
-userProfile.get("/profile-front/:id",ensureAuthenticated,userProfileContoller.userProfileFront);
+userProfile.get("/profile-front/:id" ,ensureAuthenticated, validateUserIdMatch,userProfileContoller.userProfileFront);
 userProfile.put('/send-password-otp/:id',ensureAuthenticated,userProfileContoller.userPasswordOtp);
 userProfile.put("/verify-password-otp/:id",ensureAuthenticated,userProfileContoller.userPasswordVerification);
 userProfile.put('/send-email-verification/:id',ensureAuthenticated,userProfileContoller.userEmailVerification);

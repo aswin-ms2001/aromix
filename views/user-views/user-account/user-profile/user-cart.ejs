@@ -64,18 +64,33 @@
 
                       <!-- Product Details -->
                       <td>
-                        <h6 class="fw-bold mb-1">
-                          <a href="/users-products/products/<%= item.productId._id %>?variantId=<%= item.variant ? item.variant._id : '' %>"
-                            class="text-decoration-none text-dark">
-                            <%= item.productId.name %>
-                          </a>
-                        </h6>
-                        <small class="text-muted">Volume: <%= item.variant.volume %> ml</small><br>
-                        <small class="text-muted">Stock: <span id="stock-<%= item._id %>"><%= item.variant.stock %></span></small>
-                      </td>
+                    <div class="d-flex flex-column">
+                      <!-- Product Name -->
+                      <h6 class="fw-bold mb-1">
+                        <a href="/users-products/products/<%= item.productId._id %>?variantId=<%= item.variant ? item.variant._id : '' %>"
+                          class="text-decoration-none text-dark">
+                          <%= item.productId.name %>
+                        </a>
+                      </h6>
 
-                      <!-- Price -->
-                      <td class="text-danger fw-bold text-center">
+                      <!-- Volume and Stock -->
+                      <div class="text-muted" style="font-size: 0.9rem;">
+                        Volume: <%= item.variant.volume %> ml <br>
+                        Stock: <span id="stock-<%= item._id %>"><%= item.variant.stock %></span>
+                      </div>
+
+                      <!-- Warning if stock is less -->
+                      <% if (item.variant.stock < item.quantity) { %>
+                        <div class="mt-1">
+                          <small class="text-danger fw-semibold">
+                            * Less Available Stock Than Cart Quantity
+                          </small>
+                        </div>
+                      <% } %>
+                    </div>
+                  </td>
+
+                      <td class="text-center fw-bold text-danger">
                         ₹ <%= item.variant.price %>
                       </td>
 

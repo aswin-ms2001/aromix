@@ -11,6 +11,7 @@ export const userCartFront = async (req,res)=>{
     try{
         const userId = req.user._id;
         const {cartItems,subtotal} = await cartService.getUserCartFunction(userId);
+        console.log(cartItems,subtotal);
         return res.render("user-views/user-account/user-profile/user-cart.ejs",{
           cart:cartItems,
           subtotal,

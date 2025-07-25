@@ -5,10 +5,7 @@ export const validateUserIdMatch = (req, res, next) => {
     next();
   }else{
       if (userIdFromParams !== userIdFromSession) {
-          return res.status(409).json({
-              success: false,
-              message: "You are not allowed to perform this action"
-          });
+          return res.render("error.ejs");
       } else {
           next();
       };

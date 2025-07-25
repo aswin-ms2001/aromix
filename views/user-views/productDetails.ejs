@@ -87,9 +87,9 @@
       </div>
 
       <div class="input-group w-50 mb-4">
-        <button class="btn btn-outline-secondary">-</button>
+        <!-- <button class="btn btn-outline-secondary">-</button>
         <input type="text" class="form-control text-center" value="1">
-        <button class="btn btn-outline-secondary">+</button>
+        <button class="btn btn-outline-secondary">+</button> -->
       </div>
 
       <div class="border p-3 rounded bg-light">
@@ -268,8 +268,8 @@ wishlistBtn.addEventListener("click", async () => {
 
   document.getElementById("add-to-cart-btn").addEventListener("click", async () => {
     const variant = variants[currentIndex];
-    const quantity = parseInt(document.querySelector(".form-control.text-center").value);
-    console.log("Add to Cart:", variant._id, "Qty:", quantity);
+    // const quantity = parseInt(document.querySelector(".form-control.text-center").value);
+    // console.log("Add to Cart:", variant._id, "Qty:", quantity);
     try{
       console.log(product._id,variant._id)
     const response = await axios.post(`/users-cart/user-add-cart/${product._id}/${variant._id}`);

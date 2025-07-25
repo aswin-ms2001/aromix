@@ -14,6 +14,9 @@ userOder.use(passport.session());
 userOder.use(currentUser);
 userOder.use(ensureAuthenticated);
 
-userOder.get("/user-checkout",userOderController.userCheckOut)
+userOder.get("/user-checkout",userOderController.userCheckOut);
+userOder.post("/oder",userOderController.userOrder);
+userOder.get("/oder-status/:id",userOderController.userOrderSuccessPage);
+userOder.get("/order-front",userOderController.orderFrontPage)
 
 export default userOder ;

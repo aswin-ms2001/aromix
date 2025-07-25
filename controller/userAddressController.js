@@ -87,7 +87,7 @@ export const createNewAddress = async (req, res) => {
     console.log("before save adress")
     await newAddress.save();
     console.log("after save adress")
-    return res.status(201).json({ success: true, message: "Address created successfully." });
+    return res.status(201).json({ success: true, message: "Address created successfully." , address:newAddress});
 
   } catch (err) {
     console.error("Create Address Error:", err);
@@ -161,7 +161,7 @@ export const editAddress = async (req, res) => {
 
     await address.save();
 
-    return res.status(200).json({ success: true, message: "Address updated successfully" });
+    return res.status(200).json({ success: true, message: "Address updated successfully",address });
 
   } catch (err) {
     console.log("Edit Address Error:", err);
