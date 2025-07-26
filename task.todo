@@ -1,11 +1,11 @@
 ✔ log out @done (6/4/2025, 6:58:07 PM)
 ✔ user showing and blocking @done (6/3/2025, 7:37:10 PM)
-☐ user search
+✔ user search @done (7/26/2025, 4:30:11 AM)
 ✔ forgot password @done (6/19/2025, 8:58:52 PM)
-☐ validation of forms
-☐ showing validation error message
+✔ validation of forms @done (7/26/2025, 4:30:21 AM)
+✔ showing validation error message @done (7/26/2025, 4:30:25 AM)
 ✔ edit category and also products @done (6/10/2025, 8:38:29 PM)
-☐ user non user model for otp verification deletion , updation in user model
+✔ user non user model for otp verification deletion , updation in user model @done (7/26/2025, 4:30:43 AM)
 ✔ filter @done (6/5/2025, 12:55:13 PM)
 ☐ oder- user admin
 user pofile: 
@@ -13,9 +13,9 @@ user pofile:
     ✔ adress @done (7/11/2025, 6:24:50 PM)
     ✔ add edit delete, default @done (7/11/2025, 6:24:55 PM)
 
-☐ cart
+✔ cart @done (7/26/2025, 4:30:00 AM)
 ✔ whishlist @done (7/18/2025, 8:20:38 PM)
-☐ checkout
+✔ checkout @done (7/26/2025, 4:29:57 AM)
 oder:
     ☐ user
     admin:

@@ -17,6 +17,10 @@ userOder.use(ensureAuthenticated);
 userOder.get("/user-checkout",userOderController.userCheckOut);
 userOder.post("/oder",userOderController.userOrder);
 userOder.get("/oder-status/:id",userOderController.userOrderSuccessPage);
-userOder.get("/order-front",userOderController.orderFrontPage)
+userOder.get("/order-front",userOderController.orderFrontPage);
+userOder.get("/order-details/:id",userOderController.getOrderDetails);
+userOder.post("/cancel-order/:id",userOderController.cancelOrder);
+userOder.post("/request-return/:id",userOderController.requestReturn);
+userOder.get("/download-invoice/:id",userOderController.downloadInvoice);
 
 export default userOder ;
