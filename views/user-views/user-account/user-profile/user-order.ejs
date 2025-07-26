@@ -59,7 +59,7 @@
               <i class="bi bi-box-seam fs-1 text-muted mb-3"></i>
               <h5 class="text-muted">No orders found</h5>
               <p class="text-muted">You haven't placed any orders yet.</p>
-              <a href="/users-products/products" class="btn btn-danger">Start Shopping</a>
+              <a href="/users-products/discover" class="btn btn-danger">Start Shopping</a>
             </div>
           <% } else { %>
             
@@ -106,12 +106,15 @@
                         <% order.items.slice(0, 2).forEach(item => { %>
                           <div class="col-md-6 mb-2">
                             <div class="d-flex align-items-center">
-                              <img src="<%= item.productId.images && item.productId.images.length > 0 ? item.productId.images[0] : '/images/no-image.png' %>" 
+                              <img src="<%= item.variant && item.variant.images && item.variant.images.length > 0 ? item.variant.images[0] : '/images/no-image.png' %>" 
                                    alt="<%= item.productId.name %>" 
                                    class="rounded me-2" style="width: 50px; height: 50px; object-fit: cover;">
                               <div>
                                 <small class="fw-bold d-block"><%= item.productId.name %></small>
-                                <small class="text-muted">Qty: <%= item.quantity %></small>
+                                <small class="text-muted">Qty: <%= item.quantity %> | <%= item.variant ? item.variant.volume + 'ml' : 'N/A' %></small>
+                                <% if (item.cancelStatus === 'Cancelled') { %>
+                                  <small class="text-danger d-block">Cancelled</small>
+                                <% } %>
                               </div>
                             </div>
                           </div>
@@ -227,6 +230,27 @@
     </div>
   </div>
 
+  <!-- Cancel Order Item Modal -->
+  <div class="modal fade" id="cancelOrderItemModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Cancel Order Item</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted mb-3">Please provide a reason for cancelling this item:</p>
+          <textarea id="cancelItemReason" class="form-control" rows="3" placeholder="Enter cancellation reason..."></textarea>
+          <div id="cancelItemError" class="text-danger mt-2" style="min-height: 1em;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-danger" id="confirmCancelItemBtn">Cancel Item</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Return Request Modal -->
   <div class="modal fade" id="returnRequestModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -260,6 +284,7 @@
   
   <script>
     let currentOrderId = null;
+    let currentVariantId = null;
 
     function showToast(message, type = "primary") {
       const toast = document.createElement("div");
@@ -292,6 +317,13 @@
     function cancelOrder(orderId) {
       currentOrderId = orderId;
       const modal = new bootstrap.Modal(document.getElementById('cancelOrderModal'));
+      modal.show();
+    }
+
+    function cancelOrderItem(orderId, variantId) {
+      currentOrderId = orderId;
+      currentVariantId = variantId;
+      const modal = new bootstrap.Modal(document.getElementById('cancelOrderItemModal'));
       modal.show();
     }
 
@@ -346,6 +378,37 @@
         }
       } catch (err) {
         showToast(err.response?.data?.message || "Error cancelling order", "danger");
+      }
+    });
+
+    // Cancel Order Item Confirmation
+    document.getElementById('confirmCancelItemBtn').addEventListener('click', async () => {
+      const reason = document.getElementById('cancelItemReason').value.trim();
+      const errorDiv = document.getElementById('cancelItemError');
+      
+      if (!reason) {
+        errorDiv.textContent = "Please provide a cancellation reason";
+        return;
+      }
+      
+      errorDiv.textContent = "";
+      
+      try {
+        const response = await axios.post(`/user-oder/cancel-order-item/${currentOrderId}/${currentVariantId}`, { reason });
+        if (response.data.success) {
+          showToast(response.data.message, "success");
+          const modal = bootstrap.Modal.getInstance(document.getElementById('cancelOrderItemModal'));
+          modal.hide();
+          document.getElementById('cancelItemReason').value = "";
+          
+          if (response.data.orderCancelled) {
+            showToast("All items cancelled. Order has been cancelled.", "warning");
+          }
+          
+          setTimeout(() => location.reload(), 1500);
+        }
+      } catch (err) {
+        showToast(err.response?.data?.message || "Error cancelling item", "danger");
       }
     });
 

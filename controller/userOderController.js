@@ -10,7 +10,6 @@ import * as cartService from "./services/userServices/cartServices.js";
 import currentUser from "../middleware/userIdentification/currentUser.js";
 import PDFDocument from "pdfkit";
 
-
 export const userCheckOut = async (req,res)=>{
     try {
         const userId = req.user._id;
@@ -148,7 +147,6 @@ export const userOrder = async (req, res) => {
   }
 };
 
-
 export const userOrderSuccessPage = async (req,res)=>{
     try{
         const id = req.params.id;
@@ -164,7 +162,6 @@ export const userOrderSuccessPage = async (req,res)=>{
         return res.render("error.ejs")
     }
 }
-
 
 export const orderFrontPage = async (req,res)=>{
     try{
@@ -186,11 +183,23 @@ export const orderFrontPage = async (req,res)=>{
 
         // Get orders with pagination and populate product details
         const orders = await Order.find(searchQuery)
-            .populate('items.productId', 'name images')
+            .populate('items.productId', 'name images variants')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
             .lean();
+
+        // Add variant details to each item
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                if (item.productId && item.productId.variants) {
+                    const variant = item.productId.variants.find(v => v._id.toString() === item.variantId.toString());
+                    if (variant) {
+                        item.variant = variant;
+                    }
+                }
+            });
+        });
 
         return res.render("user-views/user-account/user-profile/user-order.ejs",{
             orders,
@@ -218,12 +227,22 @@ export const getOrderDetails = async (req, res) => {
         const userId = req.user._id;
 
         const order = await Order.findOne({ _id: orderId, userId })
-            .populate('items.productId', 'name images description')
+            .populate('items.productId', 'name images description variants')
             .lean();
 
         if (!order) {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
+
+        // Add variant details to each item
+        order.items.forEach(item => {
+            if (item.productId && item.productId.variants) {
+                const variant = item.productId.variants.find(v => v._id.toString() === item.variantId.toString());
+                if (variant) {
+                    item.variant = variant;
+                }
+            }
+        });
 
         // Generate HTML for order details modal
         const html = `
@@ -274,9 +293,12 @@ export const getOrderDetails = async (req, res) => {
                             <thead class="table-light">
                                 <tr>
                                     <th>Product</th>
+                                    <th class="text-center">Volume</th>
                                     <th class="text-center">Quantity</th>
                                     <th class="text-end">Price</th>
                                     <th class="text-end">Total</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -284,7 +306,7 @@ export const getOrderDetails = async (req, res) => {
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <img src="${item.productId.images && item.productId.images.length > 0 ? item.productId.images[0] : '/images/no-image.png'}" 
+                                                <img src="${item.variant && item.variant.images && item.variant.images.length > 0 ? item.variant.images[0] : '/images/no-image.png'}" 
                                                      alt="${item.productId.name}" 
                                                      class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
                                                 <div>
@@ -293,9 +315,29 @@ export const getOrderDetails = async (req, res) => {
                                                 </div>
                                             </div>
                                         </td>
+                                        <td class="text-center">${item.variant ? item.variant.volume + 'ml' : 'N/A'}</td>
                                         <td class="text-center">${item.quantity}</td>
                                         <td class="text-end">₹${item.finalPrice}</td>
                                         <td class="text-end">₹${item.total}</td>
+                                        <td class="text-center">
+                                            ${item.cancelStatus === 'Cancelled' ? 
+                                                '<span class="badge bg-danger">Cancelled</span>' :
+                                                item.returnStatus === 'Requested' ? 
+                                                '<span class="badge bg-warning">Return Requested</span>' :
+                                                item.returnStatus === 'Approved' ? 
+                                                '<span class="badge bg-info">Return Approved</span>' :
+                                                item.returnStatus === 'Returned' ? 
+                                                '<span class="badge bg-success">Returned</span>' :
+                                                '<span class="badge bg-secondary">Active</span>'
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            ${item.cancelStatus !== 'Cancelled' && order.orderStatus === 'Pending' ? 
+                                                `<button class="btn btn-outline-danger btn-sm" onclick="cancelOrderItem('${order._id}', '${item.variantId}')">
+                                                    <i class="bi bi-x-circle"></i> Cancel
+                                                </button>` : ''
+                                            }
+                                        </td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -331,7 +373,7 @@ export const getOrderDetails = async (req, res) => {
                         <h6 class="fw-bold mb-3">Return Status</h6>
                         ${order.items.map(item => item.returnStatus !== 'Not Requested' ? `
                             <div class="alert alert-info mb-2">
-                                <strong>${item.productId.name}:</strong> ${item.returnStatus}
+                                <strong>${item.productId.name} (${item.variant ? item.variant.volume + 'ml' : 'N/A'}):</strong> ${item.returnStatus}
                                 ${item.returnReason ? `<br><small class="text-muted">Reason: ${item.returnReason}</small>` : ''}
                             </div>
                         ` : '').join('')}
@@ -389,6 +431,83 @@ export const cancelOrder = async (req, res) => {
 
     } catch (err) {
         console.error("Error in cancelOrder:", err);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+};
+
+export const cancelOrderItem = async (req, res) => {
+    try {
+        const orderId = req.params.orderId;
+        const variantId = req.params.variantId;
+        const userId = req.user._id;
+        const { reason } = req.body;
+
+        if (!reason || reason.trim().length === 0) {
+            return res.status(400).json({ success: false, message: "Cancellation reason is required" });
+        }
+
+        const order = await Order.findOne({ _id: orderId, userId });
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        if (order.orderStatus !== 'Pending') {
+            return res.status(400).json({ success: false, message: "Only pending orders can have items cancelled" });
+        }
+
+        // Find the specific item to cancel
+        const itemToCancel = order.items.find(item => item.variantId.toString() === variantId);
+        
+        if (!itemToCancel) {
+            return res.status(404).json({ success: false, message: "Order item not found" });
+        }
+
+        if (itemToCancel.cancelStatus === 'Cancelled') {
+            return res.status(400).json({ success: false, message: "Item is already cancelled" });
+        }
+
+        // Cancel the specific item
+        itemToCancel.cancelStatus = 'Cancelled';
+        itemToCancel.cancelReason = reason;
+
+        // Recalculate order totals
+        let newSubtotal = 0;
+        let activeItemsCount = 0;
+        
+        order.items.forEach(item => {
+            if (item.cancelStatus !== 'Cancelled') {
+                newSubtotal += item.total;
+                activeItemsCount++;
+            }
+        });
+
+        // Update order totals
+        order.subtotal = newSubtotal;
+        order.shippingCharge = newSubtotal > 1000 ? 0 : 50;
+        order.grandTotal = newSubtotal + order.shippingCharge - order.discount;
+
+        // If all items are cancelled, cancel the entire order
+        if (activeItemsCount === 0) {
+            order.orderStatus = 'Cancelled';
+        }
+
+        await order.save();
+
+        // Restore stock for the cancelled item
+        await Product.updateOne(
+            { _id: itemToCancel.productId, "variants._id": itemToCancel.variantId },
+            { $inc: { "variants.$.stock": itemToCancel.quantity } }
+        );
+
+        res.json({ 
+            success: true, 
+            message: "Item cancelled successfully",
+            orderCancelled: activeItemsCount === 0
+        });
+
+    } catch (err) {
+        console.error("Error in cancelOrderItem:", err);
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
