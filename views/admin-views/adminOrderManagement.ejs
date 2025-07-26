@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Order Management | Aromix</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/css/admin-css/adminProducts.css">
+  <link rel="stylesheet" href="/css/admin-css/sidebar.css">
+</head>
+<body>
+
+<div class="d-flex">
+  <%- include('./partials/sidebar') %>
+
+  <div class="flex-grow-1 p-4" style="background-color: #1b1b1b; min-height: 100vh;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="text-white">Order Management</h2>
+      <div class="d-flex gap-2">
+        <!-- Search Form -->
+        <form class="d-flex" method="GET" action="/admin-order/admin-order-details">
+          <input
+            name="search"
+            class="form-control me-2"
+            type="text"
+            placeholder="Search by Order ID, Customer Name or Phone"
+            style="width: 300px;"
+            value="<%= search || '' %>"
+          />
+          <button class="btn btn-outline-light" type="submit">
+            <i class="bi bi-search"></i>
+          </button>
+        </form>
+        
+        <!-- Clear Search -->
+        <% if (search || statusFilter) { %>
+          <a href="/admin-order/admin-order-details" class="btn btn-outline-danger">
+            <i class="bi bi-x-circle"></i> Clear
+          </a>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card p-3 mb-4" style="background-color: #2e0e46; border: none; border-radius: 20px;">
+      <div class="row">
+        <div class="col-md-3">
+          <label class="text-white mb-2">Status Filter</label>
+          <select class="form-select" id="statusFilter" onchange="applyFilters()">
+            <option value="">All Statuses</option>
+            <% statuses.forEach(status => { %>
+              <option value="<%= status %>" <%= statusFilter === status ? 'selected' : '' %>><%= status %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="text-white mb-2">Sort By</label>
+          <select class="form-select" id="sortBy" onchange="applyFilters()">
+            <option value="createdAt" <%= sortBy === 'createdAt' ? 'selected' : '' %>>Order Date</option>
+            <option value="orderId" <%= sortBy === 'orderId' ? 'selected' : '' %>>Order ID</option>
+            <option value="grandTotal" <%= sortBy === 'grandTotal' ? 'selected' : '' %>>Total Amount</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="text-white mb-2">Sort Order</label>
+          <select class="form-select" id="sortOrder" onchange="applyFilters()">
+            <option value="desc" <%= sortOrder === 'desc' ? 'selected' : '' %>>Newest First</option>
+            <option value="asc" <%= sortOrder === 'asc' ? 'selected' : '' %>>Oldest First</option>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <div class="text-white">
+            Total Orders: <%= totalOrders %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-3" style="background-color: #2e0e46; border: none; border-radius: 20px;">
+      <div class="table-responsive">
+        <table class="table text-white mb-0">
+          <thead>
+            <tr style="background-color: #aa5de8;">
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Payment</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% orders.forEach(order => { %>
+              <tr data-id="<%= order._id %>">
+                <td><strong><%= order.orderId %></strong></td>
+                <td>
+                  <div><%= order.userId.name %></div>
+                  <small class="text-muted"><%= order.userId.email %></small>
+                </td>
+                <td><%= new Date(order.createdAt).toLocaleDateString('en-IN') %></td>
+                <td>₹<%= order.grandTotal %></td>
+                <td>
+                  <span class="badge bg-${
+                    order.orderStatus === 'Delivered' ? 'success' :
+                    order.orderStatus === 'Cancelled' ? 'danger' :
+                    order.orderStatus === 'Shipped' ? 'info' :
+                    order.orderStatus === 'Out for Delivery' ? 'warning' :
+                    order.orderStatus === 'Confirmed' ? 'primary' :
+                    'secondary'
+                  }"><%= order.orderStatus %></span>
+                </td>
+                <td>
+                  <span class="badge bg-${
+                    order.paymentStatus === 'Paid' ? 'success' :
+                    order.paymentStatus === 'Failed' ? 'danger' :
+                    'warning'
+                  }"><%= order.paymentStatus %></span>
+                </td>
+                <td>
+                  <button class="btn btn-sm" style="background-color: #d58dfb;" onclick="viewOrderDetails('<%= order._id %>')">
+                    <i class="bi bi-eye"></i> View
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="d-flex justify-content-between mt-4 text-white">
+        <div>
+          Page <%= currentPage %> of <%= totalPages %> (<%= totalOrders %> orders)
+        </div>
+        <div>
+          <% if (hasPrevPage) { %>
+            <a href="?page=<%= prevPage %><%= search ? '&search=' + search : '' %><%= statusFilter ? '&status=' + statusFilter : '' %><%= sortBy ? '&sortBy=' + sortBy : '' %><%= sortOrder ? '&sortOrder=' + sortOrder : '' %>" class="btn btn-outline-light btn-sm">Previous</a>
+          <% } %>
+
+          <% if (hasNextPage) { %>
+            <a href="?page=<%= nextPage %><%= search ? '&search=' + search : '' %><%= statusFilter ? '&status=' + statusFilter : '' %><%= sortBy ? '&sortBy=' + sortBy : '' %><%= sortOrder ? '&sortOrder=' + sortOrder : '' %>" class="btn btn-outline-light btn-sm">Next</a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Order Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="orderDetailsContent">
+        <!-- Content will be loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Return Verification Modal -->
+<div class="modal fade" id="returnVerificationModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Verify Return Request</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">Do you want to approve or reject this return request?</p>
+        <div class="alert alert-info">
+          <strong>Refund Amount:</strong> ₹<span id="refundAmount">0</span>
+        </div>
+        <div id="returnVerificationError" class="text-danger mt-2" style="min-height: 1em;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger" onclick="processReturn('reject')">Reject Return</button>
+        <button type="button" class="btn btn-success" onclick="processReturn('approve')">Approve & Refund</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+  let currentOrderId = null;
+  let currentVariantId = null;
+  let currentRefundAmount = 0;
+
+  function showToast(message, type = "primary") {
+    const toast = document.createElement("div");
+    toast.className = `toast align-items-center text-white bg-${type} border-0 show position-fixed top-50 start-50 translate-middle`;
+    toast.role = "alert";
+    toast.style.zIndex = "1055";
+    toast.style.minWidth = "300px";
+    toast.innerHTML = `
+      <div class="d-flex">
+        <div class="toast-body">${message}</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  function applyFilters() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    const sortBy = document.getElementById('sortBy').value;
+    const sortOrder = document.getElementById('sortOrder').value;
+    const search = '<%= search %>';
+
+    let url = '/admin-order/admin-order-details?';
+    const params = new URLSearchParams();
+
+    if (search) params.append('search', search);
+    if (statusFilter) params.append('status', statusFilter);
+    if (sortBy) params.append('sortBy', sortBy);
+    if (sortOrder) params.append('sortOrder', sortOrder);
+
+    window.location.href = url + params.toString();
+  }
+
+  async function viewOrderDetails(orderId) {
+    try {
+      const response = await axios.get(`/admin-order/order-details/${orderId}`);
+      if (response.data.success) {
+        document.getElementById('orderDetailsContent').innerHTML = response.data.html;
+        const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+        modal.show();
+      }
+    } catch (err) {
+      showToast(err.response?.data?.message || "Error loading order details", "danger");
+    }
+  }
+
+  async function updateOrderStatus(orderId, newStatus) {
+    try {
+      const response = await axios.put(`/admin-order/update-order-status/${orderId}`, {
+        status: newStatus
+      });
+      
+      if (response.data.success) {
+        showToast("Order status updated successfully", "success");
+        setTimeout(() => location.reload(), 1500);
+      }
+    } catch (err) {
+      showToast(err.response?.data?.message || "Error updating order status", "danger");
+    }
+  }
+
+  function verifyReturn(orderId, variantId) {
+    currentOrderId = orderId;
+    currentVariantId = variantId;
+    
+    // Get refund amount from the order details
+    const orderRow = document.querySelector(`tr[data-id="${orderId}"]`);
+    if (orderRow) {
+      const amountCell = orderRow.querySelector('td:nth-child(4)');
+      const amount = amountCell.textContent.replace('₹', '');
+      currentRefundAmount = parseFloat(amount);
+      document.getElementById('refundAmount').textContent = currentRefundAmount;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('returnVerificationModal'));
+    modal.show();
+  }
+
+  async function processReturn(action) {
+    try {
+      const response = await axios.post(`/admin-order/verify-return/${currentOrderId}/${currentVariantId}`, {
+        action: action,
+        refundAmount: currentRefundAmount
+      });
+      
+      if (response.data.success) {
+        showToast(response.data.message, "success");
+        const modal = bootstrap.Modal.getInstance(document.getElementById('returnVerificationModal'));
+        modal.hide();
+        setTimeout(() => location.reload(), 1500);
+      }
+    } catch (err) {
+      showToast(err.response?.data?.message || "Error processing return", "danger");
+    }
+  }
+</script>
+
+</body>
+</html> 

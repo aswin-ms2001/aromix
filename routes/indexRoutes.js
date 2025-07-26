@@ -4,6 +4,7 @@ import productRoutes from './adminProductRoutes.js';
 import adminUserRouter from './adminUserRoutes.js';
 import { landingPageView } from "../controller/userController.js";
 // import orderRoutes from './orderRoutes.js';
+import adminOrderRoutes from './adminOrderRoutes.js';
 import adminRoutes from './adminRoutes.js';
 import adminCategoryRoutes from "./adminCategoryRoutes.js";
 import userProducts from './userProducts.js';
@@ -26,6 +27,7 @@ router.use('/admin', adminRoutes);
 router.use('/admin-users', adminUserRouter);
 router.use('/products', productRoutes);
 router.use("/adminCategory",adminCategoryRoutes);
+router.use("/admin-order",adminOrderRoutes)
 router.use('/users', userRoutes);
 router.use("/users-products", userProducts);
 router.use("/users-profile",userProfile);
