@@ -169,6 +169,7 @@
   const wishlistVariantIds = JSON.parse(document.getElementById('wishlist-data').textContent);
   const variantId = JSON.parse(document.getElementById('variantId-data').textContent);
   const variants = product.variants;
+  console.log(product)
   console.log(variants)
   console.log(variantId)
   let currentIndex = 0;
@@ -288,13 +289,13 @@ wishlistBtn.addEventListener("click", async () => {
     }
   });
 
-  document.getElementById("buy-now-btn").addEventListener("click", async() => {
-    const variant = variants[currentIndex];
-    const quantity = parseInt(document.querySelector(".form-control.text-center").value);
-    console.log("Buy Now:", variant._id, "Qty:", quantity);
+  // document.getElementById("buy-now-btn").addEventListener("click", async() => {
+  //   const variant = variants[currentIndex];
+  //   const quantity = parseInt(document.querySelector(".form-control.text-center").value);
+  //   console.log("Buy Now:", variant._id, "Qty:", quantity);
 
     
-  });
+  // });
 
 function showToast(message, type = "primary", duration = 3000) {
   // ✅ Find or create toast container

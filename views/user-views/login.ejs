@@ -19,6 +19,13 @@
         <h2 class="mb-4 fw-bold">Sign In</h2>
         <p>Don't have an account yet? <a href="/users/signup">Sign Up</a></p>
 
+        <div class="text-danger" style="min-height: 24px;">
+          <% if (errorMessage) { %>
+            <%- errorMessage %>
+          <% } %>
+        </div>
+
+
         <!-- Normal login form -->
         <form action="/users/login" method="POST">
           <div class="mb-3">

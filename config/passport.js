@@ -13,22 +13,22 @@ passport.use(new LocalStrategy(
         const user = await User.findOne({ email });
   
         if (!user) {
-          return done(null, false);
+          return done(null, false, { message: "User not found" });
         }
   
         if (user.authType !== 'local') {
-          return done(null, false);
+          return done(null, false, { message: "This email is registered with Google login" });
         }
   
         if (!user.isVerified) {
-          return done(null, false);
+          return done(null, false, { message: "Please verify your email" });
         }
 
-        if (user.blocked) return done(null, false);
+        if (user.blocked) return done(null, false, { message: "Your account is blocked" });
   
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
-          return done(null, false);
+          return done(null, false, { message: "Incorrect password" });
         }
   
         return done(null, user);

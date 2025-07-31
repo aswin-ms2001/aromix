@@ -1,0 +1,1 @@
+// import flash from "connect-flash"

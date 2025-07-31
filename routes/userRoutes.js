@@ -5,12 +5,14 @@ import { ensureAuthenticated} from "../middleware/authMiddleware/userAuthMiddlew
 import { userLoginSession } from "../middleware/loginSessionHandler/loginSessionHandlerUser.js";
 import passport from "../config/passport.js"
 import currentUser from "../middleware/userIdentification/currentUser.js";
+import flash from "connect-flash"
 
 const userRoutes = express.Router();
 
 userRoutes.use(userSessionMiddleware);
 userRoutes.use(passport.initialize());
 userRoutes.use(passport.session());
+userRoutes.use(flash());
 userRoutes.use(currentUser);
 
 userRoutes.get("/login",userLoginSession,userController.userloginPage);

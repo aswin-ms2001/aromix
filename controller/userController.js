@@ -6,13 +6,16 @@ import { sendOtpEmail, sendOtpPassword } from "../utils/sendOtp.js";
 import Product from "../model/product.js";
 
 export const userloginPage = (req,res)=>{
-    res.render("user-views/login.ejs")
+    const errorMessage = req.flash("error")
+    res.render("user-views/login.ejs",{
+      errorMessage
+    })
 }
 
 export const postLogin = passport.authenticate('local', {
     successRedirect: '/',
     failureRedirect: '/users/login',
-    failureFlash: false,
+    failureFlash: true,
 });
 
 export const logout = (req, res) => {
