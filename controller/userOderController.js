@@ -86,7 +86,7 @@ export const userOrder = async (req, res) => {
       variantId: item.variant._id,
       quantity: item.quantity,
       basePrice: item.variant.price,
-      discountAmount: 0, // If any discounts, calculate here
+      discountAmount: 0, // If any discounts
       finalPrice: item.variant.price, // No discount applied
       total: item.variant.price * item.quantity,
       appliedOffer: null
@@ -234,6 +234,7 @@ export const getOrderDetails = async (req, res) => {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
 
+        console.log(order.items[0].productId.variants);
         // Add variant details to each item
         order.items.forEach(item => {
             if (item.productId && item.productId.variants) {
@@ -335,6 +336,11 @@ export const getOrderDetails = async (req, res) => {
                                             ${item.cancelStatus !== 'Cancelled' && order.orderStatus === 'Pending' ? 
                                                 `<button class="btn btn-outline-danger btn-sm" onclick="cancelOrderItem('${order._id}', '${item.variantId}')">
                                                     <i class="bi bi-x-circle"></i> Cancel
+                                                </button>` : ''
+                                            }
+                                            ${item.cancelStatus !== 'Cancelled' && order.orderStatus === 'Delivered' && item.returnStatus === 'Not Requested' ? 
+                                                `<button class="btn btn-outline-warning btn-sm" onclick="requestReturn('${order._id}', '${item.variantId}')">
+                                                    <i class="bi bi-arrow-return-left"></i> Request Return
                                                 </button>` : ''
                                             }
                                         </td>
@@ -514,7 +520,8 @@ export const cancelOrderItem = async (req, res) => {
 
 export const requestReturn = async (req, res) => {
     try {
-        const orderId = req.params.id;
+        const orderId = req.params.orderId;
+        const variantId = req.params.variantId;
         const userId = req.user._id;
         const { reason } = req.body;
 
@@ -532,18 +539,25 @@ export const requestReturn = async (req, res) => {
             return res.status(400).json({ success: false, message: "Only delivered orders can be returned" });
         }
 
-        // Check if return is already requested
-        const hasReturnRequest = order.items.some(item => item.returnStatus !== 'Not Requested');
-        if (hasReturnRequest) {
-            return res.status(400).json({ success: false, message: "Return request already exists for this order" });
+        // Find the specific item to return
+        const itemToReturn = order.items.find(item => item.variantId.toString() === variantId);
+        
+        if (!itemToReturn) {
+            return res.status(404).json({ success: false, message: "Order item not found" });
         }
 
-        // Update all items with return request
-        order.items.forEach(item => {
-            item.returnStatus = 'Requested';
-            item.returnReason = reason;
-            item.returnRequestDate = new Date();
-        });
+        if (itemToReturn.cancelStatus === 'Cancelled') {
+            return res.status(400).json({ success: false, message: "Cancelled items cannot be returned" });
+        }
+
+        if (itemToReturn.returnStatus !== 'Not Requested') {
+            return res.status(400).json({ success: false, message: "Return request already exists for this item" });
+        }
+
+        // Update only the specific item with return request
+        itemToReturn.returnStatus = 'Requested';
+        itemToReturn.returnReason = reason;
+        itemToReturn.returnRequestDate = new Date();
 
         await order.save();
 

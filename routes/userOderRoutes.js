@@ -21,7 +21,7 @@ userOder.get("/order-front",userOderController.orderFrontPage);
 userOder.get("/order-details/:id",userOderController.getOrderDetails);
 userOder.post("/cancel-order/:id",userOderController.cancelOrder);
 userOder.post("/cancel-order-item/:orderId/:variantId",userOderController.cancelOrderItem);
-userOder.post("/request-return/:id",userOderController.requestReturn);
+userOder.post("/request-return/:orderId/:variantId",userOderController.requestReturn);
 userOder.get("/download-invoice/:id",userOderController.downloadInvoice);
 
 export default userOder ;

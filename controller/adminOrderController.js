@@ -198,7 +198,7 @@ export const getOrderDetails = async (req, res) => {
                             </thead>
                             <tbody>
                                 ${order.items.map(item => `
-                                    <tr>
+                                    <tr data-variant-id="${item.variantId}">
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <img src="${item.variant && item.variant.images && item.variant.images.length > 0 ? item.variant.images[0] : '/images/no-image.png'}" 
@@ -321,6 +321,10 @@ export const updateOrderStatus = async (req, res) => {
             return res.status(400).json({ success: false, message: "Invalid status progression" });
         }
 
+        if(newStatus!== "Cancelled" && order.orderStatus !== "Pending" && newIndex-currentIndex >1 ){
+            return res.status(400).json({ success: false, message: "Progression Should be Followed Step by step" });
+        }
+
         // Update order status
         order.orderStatus = newStatus;
 
@@ -343,6 +347,7 @@ export const verifyReturn = async (req, res) => {
     try {
         const orderId = req.params.orderId;
         const variantId = req.params.variantId;
+        console.log(variantId);
         const { action, refundAmount } = req.body; // action: 'approve' or 'reject'
 
         const order = await Order.findById(orderId);
@@ -368,24 +373,24 @@ export const verifyReturn = async (req, res) => {
             // Approve return
             itemToReturn.returnStatus = "Approved";
             
-            // Process refund to wallet
+            // Process refund to wallet - only the specific item's total
             let wallet = await Wallet.findOne({ userId: order.userId });
             if (!wallet) {
                 wallet = new Wallet({ userId: order.userId, balance: 0 });
             }
 
-            const refundAmount = itemToReturn.total;
+            const refundAmount = itemToReturn.total; // This is already item.total (price * quantity)
             wallet.balance += refundAmount;
             wallet.transactions.push({
                 type: "Credit",
                 amount: refundAmount,
-                description: `Refund for returned item - Order #${order.orderId}`,
+                description: `Refund for returned item - ${itemToReturn.productId.name} (${itemToReturn.variantId}) - Order #${order.orderId}`,
                 orderId: order._id
             });
 
             await wallet.save();
-
-            // Restore stock
+            await order.save();
+            // Restore stock for the specific item
             await Product.updateOne(
                 { _id: itemToReturn.productId, "variants._id": itemToReturn.variantId },
                 { $inc: { "variants.$.stock": itemToReturn.quantity } }

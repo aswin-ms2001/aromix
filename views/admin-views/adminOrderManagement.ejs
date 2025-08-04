@@ -259,11 +259,12 @@
     currentOrderId = orderId;
     currentVariantId = variantId;
     
-    // Get refund amount from the order details
-    const orderRow = document.querySelector(`tr[data-id="${orderId}"]`);
-    if (orderRow) {
-      const amountCell = orderRow.querySelector('td:nth-child(4)');
-      const amount = amountCell.textContent.replace('₹', '');
+    // Get refund amount from the specific item in the modal
+    const modalContent = document.getElementById('orderDetailsContent');
+    const itemRow = modalContent.querySelector(`tr[data-variant-id="${variantId}"]`);
+    if (itemRow) {
+      const totalCell = itemRow.querySelector('td:nth-child(5)'); // Total column
+      const amount = totalCell.textContent.replace('₹', '');
       currentRefundAmount = parseFloat(amount);
       document.getElementById('refundAmount').textContent = currentRefundAmount;
     }

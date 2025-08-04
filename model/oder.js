@@ -8,7 +8,7 @@ const orderSchema = new mongoose.Schema({
       productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
       variantId: { type: mongoose.Schema.Types.ObjectId, required: true },
       quantity: { type: Number, required: true },
-
+      
       // Price details (Snapshot at order time)
       basePrice: { type: Number, required: true }, // Original price of variant
       discountAmount: { type: Number, default: 0 }, // Per item discount

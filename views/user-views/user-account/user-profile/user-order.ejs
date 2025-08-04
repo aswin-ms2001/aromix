@@ -134,9 +134,6 @@
                           </button>
                           
                           <% if (order.orderStatus === 'Delivered') { %>
-                            <button class="btn btn-outline-warning btn-sm ms-2" onclick="requestReturn('<%= order._id %>')">
-                              <i class="bi bi-arrow-return-left me-1"></i>Request Return
-                            </button>
                             <button class="btn btn-outline-success btn-sm ms-2" onclick="downloadInvoice('<%= order._id %>')">
                               <i class="bi bi-download me-1"></i>Download Invoice
                             </button>
@@ -260,7 +257,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <p class="text-muted mb-3">Please provide a reason for returning this order:</p>
+          <p class="text-muted mb-3">Please provide a reason for returning this item:</p>
           <textarea id="returnReason" class="form-control" rows="3" placeholder="Enter return reason..."></textarea>
           <div id="returnError" class="text-danger mt-2" style="min-height: 1em;"></div>
         </div>
@@ -327,8 +324,9 @@
       modal.show();
     }
 
-    function requestReturn(orderId) {
+    function requestReturn(orderId, variantId) {
       currentOrderId = orderId;
+      currentVariantId = variantId;
       const modal = new bootstrap.Modal(document.getElementById('returnRequestModal'));
       modal.show();
     }
@@ -425,7 +423,7 @@
       errorDiv.textContent = "";
       
       try {
-        const response = await axios.post(`/user-oder/request-return/${currentOrderId}`, { reason });
+        const response = await axios.post(`/user-oder/request-return/${currentOrderId}/${currentVariantId}`, { reason });
         if (response.data.success) {
           showToast("Return request submitted successfully", "success");
           const modal = bootstrap.Modal.getInstance(document.getElementById('returnRequestModal'));
