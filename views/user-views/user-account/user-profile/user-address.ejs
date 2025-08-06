@@ -269,7 +269,7 @@
   const editForm = document.getElementById("editAddressForm");
   let selectedDefaultAddressId = null;
   let deleteAddressId = null;
-
+  const allSameDigit = /^([0-9])\1{9}$/;
   // 1. showToast helper
   function showToast(message, type = "primary") {
     const toast = document.createElement("div");
@@ -380,18 +380,21 @@
       } else if (!/^[0-9]{10}$/.test(payload.mobile)) {
         document.getElementById("addMobileError").textContent = "Mobile number must be 10 digits.";
         hasError = true;
+      }else if(allSameDigit.test(payload.mobile)){
+        document.getElementById("addMobileError").textContent = "Enter Valid Phone Number.";
+        hasError = true;
       }
 
       // --- Pincode ---
       if (!payload.pincode) {
         document.getElementById("addPincodeError").textContent = "Pincode is required.";
         hasError = true;
-      } else if (!/^\d{6}$/.test(payload.pincode)) {
-        document.getElementById("addPincodeError").textContent = "Pincode must be 6 digits.";
+      } else if (!/^[1-9]\d{5}$/.test(payload.pincode)) {
+        document.getElementById("addPincodeError").textContent = "Enter valid Pincode.";
         hasError = true;
       }
 
-      // 🔁 Stop if any validation failed
+      //  Stop if any validation failed
       if (hasError) return;
 
       const response = await axios.post("/users-address/create-new-address/<%- user.id %>", payload);
@@ -516,14 +519,16 @@
     } else if (!/^[0-9]{10}$/.test(payload.mobile)) {
       document.getElementById("editMobileError").textContent = "Mobile number must be 10 digits.";
       hasError = true;
+    }else if(allSameDigit.test(payload.mobile)){
+      document.getElementById("editMobileError").textContent = "Enter Valid Phone Number.";
+      hasError = true;
     }
-
     // --- Pincode ---
     if (!payload.pincode) {
       document.getElementById("editPincodeError").textContent = "Pincode is required.";
       hasError = true;
-    } else if (!/^\d{6}$/.test(payload.pincode)) {
-      document.getElementById("editPincodeError").textContent = "Pincode must be 6 digits.";
+    } else if (!/^[1-9]\d{5}$/.test(payload.pincode)) {
+      document.getElementById("editPincodeError").textContent = "Enter Valid Pincode.";
       hasError = true;
     }
 
@@ -578,6 +583,10 @@
     document.getElementById("editPincode").value = data.pincode || "";
 
     editForm.setAttribute("data-id", data._id);
+    
+    const fields = ["Name", "House", "Street", "City", "State", "Country", "Mobile", "Pincode"];
+    fields.forEach(f => document.getElementById(`edit${f}Error`).textContent = "");
+
     const modal = new bootstrap.Modal(document.getElementById("editAddressModal"));
     modal.show();
   }

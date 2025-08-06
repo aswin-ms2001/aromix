@@ -52,11 +52,12 @@ export const logoutPage = (req,res)=>{
   }
 }
 
-export const googleAuthentication = passport.authenticate("google",{scope:["profile","email"],prompt:"consent"})
+export const googleAuthentication = passport.authenticate("google",{scope:["profile","email"]})
 
 export const googleRedirect = passport.authenticate("google",{
     failureRedirect:"/users/login",
-    successRedirect:"/"
+    successRedirect:"/",
+    failureFlash: true,
 })
 
 export const userDashboard = (req,res)=>{

@@ -8,7 +8,10 @@ import Product from "../model/product.js"
 import fs from 'fs'; 
 
 export const loginPage = (req,res)=>{
-    res.render("admin-views/adminLogin")
+    const errorMessage = req.flash("error");
+    res.render("admin-views/adminLogin",{
+      errorMessage:errorMessage[0]
+    })
 }
 
 export const login = async (req,res)=>{
@@ -25,8 +28,9 @@ export const login = async (req,res)=>{
             res.redirect("/admin/dashboard");
         }
         else{
-            console.log("invalid details")
-            res.render("admin-views/adminLogin");
+            console.log("invalid details");
+            req.flash("error","Invalid Credentils")
+            res.redirect("/admin/login")
         }
 
     }catch(err){

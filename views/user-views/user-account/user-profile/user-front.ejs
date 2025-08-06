@@ -203,15 +203,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     // Inputs & Buttons
   
-    // Toggle show/hide password
-    let otpCountdown;
-    let otpTimeLeft = 60;
-    const otpTimerEl = document.getElementById("otpTimer");
-    const resendOtpBtn = document.getElementById("resendOtpBtn");
-    const verifyOtpBtn = document.getElementById("verifyOtpBtn");
-    const otpInput = document.getElementById("otpInput");
-    const otpError = document.getElementById("otpError");
-   
+
     // Email Modal logic
     const emailOtp = document.getElementById("otpEmailInput");
     const otpEmailError = document.getElementById("otpEmailError");
@@ -314,7 +306,218 @@
     })
 
 
-  function startOtpTimer() {
+
+    //Name and Phone number Edit
+    const nameInput = document.getElementById("nameInput");
+    const phoneInput = document.getElementById("phoneInput");
+    const editBtn = document.getElementById("editNamePhoneBtn");
+    const saveBtn = document.getElementById("saveNamePhoneBtn");
+    const cancelBtn = document.getElementById("cancelNamePhoneBtn");
+
+    const phoneError = phoneInput.nextElementSibling;
+    const nameError = document.createElement("div");
+    nameError.classList.add("text-danger");
+    nameInput.parentNode.appendChild(nameError);
+
+    function showToast(message, type = 'primary') {
+      const toastEl = document.getElementById('liveToast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.textContent = message;
+      toastEl.className = `toast align-items-center text-bg-${type} border-0`;
+      const toast = new bootstrap.Toast(toastEl);
+      toast.show();
+    }
+
+    // Name & Phone blur validation
+    nameInput.addEventListener("blur", () => {
+      nameError.textContent = nameInput.value.trim() ? "" : "Name cannot be empty.";
+    });
+
+    phoneInput.addEventListener("blur", () => {
+      const pattern = /^[0-9]{10}$/;
+      const allSameDigit = /^([0-9])\1{9}$/;
+      if (!phoneInput.value.trim()) {
+        phoneError.textContent = "Phone number cannot be empty.";
+      } else if (!pattern.test(phoneInput.value)) {
+        phoneError.textContent = "Phone number must be 10 digits.";
+      } else if(allSameDigit.test(phoneInput.value)){
+        phoneError.textContent = "Phone number cannot be full of same number.";
+      }
+      else {
+        phoneError.textContent = "";
+      }
+    });
+
+    editBtn.addEventListener("click", () => {
+      nameInput.removeAttribute("readonly");
+      phoneInput.removeAttribute("readonly");
+      editBtn.classList.add("d-none");
+      saveBtn.classList.remove("d-none");
+      cancelBtn.classList.remove("d-none");
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      nameInput.value = "<%= user.name %>";
+      phoneInput.value = "<%= user.phoneNumber %>";
+      nameInput.setAttribute("readonly", true);
+      phoneInput.setAttribute("readonly", true);
+      nameError.textContent = "";
+      phoneError.textContent = "";
+      saveBtn.classList.add("d-none");
+      cancelBtn.classList.add("d-none");
+      editBtn.classList.remove("d-none");
+    });
+
+    saveBtn.addEventListener("click", async () => {
+      const nameVal = nameInput.value.trim();
+      const phoneVal = phoneInput.value.trim();
+      const namePattern = /^[A-Za-z.\s]{3,40}$/;
+      const phonePattern = /^[0-9]{10}$/;
+      const allSameDigit = /^([0-9])\1{9}$/;
+
+      let hasError = false;
+
+      
+    // Name validation
+    if (!nameVal) {
+      nameError.textContent = "Name cannot be empty.";
+      hasError = true;
+    } else if (nameVal.length < 3) {
+      nameError.textContent = "Name must be at least 3 characters.";
+      hasError = true;
+    } else if (nameVal.length > 40) {
+      nameError.textContent = "Name cannot exceed 40 characters.";
+      hasError = true;
+    } else if (!namePattern.test(nameVal)) {
+      nameError.textContent = "Only letters, spaces, and periods are allowed.";
+      hasError = true;
+    } else if (/^[.\s]/.test(nameVal) || /[.\s]$/.test(nameVal)) {
+      nameError.textContent = "Name cannot start or end with a dot or space.";
+      hasError = true;
+    } else if (/\.\.|  /.test(nameVal)) {
+      nameError.textContent = "Name cannot contain consecutive dots or spaces.";
+      hasError = true;
+    } else {
+      nameError.textContent = "";
+    }
+
+
+      // Phone validation
+      if (!phoneVal) {
+        phoneError.textContent = "Phone number cannot be empty.";
+        hasError = true;
+      } else if (!phonePattern.test(phoneVal)) {
+        phoneError.textContent = "Phone number must be 10 digits.";
+        hasError = true;
+      }else if(allSameDigit.test(phoneVal)){
+        phoneError.textContent = "Phone number cannot be full of same number.";
+        hasError = true;
+      }
+       else {
+        phoneError.textContent = "";
+      }
+
+      // Stop request if any error found
+      if (hasError) return;
+
+   
+      try {
+        const res = await axios.put('/users-profile/update-user-name-phone/<%-user.id%>', {
+          name: nameVal,
+          phone: phoneVal
+        });
+
+      
+        if(res.data.success){
+          showToast(res.data.message, "success");
+          setTimeout(() => location.reload(), 1500);
+          return;
+        }
+
+      } catch (err) {
+        console.log("Error")
+        if(err.response && err.response.data && err.response.data.message){
+          showToast(err.response.data.message, "danger");
+          return;
+        }else{
+          showToast("Error updating info.", "danger");
+          return;
+        }
+        
+      }
+    });
+
+
+    //Email Error
+    const emailError = document.createElement("div");
+    emailError.classList.add("text-danger", "mt-2");
+    newEmailInput.parentNode.appendChild(emailError);
+
+    confirmEmailChangeBtn.addEventListener("click", async () => {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!newEmailInput.value.trim()) {
+        emailError.textContent = "Email cannot be empty.";
+        return;
+      }
+      if (!emailPattern.test(newEmailInput.value)) {
+        emailError.textContent = "Invalid email format.";
+        return;
+      }
+      emailError.textContent = "";
+      try {
+        const res = await axios.put('/users-profile/send-email-verification/<%-user.id%>', { email: newEmailInput.value });
+        if(res.data.success){
+          showToast(res.data.message, "success");
+
+          const otpEmailModal = new bootstrap.Modal(document.getElementById("otpEmailModal"));
+          otpEmailModal.show();
+          console.log("before run function")
+          runEmailOtpTimer();
+          console.log("after run function")
+        }
+        
+      } catch (err) {
+        console.log(err)
+        showToast("Failed to send verification email.", "danger");
+      }
+    });
+
+  
+
+  });
+</script>
+
+<% if(user.authType==="local") {%>
+<script>
+  document.addEventListener("DOMContentLoaded",()=>{
+
+    
+    function showToast(message, type = 'primary') {
+      const toastEl = document.getElementById('liveToast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.textContent = message;
+      toastEl.className = `toast align-items-center text-bg-${type} border-0`;
+      const toast = new bootstrap.Toast(toastEl);
+      toast.show();
+    }
+    // Toggle show/hide password
+    let otpCountdown;
+    let otpTimeLeft = 60;
+    const otpTimerEl = document.getElementById("otpTimer");
+    const resendOtpBtn = document.getElementById("resendOtpBtn");
+    const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+    const otpInput = document.getElementById("otpInput");
+    const otpError = document.getElementById("otpError");
+
+
+          // Password section
+    const editPwdBtn = document.getElementById("editPasswordBtn");
+    const savePwdBtn = document.getElementById("savePasswordBtn");
+    const cancelPwdBtn = document.getElementById("cancelPasswordBtn");
+    const pwdFields = ["currentPassword", "newPassword", "confirmPassword"];
+    const pwdErrors = {};
+
+    function startOtpTimer() {
     // Clear any existing interval before starting a new one
     if (otpCountdown) clearInterval(otpCountdown);
 
@@ -421,178 +624,7 @@
       });
     });
 
-    //Name and Phone number Edit
-    const nameInput = document.getElementById("nameInput");
-    const phoneInput = document.getElementById("phoneInput");
-    const editBtn = document.getElementById("editNamePhoneBtn");
-    const saveBtn = document.getElementById("saveNamePhoneBtn");
-    const cancelBtn = document.getElementById("cancelNamePhoneBtn");
 
-    const phoneError = phoneInput.nextElementSibling;
-    const nameError = document.createElement("div");
-    nameError.classList.add("text-danger");
-    nameInput.parentNode.appendChild(nameError);
-
-    function showToast(message, type = 'primary') {
-      const toastEl = document.getElementById('liveToast');
-      const toastMsg = document.getElementById('toastMsg');
-      toastMsg.textContent = message;
-      toastEl.className = `toast align-items-center text-bg-${type} border-0`;
-      const toast = new bootstrap.Toast(toastEl);
-      toast.show();
-    }
-
-    // Name & Phone blur validation
-    nameInput.addEventListener("blur", () => {
-      nameError.textContent = nameInput.value.trim() ? "" : "Name cannot be empty.";
-    });
-
-    phoneInput.addEventListener("blur", () => {
-      const pattern = /^[0-9]{10}$/;
-      if (!phoneInput.value.trim()) {
-        phoneError.textContent = "Phone number cannot be empty.";
-      } else if (!pattern.test(phoneInput.value)) {
-        phoneError.textContent = "Phone number must be 10 digits.";
-      } else {
-        phoneError.textContent = "";
-      }
-    });
-
-    editBtn.addEventListener("click", () => {
-      nameInput.removeAttribute("readonly");
-      phoneInput.removeAttribute("readonly");
-      editBtn.classList.add("d-none");
-      saveBtn.classList.remove("d-none");
-      cancelBtn.classList.remove("d-none");
-    });
-
-    cancelBtn.addEventListener("click", () => {
-      nameInput.value = "<%= user.name %>";
-      phoneInput.value = "<%= user.phoneNumber %>";
-      nameInput.setAttribute("readonly", true);
-      phoneInput.setAttribute("readonly", true);
-      nameError.textContent = "";
-      phoneError.textContent = "";
-      saveBtn.classList.add("d-none");
-      cancelBtn.classList.add("d-none");
-      editBtn.classList.remove("d-none");
-    });
-
-    saveBtn.addEventListener("click", async () => {
-      const nameVal = nameInput.value.trim();
-      const phoneVal = phoneInput.value.trim();
-      const namePattern = /^[A-Za-z.\s]{3,40}$/;
-      const phonePattern = /^[0-9]{10}$/;
-
-      let hasError = false;
-
-      
-    // Name validation
-    if (!nameVal) {
-      nameError.textContent = "Name cannot be empty.";
-      hasError = true;
-    } else if (nameVal.length < 3) {
-      nameError.textContent = "Name must be at least 3 characters.";
-      hasError = true;
-    } else if (nameVal.length > 40) {
-      nameError.textContent = "Name cannot exceed 40 characters.";
-      hasError = true;
-    } else if (!namePattern.test(nameVal)) {
-      nameError.textContent = "Only letters, spaces, and periods are allowed.";
-      hasError = true;
-    } else if (/^[.\s]/.test(nameVal) || /[.\s]$/.test(nameVal)) {
-      nameError.textContent = "Name cannot start or end with a dot or space.";
-      hasError = true;
-    } else if (/\.\.|  /.test(nameVal)) {
-      nameError.textContent = "Name cannot contain consecutive dots or spaces.";
-      hasError = true;
-    } else {
-      nameError.textContent = "";
-    }
-
-
-      // Phone validation
-      if (!phoneVal) {
-        phoneError.textContent = "Phone number cannot be empty.";
-        hasError = true;
-      } else if (!phonePattern.test(phoneVal)) {
-        phoneError.textContent = "Phone number must be 10 digits.";
-        hasError = true;
-      } else {
-        phoneError.textContent = "";
-      }
-
-      // Stop request if any error found
-      if (hasError) return;
-
-   
-      try {
-        const res = await axios.put('/users-profile/update-user-name-phone/<%-user.id%>', {
-          name: nameVal,
-          phone: phoneVal
-        });
-
-      
-        if(res.data.success){
-          showToast(res.data.message, "success");
-          setTimeout(() => location.reload(), 1500);
-          return;
-        }
-
-      } catch (err) {
-        console.log("Error")
-        if(err.response && err.response.data && err.response.data.message){
-          showToast(err.response.data.message, "danger");
-          return;
-        }else{
-          showToast("Error updating info.", "danger");
-          return;
-        }
-        
-      }
-    });
-
-
-    //Email Error
-    const emailError = document.createElement("div");
-    emailError.classList.add("text-danger", "mt-2");
-    newEmailInput.parentNode.appendChild(emailError);
-
-    confirmEmailChangeBtn.addEventListener("click", async () => {
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!newEmailInput.value.trim()) {
-        emailError.textContent = "Email cannot be empty.";
-        return;
-      }
-      if (!emailPattern.test(newEmailInput.value)) {
-        emailError.textContent = "Invalid email format.";
-        return;
-      }
-      emailError.textContent = "";
-      try {
-        const res = await axios.put('/users-profile/send-email-verification/<%-user.id%>', { email: newEmailInput.value });
-        if(res.data.success){
-          showToast(res.data.message, "success");
-
-          const otpEmailModal = new bootstrap.Modal(document.getElementById("otpEmailModal"));
-          otpEmailModal.show();
-          console.log("before run function")
-          runEmailOtpTimer();
-          console.log("after run function")
-        }
-        
-      } catch (err) {
-        console.log(err)
-        showToast("Failed to send verification email.", "danger");
-      }
-    });
-
-    // Password section
-    const editPwdBtn = document.getElementById("editPasswordBtn");
-    const savePwdBtn = document.getElementById("savePasswordBtn");
-    const cancelPwdBtn = document.getElementById("cancelPasswordBtn");
-    const pwdFields = ["currentPassword", "newPassword", "confirmPassword"];
-    const pwdErrors = {};
 
     pwdFields.forEach(id => {
       const el = document.getElementById(id);
@@ -637,6 +669,7 @@
       const current = document.getElementById("currentPassword").value.trim();
       const newPwd = document.getElementById("newPassword").value.trim();
       const confirmPwd = document.getElementById("confirmPassword").value.trim();
+      const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[a-zA-Z\d\W_]{8,}$/;
       let valid = true;
 
       if (!current) {
@@ -647,7 +680,13 @@
       if (!newPwd) {
         pwdErrors.newPassword.textContent = "New password is required.";
         valid = false;
-      } else pwdErrors.newPassword.textContent = "";
+      } else if(!passwordPattern.test(newPwd)){
+        pwdErrors.newPassword.textContent = "Password must be at least 8 characters long, include uppercase, lowercase, number, and special character.";
+        valid = false;
+      }
+      else{
+        pwdErrors.newPassword.textContent = "";
+      } 
 
       if (!confirmPwd) {
         pwdErrors.confirmPassword.textContent = "Please confirm your password.";
@@ -655,7 +694,11 @@
       } else if (newPwd !== confirmPwd) {
         pwdErrors.confirmPassword.textContent = "Passwords do not match.";
         valid = false;
-      } else if (current && newPwd === current) {
+      } else if(!passwordPattern.test(confirmPwd)){
+        pwdErrors.confirmPassword.textContent = "Password must be at least 8 characters long, include uppercase, lowercase, number, and special character.";
+        valid = false;
+      }
+      else if (current && newPwd === current) {
         pwdErrors.confirmPassword.textContent = "New password must be different from current password.";
         valid = false;
       } else {
@@ -682,9 +725,12 @@
         }
       }
     });
-
-  });
+   
+  })
 </script>
+
+<%}%>
+
 
 </body>
 </html>

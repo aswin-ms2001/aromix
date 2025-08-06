@@ -259,7 +259,7 @@ export const deleteCart = async (req, res) => {
 
     await Cart.findByIdAndDelete(cartId);
 
-  
+    
     const userCart = await Cart.find({ userId }).populate({
       path: "productId",
       select: "variants blocked categoryId",
@@ -280,7 +280,8 @@ export const deleteCart = async (req, res) => {
       }
     }
 
-    return res.json({
+    
+    return res.status(200).json({
       success: true,
       message: "Item removed from cart",
       subtotal,

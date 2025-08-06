@@ -301,8 +301,8 @@ document.getElementById("addForm").addEventListener("submit", async function (e)
     })
     let hasError = false;
     const addressPattern = /^(?!\s)(?!.*\s$)[A-Za-z0-9]+(?:\s[A-Za-z0-9]+)*$/;
-    console.log(payload);
-    console.log
+    const isAllSame = /^([0-9])\1{9}$/;
+
     // --- Name ---
     if (!payload.name) {
       document.getElementById("addNameError").textContent = "Name cannot be empty.";
@@ -370,14 +370,17 @@ document.getElementById("addForm").addEventListener("submit", async function (e)
     } else if (!/^[0-9]{10}$/.test(payload.mobile)) {
       document.getElementById("addMobileError").textContent = "Mobile number must be 10 digits.";
       hasError = true;
+    }else if(isAllSame.test(payload.mobile)){
+      document.getElementById("addMobileError").textContent = "Enter Valid Mobile Number";
+      hasError = true;
     }
 
     // --- Pincode ---
     if (!payload.pincode) {
       document.getElementById("addPincodeError").textContent = "Pincode is required.";
       hasError = true;
-    } else if (!/^\d{6}$/.test(payload.pincode)) {
-      document.getElementById("addPincodeError").textContent = "Pincode must be 6 digits.";
+    } else if (!/^[1-9]\d{5}$/.test(payload.pincode)) {
+      document.getElementById("addPincodeError").textContent = "Enter A Valid Pincode.";
       hasError = true;
     }
 

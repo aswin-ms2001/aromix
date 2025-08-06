@@ -18,9 +18,20 @@
       </div>
 
       <!-- Right Login Section -->
+
       <div class="col-md-6 p-0">
+
         <div class="login-box">
           <form action="/admin/login" method="POST" class="w-100 login-form">
+              <%if(errorMessage){%>
+                <div class="text-danger text-center mb-4">
+                  <%= errorMessage %>
+                    <script>
+                      console.log("Enterd")
+                    </script>
+              
+                </div>
+                <% }%>
             <h2 class="text-center mb-4 login-heading">Admin Login</h2>
 
             <div class="mb-4">

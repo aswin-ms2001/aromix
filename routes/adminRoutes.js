@@ -3,9 +3,12 @@ import {adminSessionMiddleware} from "../config/session.js";
 import * as adminController from "../controller/adminController.js";
 import adminAuthMiddleware from "../middleware/authMiddleware/adminAuthMiddleware.js";
 import { adminLoginSession } from "../middleware/loginSessionHandler/loginSessionHandlerAdmin.js";
+import flash from "connect-flash";
+
 const adminRouter = express.Router();
 
 adminRouter.use(adminSessionMiddleware);
+adminRouter.use(flash());
 
 adminRouter.get("/login",adminLoginSession ,adminController.loginPage);
 adminRouter.post("/login", adminController.login);

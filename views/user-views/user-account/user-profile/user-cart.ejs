@@ -33,7 +33,7 @@
           </ol>
         </nav>
 
-        <div class="card shadow-sm p-4">
+        <div  id="cartCard" class="card shadow-sm p-4">
           <h5 class="fw-bold text-danger mb-3">My Cart</h5>
           <hr>
 
@@ -194,7 +194,7 @@
   try {
     const response = await axios.delete(`/users-cart/remove/${cartId}`);
     const { success, subtotal, delivery, grandTotal, remainingItems, message } = response.data;
-
+    console.log(response);
     if (success) {
       // ✅ Remove the row from the cart table
       document.getElementById(`cart-item-${cartId}`).remove();
@@ -206,15 +206,18 @@
         document.getElementById('grandTotal').innerText = grandTotal;
       } else {
         // ✅ If no items left, show empty cart message
-        document.querySelector('.cart-card').innerHTML = `
+        
+        document.getElementById('cartCard').innerHTML = `
           <div class="cart-empty text-center py-5 fs-5 text-muted">Your cart is empty.</div>
         `;
+        console.log("Error")
       }
 
       // ✅ Show success toast
       showToast(message || "Item removed from cart", "warning");
     }
   } catch (err) {
+    
     if (err.response?.data?.redirect) {
       showToast(err.response?.data?.message || "Product or category is Blocked", "danger");
       setTimeout(()=>{

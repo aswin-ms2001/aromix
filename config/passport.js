@@ -52,10 +52,10 @@ passport.use(new GoogleStrategy({
         if(user){
             if(user.authType != "google"){
                 // console.log("Error: This email is registered with local Authentication.");
-                return done(new Error("This email is registered with local Authentication"),null);
+                return done(null,false,{message:"User is not Registered Using Google Auth"});
             }
 
-            if (user.blocked) return done(null, false);
+            if (user.blocked) return done(null, false,{message:"User is Blocked"});
             
             // console.log("User logged in:", user);
             return done(null, user); // user login
