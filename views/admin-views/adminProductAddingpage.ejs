@@ -19,7 +19,10 @@
 <body>
   <div class="admin-layout">
     <!-- Sidebar Include -->
-    <%- include('./partials/sidebar') %>
+    <div style="background-color: #1b1b1b; margin: 0; padding: 0;margin-left: 0;padding-left: 0;">
+      <%- include('./partials/sidebar') %>
+    </div>
+    
 
     <!-- Main Content -->
     <div class="admin-main">
@@ -32,7 +35,8 @@
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label text-white">Product Name*</label>
-              <input type="text" name="name" class="form-control" required />
+              <input type="text" name="name" class="form-control" value="" required />
+              <div class="text-danger" id="error-name"></div>
             </div>
             <div class="col-md-6">
               <label class="form-label text-white">Category*</label>
@@ -42,6 +46,7 @@
                   <option value="<%= category._id %>::<%= category.name %>"><%= category.name %></option>
                 <% }); %>
               </select>
+              <div class="text-danger" id="error-category"></div>
             </div>
             <div class="col-md-6">
               <label class="form-label text-white">Gender*</label>
@@ -51,6 +56,7 @@
                 <option value="Female">Female</option>
                 <option value="Unisex">Unisex</option>
               </select>
+              <div class="text-danger" id="error-gender"></div>
             </div>
           </div>
 
@@ -92,48 +98,54 @@
   <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
 
   <script>
-    let uniqueIdCounter = 0;
+
+   let uniqueIdCounter = 0;
     let cropper;
     let currentFileInput;
 
-    function addVariant() {
-      const container = document.getElementById('variants-container');
-      const currentCount = container.querySelectorAll('.variant-row').length;
-      const uniqueId = uniqueIdCounter++;
-      const isRemovable = currentCount > 0;
+    
+function addVariant() {
+  const container = document.getElementById('variants-container');
+  const currentCount = container.querySelectorAll('.variant-row').length;
+  const uniqueId = uniqueIdCounter++;
+  const isRemovable = currentCount > 0;
 
-      const variantHTML = `
-        <div class="variant-row mt-4 p-3 position-relative" style="background-color: #3b3b3b; border-radius: 10px;" data-uid="${uniqueId}">
-          <h6 class="text-white variant-heading">Variant ${currentCount + 1}</h6>
-          ${isRemovable ? `<button type="button" class="btn-close position-absolute top-0 end-0 m-3" onclick="removeVariant(${uniqueId})"></button>` : ''}
-          <div class="row g-3 mt-2">
-            <div class="col-md-4">
-              <label class="form-label text-white">Volume*</label>
-              <input type="number" name="variants[${uniqueId}][volume]" class="form-control variant-volume" required />
-            </div>
-            <div class="col-md-4">
-              <label class="form-label text-white">Price*</label>
-              <input type="number" name="variants[${uniqueId}][price]" class="form-control variant-price" required />
-            </div>
-            <div class="col-md-4">
-              <label class="form-label text-white">Stock*</label>
-              <input type="number" name="variants[${uniqueId}][stock]" class="form-control variant-stock" required />
-            </div>
-            <div class="col-md-12">
-              <label class="form-label text-white">Description*</label>
-              <textarea name="variants[${uniqueId}][description]" rows="3" class="form-control" required></textarea>
-            </div>
-            ${[1, 2, 3, 4].map(i => `
-              <div class="col-md-3 mb-3">
-                <label class="form-label text-white">Image ${i}*</label>
-                <input type="file" name="variantImages" accept="image/*" class="form-control variant-image-input" required />
-              </div>`).join('')}
-          </div>
-        </div>`;
-      
-      container.insertAdjacentHTML('beforeend', variantHTML);
-      relabelVariants();
-    }
+  const variantHTML = `
+    <div class="variant-row mt-4 p-3 position-relative" style="background-color: #3b3b3b; border-radius: 10px;" data-uid="${uniqueId}">
+      <h6 class="text-white variant-heading">Variant ${currentCount + 1}</h6>
+      ${isRemovable ? `<button type="button" class="btn-close position-absolute top-0 end-0 m-3" onclick="removeVariant(${uniqueId})"></button>` : ''}
+      <div class="row g-3 mt-2">
+        <div class="col-md-4">
+          <label class="form-label text-white">Volume*</label>
+          <input type="number" name="variants[${uniqueId}][volume]" class="form-control variant-volume" required />
+          <div class="text-danger variant-error-volume"></div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label text-white">Price*</label>
+          <input type="number" name="variants[${uniqueId}][price]" class="form-control variant-price" required />
+          <div class="text-danger variant-error-price"></div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label text-white">Stock*</label>
+          <input type="number" name="variants[${uniqueId}][stock]" class="form-control variant-stock" required />
+          <div class="text-danger variant-error-stock"></div>
+        </div>
+        <div class="col-md-12">
+          <label class="form-label text-white">Description*</label>
+          <textarea name="variants[${uniqueId}][description]" rows="3" class="form-control" required></textarea>
+          <div class="text-danger variant-error-description"></div>
+        </div>
+        ${[1, 2, 3, 4].map(i => `
+          <div class="col-md-3 mb-3">
+            <label class="form-label text-white">Image ${i}*</label>
+            <input type="file" name="variantImages" accept="image/*" class="form-control variant-image-input" required />
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  container.insertAdjacentHTML('beforeend', variantHTML);
+  relabelVariants();
+}
 
     function removeVariant(uid) {
       const row = document.querySelector(`.variant-row[data-uid="${uid}"]`);
@@ -149,23 +161,81 @@
       });
     }
 
-    document.getElementById('product-form').addEventListener('submit', function (e) {
-      const errors = [];
-      document.querySelectorAll('.variant-volume').forEach((el, i) => {
-        if (isNaN(el.value) || el.value < 0) errors.push(`Variant ${i + 1}: Volume must be non-negative`);
-      });
-      document.querySelectorAll('.variant-price').forEach((el, i) => {
-        if (isNaN(el.value) || el.value < 0) errors.push(`Variant ${i + 1}: Price must be non-negative`);
-      });
-      document.querySelectorAll('.variant-stock').forEach((el, i) => {
-        if (isNaN(el.value) || el.value < 0) errors.push(`Variant ${i + 1}: Stock must be non-negative`);
-      });
+document.getElementById('product-form').addEventListener('submit', function (e) {
+  let hasError = false;
+  const namePattern = /^[a-zA-Z]{4,}.*/;
+  const descriptionPattern = /^[a-zA-Z]\w{5,}/;
+  // Clear all previous error messages
+  document.querySelectorAll('.text-danger').forEach(el => el.textContent = '');
 
-      if (errors.length) {
-        e.preventDefault();
-        alert(errors.join('\n'));
-      }
-    });
+  // Product Name
+  const nameInput = document.querySelector('input[name="name"]');
+  console.log(!!nameInput.value);
+
+  if (!nameInput.value.trim()) {
+    console.log("Entered")
+    document.getElementById('error-name').textContent = 'Product name is required';
+    hasError = true;
+  }
+
+  if(!namePattern.test(nameInput.value.trim())){
+    document.getElementById('error-name').textContent = 'Enter Valid name';
+    hasError = true;
+  }
+
+  // Category
+  const categoryInput = document.querySelector('select[name="category"]');
+  if (!categoryInput.value) {
+    document.getElementById('error-category').textContent = 'Category is required';
+    hasError = true;
+  }
+
+  // Gender
+  const genderInput = document.querySelector('select[name="gender"]');
+  if (!genderInput.value) {
+    document.getElementById('error-gender').textContent = 'Gender is required';
+    hasError = true;
+  }
+
+  // Variant validation
+  const variantRows = document.querySelectorAll('.variant-row');
+  variantRows.forEach((row, index) => {
+    const volume = row.querySelector('.variant-volume');
+    const price = row.querySelector('.variant-price');
+    const stock = row.querySelector('.variant-stock');
+    const desc = row.querySelector('textarea');
+
+    const errVol = row.querySelector('.variant-error-volume');
+    const errPrice = row.querySelector('.variant-error-price');
+    const errStock = row.querySelector('.variant-error-stock');
+    const errDesc = row.querySelector('.variant-error-description');
+
+    if (!volume.value || Number(volume.value) < 0) {
+      errVol.textContent = 'Volume must be non-negative';
+      hasError = true;
+    }
+    if (!price.value || Number(price.value) < 0) {
+      errPrice.textContent = 'Price must be non-negative';
+      hasError = true;
+    }
+    if (!stock.value || Number(stock.value) < 0) {
+      errStock.textContent = 'Stock must be non-negative';
+      hasError = true;
+    }
+    if (!desc.value.trim()) {
+      errDesc.textContent = 'Description is required';
+      hasError = true;
+    }
+    if(!descriptionPattern.test(desc.value.trim())){
+      errDesc.textContent = 'Enter Valid Disciption';
+      hasError = true;
+    }
+  });
+
+  if (hasError) {
+    e.preventDefault(); // Prevent form submission
+  }
+});
 
     window.onload = addVariant;
 
@@ -203,6 +273,8 @@
         });
       }
     });
+
+ 
   </script>
 </body>
 </html>
