@@ -13,8 +13,11 @@
   <link rel="stylesheet" href="/css/admin-css/sidebar.css" />
 </head>
 <body>
-  <div class="admin-layout">
-    <%- include('./partials/sidebar') %>
+  <div class="admin-layout ">'
+    <div style="background-color: #1b1b1b; margin: 0; padding: 0;margin-left: 0;padding-left: 0;">
+      <%- include('./partials/sidebar') %>
+    </div>
+    
 
     <div class="admin-main">
       <div class="d-flex justify-content-between align-items-center mb-4">
@@ -22,11 +25,12 @@
       </div>
 
       <div class="card p-4" style="background-color: #2e0e46; border-radius: 20px;">
-        <form id="product-form" enctype="multipart/form-data" data-product-id="<%= product._id %>">
+        <form id="product-form" enctype="multipart/form-data" data-product-id="<%= product._id %>" novalidate>
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label text-white">Product Name*</label>
               <input type="text" name="name" class="form-control" value="<%= product.name %>" required />
+              <div class="text-danger error-msg d-none">Product name is required</div>
             </div>
             <div class="col-md-6">
               <label class="form-label text-white">Category*</label>
@@ -38,6 +42,8 @@
                   </option>
                 <% }); %>
               </select>
+              <div class="text-danger error-msg d-none">Category is required</div>
+
             </div>
             <div class="col-md-6">
               <label class="form-label text-white">Gender*</label>
@@ -46,27 +52,31 @@
                 <option value="Female" <%= product.gender === "Female" ? "selected" : "" %>>Female</option>
                 <option value="Unisex" <%= product.gender === "Unisex" ? "selected" : "" %>>Unisex</option>
               </select>
+              <div class="text-danger error-msg d-none">Gender is required</div>
             </div>
           </div>
 
           <h5 class="text-white mt-5">Variants</h5>
 
           <% product.variants.forEach((variant, vIndex) => { %>
-            <div class="border p-3 mb-4 rounded" style="background-color: #47195f;">
+            <div class="variant-block border p-3 mb-4 rounded" style="background-color: #47195f;">
               <input type="hidden" name="variants[<%= vIndex %>]._id" value="<%= variant._id %>" />
               <div class="row g-3">
                 <div class="row">
                   <div class="col-md-4">
                     <label class="form-label text-white">Volume (ml)</label>
                     <input type="number" name="variants[<%= vIndex %>].volume" value="<%= variant.volume %>" class="form-control" required />
+                    <div class="text-danger error-msg d-none">Volume is required</div>
                   </div>
                   <div class="col-md-4">
                     <label class="form-label text-white">Price</label>
                     <input type="number" name="variants[<%= vIndex %>].price" value="<%= variant.price %>" class="form-control" required />
+                    <div class="text-danger error-msg d-none">Price is required</div>
                   </div>
                   <div class="col-md-4">
                     <label class="form-label text-white">Stock</label>
                     <input type="number" name="variants[<%= vIndex %>].stock" value="<%= variant.stock %>" class="form-control" required />
+                    <div class="text-danger error-msg d-none">Stock is required</div>
                   </div>
                 </div>
 
@@ -74,6 +84,7 @@
                   <div class="col-md-12">
                     <label class="form-label text-white">Description</label>
                     <textarea name="variants[<%= vIndex %>].description" class="form-control" required><%= variant.description %></textarea>
+                    <div class="text-danger error-msg d-none">Description is required</div>
                   </div>
                 </div>
 
@@ -130,6 +141,22 @@
   <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
 
   <script>
+
+    function showToast(message, type = "primary") {
+      const toast = document.createElement("div");
+      toast.className = `toast align-items-center text-white bg-${type} border-0 show position-fixed bottom-0 end-0 m-3`;
+      toast.role = "alert";
+      toast.style.zIndex = "1055";
+      toast.style.minWidth = "300px";
+      toast.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">${message}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
     
     let cropper;
     let currentIndex = null;
@@ -180,13 +207,94 @@
       croppedModal.hide();
     });
 
-
     document.getElementById("product-form").addEventListener("submit", async function (e) {
       e.preventDefault();
 
       const form = e.target;
       const productId = form.dataset.productId;
       const formData = new FormData(form);
+
+      let isValid = true;
+
+      // Clear all existing error messages
+      form.querySelectorAll(".error-msg").forEach(el => el.classList.add("d-none"));
+
+      // Validate top-level fields
+      const nameInput = form.querySelector('input[name="name"]');
+      const categoryInput = form.querySelector('select[name="category"]');
+      const genderInput = form.querySelector('select[name="gender"]');
+      const namePattern = /^[a-zA-Z]{4,}.*/;
+      const descriptionPattern = /^[a-zA-Z]\w{5,}/;
+
+      if (!nameInput.value.trim()) {
+        nameInput.nextElementSibling.classList.remove("d-none");
+        isValid = false;
+      }else if(!namePattern.test(nameInput.value.trim())){
+        nameInput.nextElementSibling.textContent = "Enter a Valid Name";
+        nameInput.nextElementSibling.classList.remove("d-none");
+        isValid = false;
+      }
+
+      if (!categoryInput.value) {
+        categoryInput.nextElementSibling.classList.remove("d-none");
+        isValid = false;
+      }
+
+      if (!genderInput.value) {
+        genderInput.nextElementSibling.classList.remove("d-none");
+        isValid = false;
+      }
+
+      // Validate each variant block
+      const variantBlocks = form.querySelectorAll(".variant-block");
+      variantBlocks.forEach(block => {
+        const volume = block.querySelector('input[name$=".volume"]');
+        const price = block.querySelector('input[name$=".price"]');
+        const stock = block.querySelector('input[name$=".stock"]');
+        const description = block.querySelector('textarea[name$=".description"]');
+
+        if (!volume.value.trim()) {
+          volume.nextElementSibling.classList.remove("d-none");
+          isValid = false;
+        }else if(volume.value.trim()<0){
+          volume.nextElementSibling.textContent = "Volume cannot be negative"
+          volume.nextElementSibling.classList.remove("d-none");
+          isValid = false;
+        }
+
+        if (!price.value.trim()) {
+          price.nextElementSibling.classList.remove("d-none");
+          isValid = false;
+        }else if(price.value.trim()<0){
+          price.nextElementSibling.textContent = "Price Must be non negative"
+          price.nextElementSibling.classList.remove("d-none");
+          isValid = false;          
+        }
+
+        if (!stock.value.trim()) {
+          stock.nextElementSibling.classList.remove("d-none");
+          isValid = false;
+        }else if(stock.value.trim() < 0){
+          stock.nextElementSibling.textContent = "Stock Must be a non negative number"
+          stock.nextElementSibling.classList.remove("d-none");
+          isValid = false;
+        }
+
+        if (!description.value.trim()) {
+          description.nextElementSibling.classList.remove("d-none");
+          isValid = false;
+        }else if(!descriptionPattern.test(description.value.trim())){
+          description.nextElementSibling.textContent = "Enter a Valid Description";
+          description.nextElementSibling.classList.remove("d-none");
+          isValid = false;
+        }
+      });
+
+      if (!isValid) {
+        console.log("not valid")
+        showToast("Please fix validation errors.", "danger");
+        return;
+      }
 
       try {
         const response = await fetch(`/products/edit/${productId}`, {
@@ -195,16 +303,17 @@
         });
 
         if (response.ok) {
-          alert("Product updated successfully!");
+          showToast("Product updated successfully!", "success");
         } else {
-          const text = await response.text();
-          alert("Update failed: " + text);
+          const text = await response.json();
+          showToast("Update failed: " + text.message, "danger");
         }
       } catch (err) {
         console.error("Error updating product:", err);
-        alert("Something went wrong.");
+        showToast("Something went wrong.", "danger");
       }
     });
+
   </script>
 </body>
 </html>
