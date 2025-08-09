@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/css/admin-css/sidebar.css" />
 </head>
 <body>
-  <div class="admin-layout ">'
+  <div class="admin-layout ">
     <div style="background-color: #1b1b1b; margin: 0; padding: 0;margin-left: 0;padding-left: 0;">
       <%- include('./partials/sidebar') %>
     </div>
@@ -114,6 +114,9 @@
 
           <button type="submit" class="btn btn-primary mt-4">Save Product</button>
         </form>
+        <div id="variants-container"></div>
+        <button type="button" class="btn btn-success mb-3 mt-4" onclick="addVariant()">Add New Variant</button>
+        <button type="button" class="btn btn-primary mt-3" onclick="saveAllVariants()" style="display: none;">Save All Variants</button>
       </div>
     </div>
   </div>
@@ -139,6 +142,7 @@
   <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
   <script>
 
@@ -313,6 +317,289 @@
         showToast("Something went wrong.", "danger");
       }
     });
+
+
+    let uniqueIdCounter = 0;
+
+    function addVariant() {
+        const container = document.getElementById('variants-container');
+        const uniqueId = uniqueIdCounter++;
+        const variantCount = container.querySelectorAll('.variant-row').length + 1;
+        
+        const variantHTML = `
+        <div class="variant-row mt-4 p-3 position-relative" 
+             style="background-color: #3b3b3b; border-radius: 10px;" 
+             data-uid="${uniqueId}">
+             
+            <h6 class="text-white variant-heading">New Variant ${variantCount}</h6>
+            
+            <button type="button" class="btn-close position-absolute top-0 end-0 m-3" 
+                    onclick="removeVariant(${uniqueId})"></button>
+            
+            <div class="row g-3 mt-2">
+                <div class="col-md-4">
+                    <label class="form-label text-white">Volume (ml)*</label>
+                    <input type="number" name="newVariants[${uniqueId}][volume]" class="form-control new-variant-input" required />
+                    <div class="text-danger error-msg d-none">Volume is required and must be positive</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-white">Price*</label>
+                    <input type="number" name="newVariants[${uniqueId}][price]" class="form-control new-variant-input" required />
+                    <div class="text-danger error-msg d-none">Price is required and must be positive</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-white">Stock*</label>
+                    <input type="number" name="newVariants[${uniqueId}][stock]" class="form-control new-variant-input" required />
+                    <div class="text-danger error-msg d-none">Stock is required and must be positive</div>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label text-white">Description*</label>
+                    <textarea name="newVariants[${uniqueId}][description]" rows="3" class="form-control new-variant-input" required></textarea>
+                    <div class="text-danger error-msg d-none">Description is required and must start with a letter followed by at least 5 characters</div>
+                </div>
+
+                ${[1, 2, 3, 4].map(i => `
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label text-white">Image ${i}*</label>
+                        <input type="file" accept="image/*" 
+                               class="form-control new-variant-image" 
+                               data-variant="${uniqueId}" data-index="${i}" required>
+                        <img id="preview-${uniqueId}-${i}" class="img-fluid mt-2" style="display:none; height: 100px; object-fit: cover;">
+                    </div>`).join('')}
+            </div>
+        </div>
+
+        <!-- Unique cropper modal for this variant -->
+        <div class="modal fade" id="cropperModal-${uniqueId}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Crop Image</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img id="cropperImage-${uniqueId}" class="img-fluid" style="max-height: 400px;">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary crop-save-btn" data-variant="${uniqueId}">Crop & Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', variantHTML);
+        initVariantCropper(uniqueId);
+        updateSaveButtonVisibility();
+        updateVariantNumbers();
+    }
+
+    function removeVariant(uid) {
+        document.querySelector(`.variant-row[data-uid="${uid}"]`)?.remove();
+        document.getElementById(`cropperModal-${uid}`)?.remove();
+        updateSaveButtonVisibility();
+        updateVariantNumbers();
+    }
+
+    function updateSaveButtonVisibility() {
+        const container = document.getElementById("variants-container");
+        const variantRows = container.querySelectorAll(".variant-row");
+        const saveButton = document.querySelector('button[onclick="saveAllVariants()"]');
+        
+        if (variantRows.length > 0) {
+            saveButton.style.display = "block";
+        } else {
+            saveButton.style.display = "none";
+        }
+    }
+
+    // Handle cropper for each variant
+    function initVariantCropper(variantId) {
+        let cropperInstance;
+        let currentImageIndex;
+
+        document.querySelectorAll(`.new-variant-image[data-variant="${variantId}"]`)
+            .forEach(input => {
+                input.addEventListener('change', function (event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    currentImageIndex = event.target.getAttribute("data-index");
+
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const imageElement = document.getElementById(`cropperImage-${variantId}`);
+                        imageElement.src = e.target.result;
+
+                        const modal = new bootstrap.Modal(document.getElementById(`cropperModal-${variantId}`));
+                        modal.show();
+
+                        if (cropperInstance) cropperInstance.destroy();
+                        cropperInstance = new Cropper(imageElement, { aspectRatio: 1, viewMode: 1 });
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+
+        // Crop save button
+        document.querySelector(`#cropperModal-${variantId} .crop-save-btn`)
+            .addEventListener('click', function () {
+                if (!cropperInstance) return;
+
+                const canvas = cropperInstance.getCroppedCanvas({ width: 500, height: 500 });
+                canvas.toBlob(blob => {
+                    const fileInput = document.querySelector(`.new-variant-image[data-variant="${variantId}"][data-index="${currentImageIndex}"]`);
+                    const newFile = new File([blob], `variant-${variantId}-${currentImageIndex}.jpg`, { type: "image/jpeg" });
+
+                    const dt = new DataTransfer();
+                    dt.items.add(newFile);
+                    fileInput.files = dt.files;
+
+                    const preview = document.getElementById(`preview-${variantId}-${currentImageIndex}`);
+                    preview.src = URL.createObjectURL(newFile);
+                    preview.style.display = "block";
+                });
+
+                bootstrap.Modal.getInstance(document.getElementById(`cropperModal-${variantId}`)).hide();
+            });
+    }
+
+    async function saveAllVariants() {
+        const container = document.getElementById("variants-container");
+        const variantRows = container.querySelectorAll(".variant-row");
+
+        if (variantRows.length === 0) {
+            showToast("No new variants to save", "warning");
+            return;
+        }
+
+        // Clear all existing error messages
+        container.querySelectorAll(".error-msg").forEach(el => el.classList.add("d-none"));
+
+        let isValid = true;
+        const formData = new FormData();
+        const descriptionPattern = /^[a-zA-Z]\w{5,}/;
+
+        variantRows.forEach((row, idx) => {
+            const uid = row.getAttribute("data-uid");
+
+            // Get form inputs
+            const volume = row.querySelector('input[name$="[volume]"]');
+            const price = row.querySelector('input[name$="[price]"]');
+            const stock = row.querySelector('input[name$="[stock]"]');
+            const description = row.querySelector('textarea[name$="[description]"]');
+
+            // Validate volume
+            if (!volume.value.trim()) {
+                volume.nextElementSibling.textContent = "Volume is required";
+                volume.nextElementSibling.classList.remove("d-none");
+                isValid = false;
+            } else if (parseFloat(volume.value) <= 0) {
+                volume.nextElementSibling.textContent = "Volume must be a positive number";
+                volume.nextElementSibling.classList.remove("d-none");
+                isValid = false;
+            }
+
+            // Validate price
+            if (!price.value.trim()) {
+                price.nextElementSibling.textContent = "Price is required";
+                price.nextElementSibling.classList.remove("d-none");
+                isValid = false;
+            } else if (parseFloat(price.value) <= 0) {
+                price.nextElementSibling.textContent = "Price must be a positive number";
+                price.nextElementSibling.classList.remove("d-none");
+                isValid = false;
+            }
+
+            // Validate stock
+            if (!stock.value.trim()) {
+                stock.nextElementSibling.textContent = "Stock is required";
+                stock.nextElementSibling.classList.remove("d-none");
+                isValid = false;
+            } else if (parseFloat(stock.value) < 0) {
+                stock.nextElementSibling.textContent = "Stock must be a non-negative number";
+                stock.nextElementSibling.classList.remove("d-none");
+                isValid = false;
+            }
+
+            // Validate description
+            if (!description.value.trim()) {
+                description.nextElementSibling.textContent = "Description is required";
+                description.nextElementSibling.classList.remove("d-none");
+                isValid = false;
+            } else if (!descriptionPattern.test(description.value.trim())) {
+                description.nextElementSibling.textContent = "Description must start with a letter followed by at least 5 characters";
+                description.nextElementSibling.classList.remove("d-none");
+                isValid = false;
+            }
+
+            // Check if all 4 images are uploaded
+            const imageInputs = row.querySelectorAll('.new-variant-image');
+            let imagesUploaded = 0;
+            imageInputs.forEach(input => {
+                if (input.files[0]) imagesUploaded++;
+            });
+
+            if (imagesUploaded < 4) {
+                showToast(`Variant ${idx + 1}: All 4 images are required`, "danger");
+                isValid = false;
+            }
+
+            // Add to form data if valid
+            if (isValid) {
+                formData.append(`newVariants[${idx}][volume]`, volume.value);
+                formData.append(`newVariants[${idx}][price]`, price.value);
+                formData.append(`newVariants[${idx}][stock]`, stock.value);
+                formData.append(`newVariants[${idx}][description]`, description.value);
+
+                // Add images
+                imageInputs.forEach((input, imageIdx) => {
+                    if (input.files[0]) {
+                        formData.append(`newVariants[${idx}][images]`, input.files[0]);
+                    }
+                });
+            }
+        });
+
+        if (!isValid) {
+            showToast("Please fix validation errors", "danger");
+            return;
+        }
+
+        try {
+            const response = await axios.post(`/products/add-new-variants/<%= product._id %>`, formData, {
+                headers: { "Content-Type": "multipart/form-data" }
+            });
+
+            if (response.data.success) {
+                showToast("New variants added successfully!", "success");
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showToast(response.data.message || "Error adding variants", "danger");
+            }
+        } catch (err) {
+            console.error("Error saving variants:", err);
+            showToast(err.response?.data?.message || "Error adding variants", "danger");
+        }
+    }
+
+    function updateVariantNumbers() {
+        const container = document.getElementById("variants-container");
+        const variantRows = container.querySelectorAll(".variant-row");
+        
+        variantRows.forEach((row, index) => {
+            const heading = row.querySelector('.variant-heading');
+            if (heading) {
+                heading.textContent = `New Variant ${index + 1}`;
+            }
+        });
+    }
+
+    // Initialize save button visibility
+    updateSaveButtonVisibility();
 
   </script>
 </body>

@@ -15,5 +15,6 @@ productRouter.post("/add",adminAuthMiddleware, ...adminController.addProductPost
 productRouter.put("/block/:id",adminAuthMiddleware, adminController.blockProduct);
 productRouter.get("/edit/:id",adminAuthMiddleware, adminController.editProduct);
 productRouter.put("/edit/:id",adminAuthMiddleware, adminController.editProductPost);
+productRouter.post("/add-new-variants/:productId",adminAuthMiddleware, adminController.addNewVariants);
 
 export default productRouter;

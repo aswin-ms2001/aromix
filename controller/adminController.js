@@ -497,7 +497,135 @@ export const editProductPost = [
       res.status(200).json({ message: "Product updated successfully" });
     } catch (err) {
       console.error("Error updating product:", err);
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({ message: "Internal server error" });
+    }
+  },
+];
+
+
+export const addNewVariants = [
+  // Accept any file field 
+  upload.any(),
+
+  async (req, res) => {
+    try {
+      const productId = req.params.productId;
+
+      // Log incoming body for debugging
+      // console.log("Incoming body:", req.body);
+
+      // Validate product exists
+      const product = await Product.findById(productId);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found",
+        });
+      }
+
+      // Ensure we actually have variants in body
+      if (!Array.isArray(req.body.newVariants) || req.body.newVariants.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "No variants provided",
+        });
+      }
+
+      const variantsToAdd = [];
+      const descriptionPattern = /^[a-zA-Z]\w{5,}/;
+
+      for (let i = 0; i < req.body.newVariants.length; i++) {
+        const variant = req.body.newVariants[i];
+
+        const volume = parseFloat(variant.volume);
+        const price = parseFloat(variant.price);
+        const stock = parseInt(variant.stock);
+        const description = variant.description;
+
+        // ===== VALIDATIONS =====
+        if (!volume || volume <= 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Variant ${i + 1}: Volume must be a positive number`,
+          });
+        }
+        if (!price || price <= 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Variant ${i + 1}: Price must be a positive number`,
+          });
+        }
+        if (stock < 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Variant ${i + 1}: Stock must be a non-negative number`,
+          });
+        }
+        if (!description || !description.trim()) {
+          return res.status(400).json({
+            success: false,
+            message: `Variant ${i + 1}: Description is required`,
+          });
+        }
+        if (!descriptionPattern.test(description.trim())) {
+          return res.status(400).json({
+            success: false,
+            message: `Variant ${i + 1}: Description must start with a letter followed by at least 5 characters`,
+          });
+        }
+
+        // ===== IMAGES HANDLING =====
+        const filesForVariant = (req.files || []).filter(
+          (file) => file.fieldname === `newVariants[${i}][images]`
+        );
+
+        if (filesForVariant.length < 4) {
+          return res.status(400).json({
+            success: false,
+            message: `Variant ${i + 1}: All 4 images are required`,
+          });
+        }
+
+        // Upload images to Cloudinary
+        const uploadedImages = await Promise.all(
+          filesForVariant.map((file) =>
+            cloudinary.uploader
+              .upload(file.path, {
+                folder: "products/variants",
+                crop: "fill",
+                width: 500,
+                height: 500,
+                gravity: "auto",
+              })
+              .then((result) => result.secure_url)
+          )
+        );
+
+        // Add validated variant
+        variantsToAdd.push({
+          volume,
+          price,
+          stock,
+          description: description.trim(),
+          images: uploadedImages,
+        });
+      }
+
+      // ===== SAVE TO DATABASE =====
+      product.variants.push(...variantsToAdd);
+      await product.save();
+
+      res.json({
+        success: true,
+        message: `${variantsToAdd.length} new variant(s) added successfully`,
+        product,
+      });
+    } catch (err) {
+      console.error("Error adding new variants:", err);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
     }
   },
 ];
