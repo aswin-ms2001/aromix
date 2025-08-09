@@ -114,7 +114,11 @@ export const signup = async (req,res)=>{
     const {fullname,email,password}= req.body;
     const existing = await User.findOne({email})
     if(existing && existing.isVerified){
-        return res.render("user-views/login.ejs")
+        return res.render("user-views/login.ejs",
+          {
+            errorMessage:"User Allready Exist"
+          }
+        )
     }
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     console.log(otp);
@@ -281,6 +285,7 @@ export const verifyResetOtp = async (req, res) => {
 
 export const updatePassword = async (req, res) => {
   try {
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[a-zA-Z\d\W_]{8,}$/;
     const { email, newPassword, confirmPassword } = req.body;
 
    
@@ -292,6 +297,9 @@ export const updatePassword = async (req, res) => {
       return res.status(400).json({ error: "Passwords do not match." });
     }
 
+    if(!passwordPattern.test(newPassword)){
+      return res.status(400).json({ error: "Password must be at least 8 characters long, include uppercase, lowercase, number, and special character." });
+    }
    
     const user = await User.findOne({ email });
 

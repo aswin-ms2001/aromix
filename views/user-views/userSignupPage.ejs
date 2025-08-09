@@ -71,6 +71,7 @@
   const togglePassword = document.querySelector("#togglePassword");
   const passwordInput = document.querySelector("#password");
   const icon = togglePassword.querySelector("i");
+  const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[a-zA-Z\d\W_]{8,}$/;
 
   togglePassword.addEventListener("click", () => {
     const isPassword = passwordInput.type === "password";
@@ -151,6 +152,9 @@
     if (passwordField.value.trim() === "") {
       showError(passwordField, "Please enter a password.");
       valid = false;
+    }else if(!passwordPattern.test(passwordField.value.trim())){
+            showError(passwordField, "Password must be at least 8 characters long, include uppercase, lowercase, number, and special character.");
+            valid = false;
     }
 
     // Confirm Password
@@ -158,7 +162,12 @@
       showError(confirmPasswordField, "Please confirm your password.");
       confirmPasswordError.style.display = "none";
       valid = false;
-    } else if (passwordField.value !== confirmPasswordField.value) {
+    } else if(!passwordPattern.test(confirmPasswordField.value.trim())){
+      showError(confirmPasswordField, "Password must be at least 8 characters long, include uppercase, lowercase, number, and special character.");
+      confirmPasswordError.style.display = "none";
+      valid = false;
+    }
+    else if (passwordField.value !== confirmPasswordField.value) {
       confirmPasswordError.style.display = "block";
       valid = false;
     } else {

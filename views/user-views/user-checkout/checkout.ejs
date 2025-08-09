@@ -325,6 +325,9 @@ document.getElementById("addForm").addEventListener("submit", async function (e)
     } else if (!addressPattern.test(payload.house)) {
       document.getElementById("addHouseError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
       hasError = true;
+    }else if (!/.{4,}/.test(payload.house)) {
+      document.getElementById("addHouseError").textContent = "Minimum 4 letters are required";
+      hasError = true;
     }
 
     // --- Street ---
@@ -333,6 +336,9 @@ document.getElementById("addForm").addEventListener("submit", async function (e)
       hasError = true;
     } else if (!addressPattern.test(payload.street)) {
       document.getElementById("addStreetError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
+      hasError = true;
+    }else if (!/.{7,}/.test(payload.street)) {
+      document.getElementById("addStreetError").textContent = "Minimum 7 letters Required.";
       hasError = true;
     }
 
@@ -343,6 +349,9 @@ document.getElementById("addForm").addEventListener("submit", async function (e)
     } else if (!addressPattern.test(payload.city)) {
       document.getElementById("addCityError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
       hasError = true;
+    }else if (!/.{3,}/.test(payload.city)) {
+      document.getElementById("addCityError").textContent = "Minimum 3 letters reqired.";
+      hasError = true;
     }
 
     // --- State ---
@@ -352,6 +361,9 @@ document.getElementById("addForm").addEventListener("submit", async function (e)
     } else if (!addressPattern.test(payload.state)) {
       document.getElementById("addStateError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
       hasError = true;
+    }else if (!/.{3,}/.test(payload.state)) {
+      document.getElementById("addStateError").textContent = "Minimum 3 letters reqired.";
+      hasError = true;
     }
 
     // --- Country ---
@@ -360,6 +372,9 @@ document.getElementById("addForm").addEventListener("submit", async function (e)
       hasError = true;
     } else if (!addressPattern.test(payload.country)) {
       document.getElementById("addCountryError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
+      hasError = true;
+    }else if (!/.{5,}/.test(payload.country)) {
+      document.getElementById("addCountryError").textContent = "Minimum 5 letters required.";
       hasError = true;
     }
 
@@ -448,7 +463,7 @@ document.getElementById("editForm").addEventListener("submit", async function (e
     console.log(payload);
     let hasError = false;
     const addressPattern = /^(?!\s)(?!.*\s$)[A-Za-z0-9]+(?:\s[A-Za-z0-9]+)*$/;
-
+    const isAllSame = /^([0-9])\1{9}$/;
     // ✅ Validations
 
     // --- Name ---
@@ -473,6 +488,9 @@ document.getElementById("editForm").addEventListener("submit", async function (e
     } else if (!addressPattern.test(payload.house)) {
       document.getElementById("editHouseError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
       hasError = true;
+    }else if (!/.{4,}/.test(payload.house)) {
+      document.getElementById("editHouseError").textContent = "Minimum 4 letters are required";
+      hasError = true;
     }
 
     // --- Street ---
@@ -481,6 +499,9 @@ document.getElementById("editForm").addEventListener("submit", async function (e
       hasError = true;
     } else if (!addressPattern.test(payload.street)) {
       document.getElementById("editStreetError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
+      hasError = true;
+    } else if (!/.{7,}/.test(payload.street)) {
+      document.getElementById("editStreetError").textContent = "Minimum 7 letters Required.";
       hasError = true;
     }
 
@@ -491,6 +512,9 @@ document.getElementById("editForm").addEventListener("submit", async function (e
     } else if (!addressPattern.test(payload.city)) {
       document.getElementById("editCityError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
       hasError = true;
+    } else if (!/.{3,}/.test(payload.city)) {
+      document.getElementById("editCityError").textContent = "Minimum 3 letters reqired.";
+      hasError = true;
     }
 
     // --- State ---
@@ -499,6 +523,9 @@ document.getElementById("editForm").addEventListener("submit", async function (e
       hasError = true;
     } else if (!addressPattern.test(payload.state)) {
       document.getElementById("editStateError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
+      hasError = true;
+    }else if (!/.{3,}/.test(payload.state)) {
+      document.getElementById("editStateError").textContent = "Minimum 3 letters reqired.";
       hasError = true;
     }
 
@@ -509,6 +536,9 @@ document.getElementById("editForm").addEventListener("submit", async function (e
     } else if (!addressPattern.test(payload.country)) {
       document.getElementById("editCountryError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
       hasError = true;
+    }else if (!/.{5,}/.test(payload.country)) {
+      document.getElementById("editCountryError").textContent = "Minimum 5 letters required.";
+      hasError = true;
     }
 
     // --- Mobile ---
@@ -518,14 +548,17 @@ document.getElementById("editForm").addEventListener("submit", async function (e
     } else if (!/^[0-9]{10}$/.test(payload.mobile)) {
       document.getElementById("editMobileError").textContent = "Mobile number must be 10 digits.";
       hasError = true;
+    }else if(isAllSame.test(payload.mobile)){
+      document.getElementById("editMobileError").textContent = "Enter Valid Mobile Number";
+      hasError = true;
     }
 
     // --- Pincode ---
     if (!payload.pincode) {
       document.getElementById("editPincodeError").textContent = "Pincode is required.";
       hasError = true;
-    } else if (!/^\d{6}$/.test(payload.pincode)) {
-      document.getElementById("editPincodeError").textContent = "Pincode must be 6 digits.";
+    } else if (!/^[1-9]\d{5}$/.test(payload.pincode)) {
+      document.getElementById("editPincodeError").textContent = "Enter A Valid Pincode.";
       hasError = true;
     }
 

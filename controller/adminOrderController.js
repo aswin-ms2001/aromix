@@ -320,6 +320,9 @@ export const updateOrderStatus = async (req, res) => {
         } else if (newIndex === -1 || newIndex < currentIndex) {
             return res.status(400).json({ success: false, message: "Invalid status progression" });
         }
+        if(order.orderStatus === "Pending" && newStatus !== "Cancelled" && newIndex - currentIndex > 1){
+             return res.status(400).json({ success: false, message: "You can only Confirm or Cancel while the order is Pending " });
+        }
 
         if(newStatus!== "Cancelled" && order.orderStatus !== "Pending" && newIndex-currentIndex >1 ){
             return res.status(400).json({ success: false, message: "Progression Should be Followed Step by step" });
@@ -347,8 +350,7 @@ export const verifyReturn = async (req, res) => {
     try {
         const orderId = req.params.orderId;
         const variantId = req.params.variantId;
-        console.log(variantId);
-        const { action, refundAmount } = req.body; // action: 'approve' or 'reject'
+        const { action } = req.body; // action: 'approve' or 'reject'
 
         const order = await Order.findById(orderId);
         if (!order) {
@@ -384,7 +386,7 @@ export const verifyReturn = async (req, res) => {
             wallet.transactions.push({
                 type: "Credit",
                 amount: refundAmount,
-                description: `Refund for returned item - ${itemToReturn.productId.name} (${itemToReturn.variantId}) - Order #${order.orderId}`,
+                description: `Refund for returned item  - Order #${order.orderId}`,
                 orderId: order._id
             });
 

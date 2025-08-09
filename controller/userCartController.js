@@ -204,7 +204,7 @@ export const updateCartQuantity = async (req, res) => {
 
     let subtotal = 0;
     for (const item of userCart) {
-      console.log(item)
+      // console.log(item)
       if(item.productId.blocked||item.productId.categoryId.blocked){
         continue;
       }

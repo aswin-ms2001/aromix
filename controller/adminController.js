@@ -344,6 +344,15 @@ export const getEditCategoryPost =  async (req, res) => {
       return res.status(400).json({ message: 'Category name is required' });
     }
 
+
+    const duplicate = await Category.find({
+      name: new RegExp(`^${categoryName.trim()}$`,'i')
+    })
+
+    console.log(duplicate);
+    if(duplicate[0]){
+      return res.status(404).json({ message: 'Category Name Already exist' });
+    }
     const updatedCategory = await Category.findByIdAndUpdate(
       categoryId,
       { name: categoryName.trim() },

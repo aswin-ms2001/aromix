@@ -335,7 +335,10 @@
       } else if (!addressPattern.test(payload.house)) {
         document.getElementById("addHouseError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
         hasError = true;
-      }
+      }else if (!/.{4,}/.test(payload.house)) {
+      document.getElementById("addHouseError").textContent = "Minimum 4 letters are required";
+      hasError = true;
+    }
 
       // --- Street ---
       if (!payload.street) {
@@ -344,7 +347,10 @@
       } else if (!addressPattern.test(payload.street)) {
         document.getElementById("addStreetError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
         hasError = true;
-      }
+      }else if (!/.{7,}/.test(payload.street)) {
+      document.getElementById("addStreetError").textContent = "Minimum 7 letters Required.";
+      hasError = true;
+    }
 
       // --- City ---
       if (!payload.city) {
@@ -353,7 +359,10 @@
       } else if (!addressPattern.test(payload.city)) {
         document.getElementById("addCityError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
         hasError = true;
-      }
+      }else if (!/.{3,}/.test(payload.city)) {
+      document.getElementById("addCityError").textContent = "Minimum 3 letters reqired.";
+      hasError = true;
+    }
 
       // --- State ---
       if (!payload.state) {
@@ -362,7 +371,11 @@
       } else if (!addressPattern.test(payload.state)) {
         document.getElementById("addStateError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
         hasError = true;
-      }
+      } else if (!/.{3,}/.test(payload.state)) {
+      document.getElementById("addStateError").textContent = "Minimum 3 letters reqired.";
+      hasError = true;
+    }
+
 
       // --- Country ---
       if (!payload.country) {
@@ -371,7 +384,10 @@
       } else if (!addressPattern.test(payload.country)) {
         document.getElementById("addCountryError").textContent = "Only letters, numbers, and single spaces allowed. No leading or trailing spaces.";
         hasError = true;
-      }
+      }else if (!/.{5,}/.test(payload.country)) {
+      document.getElementById("addCountryError").textContent = "Minimum 5 letters required.";
+      hasError = true;
+    }
 
       // --- Mobile ---
       if (!payload.mobile) {
@@ -474,6 +490,9 @@
     } else if (!addressPattern.test(payload.house)) {
       document.getElementById("editHouseError").textContent = "Only letters, numbers, single spaces allowed.";
       hasError = true;
+    }else if (!/.{4,}/.test(payload.house)) {
+      document.getElementById("editHouseError").textContent = "Minimum 4 letters are required";
+      hasError = true;
     }
 
     // --- Street ---
@@ -482,6 +501,9 @@
       hasError = true;
     } else if (!addressPattern.test(payload.street)) {
       document.getElementById("editStreetError").textContent = "Only letters, numbers, single spaces allowed.";
+      hasError = true;
+    }else if (!/.{7,}/.test(payload.street)) {
+      document.getElementById("editStreetError").textContent = "Minimum 7 letters Required.";
       hasError = true;
     }
 
@@ -492,6 +514,9 @@
     } else if (!addressPattern.test(payload.city)) {
       document.getElementById("editCityError").textContent = "Only letters, numbers, single spaces allowed.";
       hasError = true;
+    }else if (!/.{3,}/.test(payload.city)) {
+      document.getElementById("editCityError").textContent = "Minimum 3 letters reqired.";
+      hasError = true;
     }
 
     // --- State ---
@@ -500,6 +525,9 @@
       hasError = true;
     } else if (!addressPattern.test(payload.state)) {
       document.getElementById("editStateError").textContent = "Only letters, numbers, single spaces allowed.";
+      hasError = true;
+    }else if (!/.{3,}/.test(payload.state)) {
+      document.getElementById("editStateError").textContent = "Minimum 3 letters reqired.";
       hasError = true;
     }
 
@@ -510,7 +538,11 @@
     } else if (!addressPattern.test(payload.country)) {
       document.getElementById("editCountryError").textContent = "Only letters, numbers, single spaces allowed.";
       hasError = true;
+    }else if (!/.{5,}/.test(payload.country)) {
+      document.getElementById("editCountryError").textContent = "Minimum 5 letters required.";
+      hasError = true;
     }
+
 
     // --- Mobile ---
     if (!payload.mobile) {

@@ -357,9 +357,13 @@
     document.getElementById('confirmCancelBtn').addEventListener('click', async () => {
       const reason = document.getElementById('cancelReason').value.trim();
       const errorDiv = document.getElementById('cancelError');
+      const returnDescriptionPattern = /^(?!\s)([A-Za-z0-9.,!?'"-]+\s?){7,300}(?<!\s)$/;
       
       if (!reason) {
         errorDiv.textContent = "Please provide a cancellation reason";
+        return;
+      }else if(!returnDescriptionPattern.test(reason)){
+        errorDiv.textContent = "Need Atleast 7 letters ";
         return;
       }
       
@@ -383,9 +387,13 @@
     document.getElementById('confirmCancelItemBtn').addEventListener('click', async () => {
       const reason = document.getElementById('cancelItemReason').value.trim();
       const errorDiv = document.getElementById('cancelItemError');
+      const returnDescriptionPattern = /^(?!\s)([A-Za-z0-9.,!?'"-]+\s?){7,300}(?<!\s)$/;
       
       if (!reason) {
         errorDiv.textContent = "Please provide a cancellation reason";
+        return;
+      }else if(!returnDescriptionPattern.test(reason)){
+        errorDiv.textContent = "Need Atleast 7 letters ";
         return;
       }
       
@@ -414,9 +422,13 @@
     document.getElementById('confirmReturnBtn').addEventListener('click', async () => {
       const reason = document.getElementById('returnReason').value.trim();
       const errorDiv = document.getElementById('returnError');
+      const returnDescriptionPattern = /^(?!\s)([A-Za-z0-9.,!?'"-]+\s?){7,300}(?<!\s)$/;
       
       if (!reason) {
         errorDiv.textContent = "Please provide a return reason";
+        return;
+      }else if(!returnDescriptionPattern.test(reason)){
+        errorDiv.textContent = "Need Atleast 7 letters ";
         return;
       }
       
