@@ -33,7 +33,7 @@ export const userOrder = async (req, res) => {
   try {
     const userId = req.user._id;
     const { cart, selectedAddressId, paymentMethod } = req.body;
-
+      
     // 1. Validate payment method
     if (paymentMethod !== "cod") {
       return res.status(400).json({ success: false, message: "Only Cash On Delivery is Applicable" });

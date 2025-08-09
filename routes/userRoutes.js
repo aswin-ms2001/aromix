@@ -9,7 +9,7 @@ import flash from "connect-flash"
 
 const userRoutes = express.Router();
 
-console.log("Enterd user route")
+
 userRoutes.use(userSessionMiddleware);
 userRoutes.use(passport.initialize());
 userRoutes.use(passport.session());
