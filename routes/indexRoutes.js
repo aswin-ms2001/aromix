@@ -16,6 +16,7 @@ import userCart from './userCartRoutes.js';
 import userWishlist from './userWishlistRoutes.js';
 import userWallet from './userWalletRoutes.js';
 import userOder from './userOderRoutes.js';
+import adminOfferRoutes from './adminOfferRoutes.js';
 import { userSessionMiddleware } from "../config/session.js";
 const userDetails = [userSessionMiddleware,passport.initialize(),passport.session(),currentUser]
 
@@ -37,9 +38,9 @@ router.use('/admin', adminRoutes);
 router.use('/admin-users', adminUserRouter);
 router.use('/products', productRoutes);
 router.use("/adminCategory",adminCategoryRoutes);
-router.use("/admin-order",adminOrderRoutes)
+router.use("/admin-order",adminOrderRoutes);
+router.use("/admin-offer",adminOfferRoutes)
 
-// router.use('/orders', orderRoutes);
 
 
 export default router;

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Offers | Aromix</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/css/admin-css/adminProducts.css">
+  <link rel="stylesheet" href="/css/admin-css/sidebar.css">
+</head>
+<body>
+<div class="d-flex">
+  <%- include('./partials/sidebar') %>
+
+  <div class="flex-grow-1 p-4" style="background-color:#1b1b1b; min-height:100vh;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="text-white">Offer Management</h2>
+      <button class="btn btn-success" onclick="openCreateModal()"><i class="bi bi-plus"></i> New Offer</button>
+    </div>
+
+    <div class="card p-3 mb-4" style="background-color:#2e0e46; border:none; border-radius:20px;">
+      <div class="row g-3">
+        <div class="col-md-4 d-flex">
+          <input class="form-control me-2" id="search" placeholder="Search by name" value="<%= search || '' %>">
+          <button class="btn btn-outline-light" onclick="applyFilters()"><i class="bi bi-search"></i></button>
+        </div>
+        <div class="col-md-3">
+          <select id="type" class="form-select" onchange="applyFilters()">
+            <option value="">All Types</option>
+            <option value="PRODUCT" <%= type === 'PRODUCT' ? 'selected' : '' %>>Product</option>
+            <option value="CATEGORY" <%= type === 'CATEGORY' ? 'selected' : '' %>>Category</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select id="status" class="form-select" onchange="applyFilters()">
+            <option value="">All Status</option>
+            <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
+            <option value="inactive" <%= status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-center text-white">Total: <%= totalOffers %></div>
+      </div>
+    </div>
+
+    <div class="card p-3" style="background-color:#2e0e46; border:none; border-radius:20px;">
+      <div class="table-responsive">
+        <table class="table text-white mb-0">
+          <thead>
+            <tr style="background-color:#aa5de8;">
+              <th>Name</th>
+              <th>Type</th>
+              <th>Target</th>
+              <th>Discount</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% offers.forEach(o => { %>
+              <tr>
+                <td><%= o.name %></td>
+                <td><%= o.offerType %></td>
+                <td><%= o.targetName || '-' %></td>
+                <td><%= o.discountPercent %>%</td>
+                <td><%= new Date(o.startAt).toLocaleString('en-IN') %></td>
+                <td><%= new Date(o.endAt).toLocaleString('en-IN') %></td>
+                <td>
+                  <span class="badge bg-<%= o.isActive ? 'success' : 'secondary' %>"><%= o.isActive ? 'Active' : 'Inactive' %></span>
+                </td>
+                <td>
+                  <button class="btn btn-sm btn-info me-2" onclick='openEditModal(<%- JSON.stringify(o) %>)'><i class="bi bi-pencil"></i> Edit</button>
+                  <button class="btn btn-sm <%= o.isActive ? 'btn-warning' : 'btn-success' %>" onclick="toggleOffer('<%= o._id %>', <%= !o.isActive %>)">
+                    <i class="bi <%= o.isActive ? 'bi-pause' : 'bi-play' %>"></i> <%= o.isActive ? 'Deactivate' : 'Activate' %>
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-between mt-4 text-white">
+        <div>Page <%= currentPage %> of <%= totalPages %></div>
+        <div>
+          <% if (hasPrevPage) { %>
+            <a class="btn btn-outline-light btn-sm" href="?page=<%= prevPage %><%= search ? '&search=' + search : '' %><%= type ? '&type=' + type : '' %><%= status ? '&status=' + status : '' %>">Previous</a>
+          <% } %>
+          <% if (hasNextPage) { %>
+            <a class="btn btn-outline-light btn-sm" href="?page=<%= nextPage %><%= search ? '&search=' + search : '' %><%= type ? '&type=' + type : '' %><%= status ? '&status=' + status : '' %>">Next</a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Modal -->
+<div class="modal fade" id="offerModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="offerModalTitle">New Offer</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Name</label>
+            <input id="offerName" type="text" class="form-control" placeholder="Offer name" />
+            <div class="text-danger small d-none" id="nameError"></div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Type</label>
+            <select id="offerType" class="form-select" onchange="resetTarget()">
+              <option value="PRODUCT">Product</option>
+              <option value="CATEGORY">CATEGORY</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Discount (%)</label>
+            <input id="offerPercent" type="number" class="form-control" min="1" max="90" />
+            <div class="text-danger small d-none" id="percentError"></div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Start</label>
+            <input id="startAt" type="datetime-local" class="form-control" />
+            <div class="text-danger small d-none" id="startError"></div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">End</label>
+            <input id="endAt" type="datetime-local" class="form-control" />
+            <div class="text-danger small d-none" id="endError"></div>
+          </div>
+          <div class="col-md-12">
+            <label class="form-label">Target</label>
+            <input id="targetSearch" type="text" class="form-control" placeholder="Type to search target..." oninput="debouncedSearchTargets()" />
+            <div class="list-group" id="targetResults" style="max-height:200px; overflow:auto;"></div>
+            <input type="hidden" id="targetId" />
+            <div class="text-danger small d-none" id="targetError"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button class="btn btn-primary" id="saveOfferBtn" onclick="submitOffer()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+  let editingOfferId = null;
+  let searchDebounceTimer = null;
+
+  function showToast(message, type = 'primary'){
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0 show position-fixed top-50 start-50 translate-middle`;
+    toast.style.minWidth = '300px';
+    toast.style.zIndex = '1055';
+    toast.innerHTML = `<div class='d-flex'><div class='toast-body'>${message}</div><button class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast'></button></div>`;
+    document.body.appendChild(toast);
+    setTimeout(()=>toast.remove(), 3000);
+  }
+
+  function applyFilters(){
+    const params = new URLSearchParams();
+    const s = document.getElementById('search').value.trim();
+    const t = document.getElementById('type').value;
+    const st = document.getElementById('status').value;
+    if (s) params.append('search', s);
+    if (t) params.append('type', t);
+    if (st) params.append('status', st);
+    window.location.href = '/admin-offer?' + params.toString();
+  }
+
+  function openCreateModal(){
+    editingOfferId = null;
+    document.getElementById('offerModalTitle').innerText = 'New Offer';
+    document.getElementById('offerName').value = '';
+    document.getElementById('offerType').value = 'PRODUCT';
+    document.getElementById('offerPercent').value = '';
+    document.getElementById('startAt').value = '';
+    document.getElementById('endAt').value = '';
+    document.getElementById('targetSearch').value = '';
+    document.getElementById('targetId').value = '';
+    clearErrors();
+    new bootstrap.Modal(document.getElementById('offerModal')).show();
+  }
+
+  function openEditModal(offer){
+    editingOfferId = offer._id;
+    document.getElementById('offerModalTitle').innerText = 'Edit Offer';
+    document.getElementById('offerName').value = offer.name;
+    document.getElementById('offerType').value = offer.offerType;
+    document.getElementById('offerPercent').value = offer.discountPercent;
+    document.getElementById('startAt').value = toInputDateTime(offer.startAt);
+    document.getElementById('endAt').value = toInputDateTime(offer.endAt);
+    document.getElementById('targetSearch').value = offer.targetName || '';
+    document.getElementById('targetId').value = offer.offerType === 'PRODUCT' ? (offer.productId || '') : (offer.categoryId || '');
+    clearErrors();
+    new bootstrap.Modal(document.getElementById('offerModal')).show();
+  }
+
+  function toInputDateTime(dateStr){
+    const d = new Date(dateStr);
+    const pad = n => String(n).padStart(2,'0');
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth()+1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const mi = pad(d.getMinutes());
+    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  }
+
+  function clearErrors(){
+    ['nameError','percentError','startError','endError','targetError'].forEach(id=>{
+      const el = document.getElementById(id);
+      el.classList.add('d-none');
+      el.textContent = '';
+    });
+  }
+
+  function resetTarget(){
+    document.getElementById('targetSearch').value = '';
+    document.getElementById('targetId').value = '';
+    document.getElementById('targetResults').innerHTML = '';
+  }
+
+  function debouncedSearchTargets(){
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(searchTargets, 250);
+  }
+
+  async function searchTargets(){
+    const q = document.getElementById('targetSearch').value.trim();
+    const type = document.getElementById('offerType').value;
+    if (!q) { document.getElementById('targetResults').innerHTML = ''; return; }
+    try{
+      const res = await axios.get(`/admin-offer/search-targets`, { params: { type, q } });
+      if (res.data.success){
+        const list = res.data.data.map(it => `<button type='button' class='list-group-item list-group-item-action' onclick='selectTarget("${it.id}", "${it.name.replace(/"/g,'&quot;')}")'>${it.name}</button>`).join('');
+        document.getElementById('targetResults').innerHTML = list;
+      }
+    }catch(err){
+      console.error(err);
+    }
+  }
+
+  function selectTarget(id, name){
+    document.getElementById('targetId').value = id;
+    document.getElementById('targetSearch').value = name;
+    document.getElementById('targetResults').innerHTML = '';
+  }
+
+  function validateForm(){
+    clearErrors();
+    const name = document.getElementById('offerName').value.trim();
+    const percent = Number(document.getElementById('offerPercent').value);
+    const startAt = document.getElementById('startAt').value;
+    const endAt = document.getElementById('endAt').value;
+    const targetId = document.getElementById('targetId').value;
+
+    const namePattern = /^(?![ .])(?!.*[ .]{2})[A-Za-z0-9 .]{7,}$/;
+    let ok = true;
+
+    if (!namePattern.test(name)) { document.getElementById('nameError').classList.remove('d-none'); document.getElementById('nameError').textContent = 'Invalid name'; ok = false; }
+    if (!(percent >= 1 && percent <= 90)) { document.getElementById('percentError').classList.remove('d-none'); document.getElementById('percentError').textContent = 'Discount 1 - 90%'; ok = false; }
+    const s = new Date(startAt); const e = new Date(endAt); const now = new Date();
+    if (!(startAt && !isNaN(s.getTime()))) { document.getElementById('startError').classList.remove('d-none'); document.getElementById('startError').textContent = 'Invalid start'; ok = false; }
+    if (!(endAt && !isNaN(e.getTime()))) { document.getElementById('endError').classList.remove('d-none'); document.getElementById('endError').textContent = 'Invalid end'; ok = false; }
+    if (s >= e) { document.getElementById('startError').classList.remove('d-none'); document.getElementById('startError').textContent = 'Start must be before end'; ok = false; }
+    if (!editingOfferId && s < now) { document.getElementById('startError').classList.remove('d-none'); document.getElementById('startError').textContent = 'Start cannot be past'; ok = false; }
+    if (!targetId) { document.getElementById('targetError').classList.remove('d-none'); document.getElementById('targetError').textContent = 'Select a target'; ok = false; }
+
+    return ok;
+  }
+
+  async function submitOffer(){
+    if (!validateForm()) return;
+
+    const payload = {
+      name: document.getElementById('offerName').value.trim(),
+      offerType: document.getElementById('offerType').value,
+      discountPercent: Number(document.getElementById('offerPercent').value),
+      startAt: document.getElementById('startAt').value,
+      endAt: document.getElementById('endAt').value,
+    };
+    const targetId = document.getElementById('targetId').value;
+    if (payload.offerType === 'PRODUCT') payload.productId = targetId; else payload.categoryId = targetId;
+
+    try{
+      const url = editingOfferId ? `/admin-offer/${editingOfferId}` : '/admin-offer/create';
+      const method = editingOfferId ? 'put' : 'post';
+      const res = await axios[method](url, payload);
+      if (res.data.success){
+        showToast(res.data.message || 'Saved','success');
+        setTimeout(()=>window.location.reload(), 1200);
+      }
+    }catch(err){
+      showToast(err.response?.data?.message || 'Error saving', 'danger');
+    }
+  }
+
+  async function toggleOffer(id, activate){
+    try{
+      const res = await axios.put(`/admin-offer/${id}/toggle`, { activate });
+      if (res.data.success){
+        showToast(res.data.message, 'success');
+        setTimeout(()=>window.location.reload(), 1000);
+      }
+    }catch(err){
+      showToast(err.response?.data?.message || 'Error toggling', 'danger');
+    }
+  }
+</script>
+</body>
+</html>

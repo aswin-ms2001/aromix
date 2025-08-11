@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import { fileURLToPath } from "url";
 import cacheMid from "./middleware/cacheMid/cacheMid.js";
 import router from "./routes/indexRoutes.js";
+import startOfferCron from "./cron/offerCron/offerCron.js";
 dotenv.config();
 const app = express();
 
@@ -25,6 +26,8 @@ app.use(nocache());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Start cron jobs
+startOfferCron();
 
 app.use("/",router)
 // app.get ('/', (req, res) => {

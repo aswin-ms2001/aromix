@@ -157,7 +157,7 @@ export const discoverPage = async (req, res) => {
     const totalPages = Math.ceil(totalProducts / limit);
 
     const categories = await Category.find({ blocked: false });
-
+    // console.log(products)
     res.render("user-views/discover.ejs", {
       user,
       products,
@@ -182,7 +182,7 @@ export const productDetails = async (req, res) => {
     const userId = req.user._id;
     const productId = req.params.id;
     const variantId = req.query.variantId || null;
-    console.log(variantId)
+    // console.log(variantId)
     const productAggregation = await Product.aggregate([
       {
         $match: { _id: new mongoose.Types.ObjectId(productId), blocked: false }
@@ -211,7 +211,9 @@ export const productDetails = async (req, res) => {
     }
 
     const relatedProducts = await getRelatedProducts(product);
-    const wishlistVariantIds = await getWishlistVariantIds(userId,productId)
+    const wishlistVariantIds = await getWishlistVariantIds(userId,productId);
+    // console.log(product);
+    // console.log(relatedProducts);
     res.render("user-views/productDetails", {
       product,
       relatedProducts,

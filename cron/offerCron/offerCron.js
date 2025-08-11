@@ -1,0 +1,19 @@
+import cron from "node-cron";
+import Offer from "../../model/offer.js";
+
+export default function startOfferCron() {
+  // Run every minute
+  cron.schedule("*/1 * * * *", async () => {
+    const now = new Date();
+    try {
+      // Activate offers within window
+      await Offer.updateMany({ startAt: { $lte: now }, endAt: { $gte: now } }, { $set: { isActive: true } });
+      // Deactivate offers past end
+      await Offer.updateMany({ endAt: { $lt: now } }, { $set: { isActive: false } });
+      // Deactivate offers not yet started
+      await Offer.updateMany({ startAt: { $gt: now } }, { $set: { isActive: false } });
+    } catch (err) {
+      console.error("Offer cron error:", err);
+    }
+  });
+}

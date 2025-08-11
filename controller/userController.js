@@ -98,7 +98,7 @@ export const landingPageView = async (req, res) => {
         }
       }
     ]);
-
+    // console.log(perfumes)
     res.render("user-views/landingPage", { perfumes,currentUser: req.user || null });
   } catch (error) {
     console.error('Error loading landing page perfumes:', error);
