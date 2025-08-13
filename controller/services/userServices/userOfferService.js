@@ -5,8 +5,7 @@ export const productOfferFinder = async(productId,categoryId)=>{
     try{
         if(!mongoose.Types.ObjectId.isValid(productId)) return null;
         if(!mongoose.Types.ObjectId.isValid(categoryId)) return null;
-        productId = new mongoose.Types.ObjectId(productId)
-        console.log(productId, categoryId)
+        productId = new mongoose.Types.ObjectId(productId);
         // console.log("Entered")
         const offerDetails = await Offer.aggregate([
         {

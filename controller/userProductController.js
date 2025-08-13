@@ -160,7 +160,7 @@ export const discoverPage = async (req, res) => {
     const totalPages = Math.ceil(totalProducts / limit);
 
     const categories = await Category.find({ blocked: false });
-    console.log(products)
+    // console.log(products)
     res.render("user-views/discover.ejs", {
       user,
       products,
@@ -226,7 +226,7 @@ export const productDetails = async (req, res) => {
     const wishlistVariantIds = await getWishlistVariantIds(userId,productId);
     const productOffer =await productOfferFinder(productId,categoryId);
     product.offer = productOffer;
-    console.log(product);
+    // console.log(product);
     const relatedProducts = await productActiveOfferLinker(relatedProductsToLink);
     // console.log(relatedProducts);
     res.render("user-views/productDetails", {
