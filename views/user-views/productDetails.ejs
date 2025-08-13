@@ -39,7 +39,9 @@
     <!-- Product Info -->
     <div class="col-md-5">
       <div class="d-flex align-items-center justify-content-between">
-        <h4 id="product-name" class="me-3"><%= product.name %></h4>
+        <h4 id="product-name" class="me-3"><%= product.name %>       <% if (product.offer) { %>
+        <span class="badge bg-danger ms-2"><%= product.offer %>% OFF</span>
+      <% } %> </h4>
         <button id="wishlist-btn" class="btn btn-outline-danger" title="Add to Wishlist">
           <i class="bi bi-heart" id="wishlist-icon"></i>
         </button>
@@ -52,7 +54,17 @@
           (<span id="stock-count"><%= product.variants[0].stock %></span>)
         </span>
       </p>
-      <h5 id="product-price">₹<%= product.variants[0].price %></h5>
+      
+        <% if (product.offer) { %>
+    <% const discountedPrice = product.variants[0].price - (product.variants[0].price * (product.offer / 100)); %>
+    <h5 id="product-price">
+      <span class="text-muted text-decoration-line-through me-2">₹<%= product.variants[0].price %></span>
+      <span class="fw-bold text-success">₹<%= discountedPrice.toFixed(2) %></span>
+    </h5>
+  <% } else { %>
+    <h5 id="product-price">₹<%= product.variants[0].price %></h5>
+  <% } %>
+
       <p class="product-description" id="product-description"><%= product.variants[0].description %></p>
 
       <!-- Variant Carousel -->
@@ -214,7 +226,17 @@
     const activeBtn = document.querySelector(`.variant-btn[data-index="${index}"]`);
     if (activeBtn) activeBtn.classList.add("active");
 
-    priceEl.textContent = `₹${variant.price}`;
+    if (product.offer) {
+  const discountedPrice = variant.price - (variant.price * (product.offer / 100));
+  const sub = (variant.price * (product.offer / 100));
+  console.log(discountedPrice,variant.price, product.offer,sub)
+  priceEl.innerHTML = `<span class="text-muted text-decoration-line-through me-1">₹${variant.price}</span>
+                       <span class="fw-bold text-success">₹${discountedPrice.toFixed(2)}</span>`;
+                      //  <span class="badge bg-danger ms-2">${product.offer}% OFF</span>`;
+} else {
+  priceEl.textContent = `₹${variant.price}`;
+}
+
     descEl.textContent = variant.description;
     stockEl.className = variant.stock > 0 ? "text-success" : "text-danger";
     stockEl.innerHTML = `${variant.stock > 0 ? 'In Stock' : 'Out of Stock'} (<span id="stock-count">${variant.stock}</span>)`;
