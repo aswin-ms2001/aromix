@@ -50,11 +50,35 @@
           <% perfumes.forEach(p => { %>
             <div class="col">
               <a href="/users-products/products/<%= p._id %>" class="text-decoration-none text-dark">
-                <div class="card h-100">
+                <div class="card h-100 position-relative">
+                  
+                  <% if (p.offer) { %>
+                    <!-- Offer Badge -->
+                    <span class="badge bg-danger position-absolute top-0 start-0 m-2 fs-6">
+                      <%= p.offer %>% OFF
+                    </span>
+                  <% } %>
+
+                  <!-- Product Image -->
                   <img src="<%= p.image %>" class="card-img-top" alt="<%= p.name %>">
-                  <div class="card-body">
-                    <h5 class="card-title"><%= p.name %></h5>
-                    <p><%= p.volume %> ml — ₹<%= p.price %></p>
+
+                  <div class="card-body text-center">
+                    <h5 class="card-title fw-bold"><%= p.name %></h5>
+                    <p class="mb-1"><%= p.volume %> ml</p>
+
+                    <% if (p.offer) { %>
+                      <% 
+                        const discountedPrice = p.price - (p.price * (p.offer / 100));
+                      %>
+                      <!-- Price with Offer -->
+                      <p class="mb-0">
+                        <span class="text-muted text-decoration-line-through me-2">₹<%= p.price %></span>
+                        <span class="fw-bold text-success fs-5">₹<%= discountedPrice.toFixed(2) %></span>
+                      </p>
+                    <% } else { %>
+                      <!-- Price without Offer -->
+                      <p class="fw-bold fs-5">₹<%= p.price %></p>
+                    <% } %>
                   </div>
                 </div>
               </a>

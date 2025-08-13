@@ -33,7 +33,8 @@ export const getRelatedProducts = async (product) => {
         variants: 1,
         image: { $arrayElemAt: ["$variants.images", 0] },
         price: { $arrayElemAt: ["$variants.price", 0] },
-        volume: { $arrayElemAt: ["$variants.volume", 0] }
+        volume: { $arrayElemAt: ["$variants.volume", 0] },
+        categoryId:1
       }
     }
   ]);

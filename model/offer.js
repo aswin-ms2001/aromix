@@ -39,6 +39,10 @@ const offerSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isNonBlocked:{
+    type:Boolean,
+    default:true
+  }
 }, {
   timestamps: true,
 });

@@ -110,12 +110,35 @@
           <% if (variant) { %>
             <div class="col">
               <a href="/users-products/products/<%= product._id %>" class="text-decoration-none text-dark">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm position-relative">
+
+                  <% if (product.offer) { %>
+                    <!-- Offer Badge -->
+                    <span class="badge bg-danger position-absolute top-0 start-0 m-2 fs-6">
+                      <%= product.offer %>% OFF
+                    </span>
+                  <% } %>
+
+                  <!-- Product Image -->
                   <img src="<%= variant.images[0] %>" class="card-img-top" alt="<%= product.name %>">
-                  <div class="card-body">
+
+                  <div class="card-body text-center">
                     <h6 class="fw-bold"><%= product.name %></h6>
                     <p class="mb-1"><%= variant.volume %> ml</p>
-                    <p class="text-danger fw-semibold">₹<%= variant.price %></p>
+
+                    <% if (product.offer) { %>
+                      <% 
+                        const discountedPrice = variant.price - (variant.price * (product.offer / 100));
+                      %>
+                      <!-- Price with Offer -->
+                      <p class="mb-0">
+                        <span class="text-muted text-decoration-line-through me-2">₹<%= variant.price %></span>
+                        <span class="fw-bold text-success fs-5">₹<%= discountedPrice.toFixed(2) %></span>
+                      </p>
+                    <% } else { %>
+                      <!-- Price without Offer -->
+                      <p class="fw-bold fs-5">₹<%= variant.price %></p>
+                    <% } %>
                   </div>
                 </div>
               </a>

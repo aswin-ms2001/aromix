@@ -5,6 +5,7 @@ import Category from "../model/category.js"
 import mongoose from "mongoose";
 import { getRelatedProducts } from "./services/userServices/relatedProductServices.js";
 import { getWishlistVariantIds } from "./services/userServices/wishlistServices.js";
+import { productActiveOfferLinker,productOfferFinder } from "./services/userServices/userOfferService.js";
 // import { productDetails } from "./adminController.js";
 
 export const discoverPage = async (req, res) => {
@@ -41,7 +42,7 @@ export const discoverPage = async (req, res) => {
     const isPriceSort = sort === 'lowToHigh' || sort === 'highToLow';
     const variantSortDirection = sort === 'lowToHigh' ? 1 : -1;
 
-    const products = await Product.aggregate([
+    const productsToLink = await Product.aggregate([
       {
         $lookup: {
           from: "categories",
@@ -101,7 +102,8 @@ export const discoverPage = async (req, res) => {
           image: { $arrayElemAt: ["$selectedVariant.images", 0] },
           price: "$selectedVariant.price",
           volume: "$selectedVariant.volume",
-          createdAt: 1
+          createdAt: 1,
+          categoryId:1
         }
       },
       {
@@ -152,12 +154,13 @@ export const discoverPage = async (req, res) => {
       { $match: { filteredVariants: { $ne: [] } } },
       { $count: "total" }
     ]);
+    const products = await productActiveOfferLinker(productsToLink)
     const user = await User.findById(id);
     const totalProducts = totalCountAgg[0]?.total || 0;
     const totalPages = Math.ceil(totalProducts / limit);
 
     const categories = await Category.find({ blocked: false });
-    // console.log(products)
+    console.log(products)
     res.render("user-views/discover.ejs", {
       user,
       products,
@@ -200,6 +203,15 @@ export const productDetails = async (req, res) => {
         $match: {
           "category.blocked": false
         }
+      },
+      {
+        $project:{
+          name:1,
+          categoryId:1,
+          categoryName:1,
+          gender:1,
+          variants:1,
+        }
       }
     ]);
 
@@ -208,11 +220,14 @@ export const productDetails = async (req, res) => {
 
     if (!product) {
       return res.status(404).render("error", { message: "Product not found or has been blocked" });
-    }
-
-    const relatedProducts = await getRelatedProducts(product);
+    } 
+    const categoryId = product.categoryId;
+    const relatedProductsToLink = await getRelatedProducts(product);
     const wishlistVariantIds = await getWishlistVariantIds(userId,productId);
-    // console.log(product);
+    const productOffer =await productOfferFinder(productId,categoryId);
+    product.offer = productOffer;
+    console.log(product);
+    const relatedProducts = await productActiveOfferLinker(relatedProductsToLink);
     // console.log(relatedProducts);
     res.render("user-views/productDetails", {
       product,

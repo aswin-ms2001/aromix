@@ -7,7 +7,7 @@ export default function startOfferCron() {
     const now = new Date();
     try {
       // Activate offers within window
-      await Offer.updateMany({ startAt: { $lte: now }, endAt: { $gte: now } }, { $set: { isActive: true } });
+      await Offer.updateMany({ startAt: { $lte: now }, endAt: { $gte: now },isNonBlocked:true }, { $set: { isActive: true } });
       // Deactivate offers past end
       await Offer.updateMany({ endAt: { $lt: now } }, { $set: { isActive: false } });
       // Deactivate offers not yet started

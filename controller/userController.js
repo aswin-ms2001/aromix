@@ -4,6 +4,7 @@ import passport from "../config/passport.js";
 import bcrypt from "bcrypt";
 import { sendOtpEmail, sendOtpPassword } from "../utils/sendOtp.js";
 import Product from "../model/product.js";
+import { productActiveOfferLinker } from "./services/userServices/userOfferService.js";
 
 export const userloginPage = (req,res)=>{
     const errorMessage = req.flash("error")
@@ -66,7 +67,7 @@ export const userDashboard = (req,res)=>{
 
 export const landingPageView = async (req, res) => {
   try {
-    const perfumes = await Product.aggregate([
+    const perfumesToLink = await Product.aggregate([
       {
         $lookup: {
           from: "categories",
@@ -86,7 +87,8 @@ export const landingPageView = async (req, res) => {
       {
         $project: {
           name: 1,
-          firstVariant: { $arrayElemAt: ['$variants', 0] }
+          firstVariant: { $arrayElemAt: ['$variants', 0] },
+          categoryId: 1
         }
       },
       {
@@ -94,11 +96,14 @@ export const landingPageView = async (req, res) => {
           name: 1,
           image: { $arrayElemAt: ['$firstVariant.images', 0] },
           price: '$firstVariant.price',
-          volume: '$firstVariant.volume'
+          volume: '$firstVariant.volume',
+          categoryId:1
         }
       }
     ]);
-    // console.log(perfumes)
+    // console.log(perfumes);
+    const perfumes = await productActiveOfferLinker(perfumesToLink);
+    console.log(perfumes);
     res.render("user-views/landingPage", { perfumes,currentUser: req.user || null });
   } catch (error) {
     console.error('Error loading landing page perfumes:', error);
