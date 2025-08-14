@@ -6,12 +6,13 @@ import { productDetails } from "./adminController.js";
 import { isProductAndCategoryActive } from "./services/userServices/productActivityCheckingService.js";
 import { removeFromWishlist } from "./services/userServices/wishlistServices.js";
 import * as cartService from "./services/userServices/cartServices.js";
+import { productOfferFinder } from "./services/userServices/userOfferService.js";
 
 export const userCartFront = async (req,res)=>{
     try{
         const userId = req.user._id;
         const {cartItems,subtotal} = await cartService.getUserCartFunction(userId);
-        console.log(cartItems,subtotal);
+        // console.log(cartItems,subtotal);
         return res.render("user-views/user-account/user-profile/user-cart.ejs",{
           cart:cartItems,
           subtotal,
@@ -147,7 +148,7 @@ export const updateCartQuantity = async (req, res) => {
       select: "blocked categoryId variants",
       populate: { path: "categoryId", select: "blocked" }
     });
-
+    // console.log(cartItem.productId._id,cartItem.productId.categoryId._id);
     if (!cartItem) {
       return res.status(404).json({ success: false, message: "Cart item not found" });
     }
@@ -188,31 +189,37 @@ export const updateCartQuantity = async (req, res) => {
     
     cartItem.quantity = newQuantity;
     await cartItem.save();
-
-    const itemTotal = variant.price * newQuantity;
-
-    
-    const userCart = await Cart.find({ userId }).populate({
-      path: "productId",
-      select: "variants blocked categoryId",
-      populate: {
-        path:"categoryId",
-        select:"blocked"
-      }
-
-    });
-
-    let subtotal = 0;
-    for (const item of userCart) {
-      // console.log(item)
-      if(item.productId.blocked||item.productId.categoryId.blocked){
-        continue;
-      }
-      const cartVariant = item.productId.variants.id(item.variantId);
-      if (cartVariant) {
-        subtotal += cartVariant.price * item.quantity;
-      }
+    const offer = await productOfferFinder(cartItem.productId._id,cartItem.productId.categoryId._id);
+    let itemTotal = 0;
+    if(offer){
+      itemTotal = variant.price *newQuantity * (1 - .01 * offer);
+    }else{
+      itemTotal = variant.price * newQuantity;
     }
+    
+    // const userCart = await Cart.find({ userId }).populate({
+    //   path: "productId",
+    //   select: "variants blocked categoryId",
+    //   populate: {
+    //     path:"categoryId",
+    //     select:"blocked"
+    //   }
+
+    // });
+    // let subtotal = 0;
+    // for (const item of userCart) {
+    //   // console.log(item)
+    //   if(item.productId.blocked||item.productId.categoryId.blocked){
+    //     continue;
+    //   }
+    //   const cartVariant = item.productId.variants.id(item.variantId);
+    //   if (cartVariant) {
+    //     const offer = await productOfferFinder()
+    //     subtotal += cartVariant.price * item.quantity;
+    //   }
+    // }
+    // console.log(userId);
+    const {subtotal} = await cartService.getUserCartFunction(userId)
 
     return res.json({
       success: true,
@@ -260,26 +267,27 @@ export const deleteCart = async (req, res) => {
     await Cart.findByIdAndDelete(cartId);
 
     
-    const userCart = await Cart.find({ userId }).populate({
-      path: "productId",
-      select: "variants blocked categoryId",
-      populate: {
-        path: "categoryId",
-        select: "blocked"
-      }
-    });
+    // const userCart = await Cart.find({ userId }).populate({
+    //   path: "productId",
+    //   select: "variants blocked categoryId",
+    //   populate: {
+    //     path: "categoryId",
+    //     select: "blocked"
+    //   }
+    // });
 
-    let subtotal = 0;
-    for (const item of userCart) {
-      if (item.productId.blocked || item.productId.categoryId.blocked) {
-        continue;
-      }
-      const variant = item.productId.variants.id(item.variantId);
-      if (variant) {
-        subtotal += variant.price * item.quantity;
-      }
-    }
+    // let subtotal = 0;
+    // for (const item of userCart) {
+    //   if (item.productId.blocked || item.productId.categoryId.blocked) {
+    //     continue;
+    //   }
+    //   const variant = item.productId.variants.id(item.variantId);
+    //   if (variant) {
+    //     subtotal += variant.price * item.quantity;
+    //   }
+    // }
 
+    const {cartItems, subtotal} = await cartService.getUserCartFunction(userId)
     
     return res.status(200).json({
       success: true,
@@ -287,7 +295,7 @@ export const deleteCart = async (req, res) => {
       subtotal,
       delivery: subtotal > 1000 ? 0 : 50,
       grandTotal: subtotal > 1000 ? subtotal : subtotal + 50,
-      remainingItems: userCart.length
+      remainingItems: cartItems.length
     });
 
   } catch (err) {

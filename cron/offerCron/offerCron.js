@@ -3,7 +3,7 @@ import Offer from "../../model/offer.js";
 
 export default function startOfferCron() {
   // Run every minute
-  cron.schedule("*/1 * * * *", async () => {
+  cron.schedule("0 */10 * * *", async () => {
     const now = new Date();
     try {
       // Activate offers within window

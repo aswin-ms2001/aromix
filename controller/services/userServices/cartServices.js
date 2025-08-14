@@ -4,6 +4,7 @@ import Category from "../../../model/category.js"
 import mongoose from "mongoose";
 import Cart from "../../../model/cart.js";
 import { getVariantStock } from "./productActivityCheckingService.js";
+import { productOfferFinder } from "./userOfferService.js";
 
 export const addToUserCart = async (userId, productId, variantId) => {
   try {
@@ -59,12 +60,13 @@ export const getUserCartFunction = async (userId) => {
       .lean();
 
   
-    const activeCart = cartItems.filter(item => {
+    const activeCart =  await Promise.all(
+      cartItems.filter(item => {
       const product = item.productId;
       if (!product || product.blocked) return false;
       if (product.categoryId && product.categoryId.blocked) return false;
       return true;
-    }).map(item => {
+    }).map(async(item) => {
       const product = item.productId;
 
 
@@ -72,9 +74,18 @@ export const getUserCartFunction = async (userId) => {
         v => v._id.toString() === item.variantId.toString()
       );
 
+      // console.log(product._id, product.categoryId._id);
+      const offer = await productOfferFinder(product._id, product.categoryId._id);
+      // console.log(offer)
+      let itemTotal = 0;
+      if(offer){
+         itemTotal = variant ? variant.price * item.quantity * (1 - offer * .01) : 0;
+        //  console.log(variant)
+      }else{
+         itemTotal = variant ? variant.price * item.quantity : 0;
+      }
       
-      const itemTotal = variant ? variant.price * item.quantity : 0;
-
+      // console.log(itemTotal)
       return {
         _id: item._id,
         userId: item.userId,
@@ -87,16 +98,18 @@ export const getUserCartFunction = async (userId) => {
         },
         variant: variant ? {
           _id: variant._id,
-          price: variant.price,
+          price: offer ? variant.price - (variant.price * offer *.01) : variant.price ,
           stock: variant.stock,
           images: variant.images,
           volume: variant.volume
         } : null,
         itemTotal
       };
-    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    })
+    ) ;
+    activeCart.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
- 
+    // console.log(activeCart)
     const subtotal = activeCart.reduce((sum, item) => sum + item.itemTotal, 0);
 
     return { cartItems: activeCart, subtotal };
