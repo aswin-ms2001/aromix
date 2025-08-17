@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Coupons | Aromix</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/css/admin-css/adminProducts.css">
+  <link rel="stylesheet" href="/css/admin-css/sidebar.css">
+</head>
+<body>
+<div class="d-flex">
+  <%- include('./partials/sidebar') %>
+
+  <div class="flex-grow-1 p-4" style="background-color:#1b1b1b; min-height:100vh;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="text-white">Coupon Management</h2>
+      <button class="btn btn-success" onclick="openCreateModal()"><i class="bi bi-plus"></i> New Coupon</button>
+    </div>
+
+    <div class="card p-3 mb-4" style="background-color:#2e0e46; border:none; border-radius:20px;">
+      <div class="row g-3">
+        <div class="col-md-4 d-flex">
+          <input class="form-control me-2" id="search" placeholder="Search by code" value="<%= search || '' %>">
+          <button class="btn btn-outline-light" onclick="applyFilters()"><i class="bi bi-search"></i></button>
+        </div>
+        <div class="col-md-3">
+          <select id="type" class="form-select" onchange="applyFilters()">
+            <option value="">All Types</option>
+            <option value="PERCENTAGE" <%= type === 'PERCENTAGE' ? 'selected' : '' %>>Percentage</option>
+            <option value="FLAT" <%= type === 'FLAT' ? 'selected' : '' %>>Flat</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select id="status" class="form-select" onchange="applyFilters()">
+            <option value="">All Status</option>
+            <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
+            <option value="inactive" <%= status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-center text-white">Total: <%= totalCoupons %></div>
+      </div>
+    </div>
+
+    <div class="card p-3" style="background-color:#2e0e46; border:none; border-radius:20px;">
+      <div class="table-responsive">
+        <table class="table text-white mb-0">
+          <thead>
+            <tr style="background-color:#aa5de8;">
+              <th>Code</th>
+              <th>Type</th>
+              <th>Discount</th>
+              <th>Min Amount</th>
+              <th>Max Amount</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Status</th>
+              <th>Blocked</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% coupons.forEach(c => { %>
+              <tr>
+                <td><%= c.code %></td>
+                <td><%= c.type %></td>
+                <td><%= c.type === 'PERCENTAGE' ? c.discount + '%' : '₹' + c.discount %></td>
+                <td>₹<%= c.minAmount %></td>
+                <td>₹<%= c.maxAmount %></td>
+                <td><%= new Date(c.startAt).toLocaleString('en-IN') %></td>
+                <td><%= new Date(c.endAt).toLocaleString('en-IN') %></td>
+                <td>
+                  <span class="badge bg-<%= c.isActive ? 'success' : 'secondary' %>"><%= c.isActive ? 'Active' : 'Inactive' %></span>
+                </td>
+                <td>
+                  <span class="badge bg-<%= c.isNonBlocked ? 'success' : 'danger' %>"><%= c.isNonBlocked ? 'No' : 'Blocked' %></span>
+                </td>
+                <td>
+                  <button class="btn btn-sm btn-info me-2" onclick='openEditModal(`<%- JSON.stringify(c) %>`)'><i class="bi bi-pencil"></i> Edit</button>
+                  <button class="btn btn-sm <%= c.isActive ? 'btn-warning' : 'btn-success' %>" onclick="toggleCoupon('<%= c._id %>', `<%= !c.isActive %>`)">
+                    <i class="bi <%= c.isActive ? 'bi-pause' : 'bi-play' %>"></i> <%= c.isActive ? 'Deactivate' : 'Activate' %>
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-between mt-4 text-white">
+        <div>Page <%= currentPage %> of <%= totalPages %></div>
+        <div>
+          <% if (hasPrevPage) { %>
+            <a class="btn btn-outline-light btn-sm" href="?page=<%= prevPage %><%= search ? '&search=' + search : '' %><%= type ? '&type=' + type : '' %><%= status ? '&status=' + status : '' %>">Previous</a>
+          <% } %>
+          <% if (hasNextPage) { %>
+            <a class="btn btn-outline-light btn-sm" href="?page=<%= nextPage %><%= search ? '&search=' + search : '' %><%= type ? '&type=' + type : '' %><%= status ? '&status=' + status : '' %>">Next</a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createCouponModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">New Coupon</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="createCouponForm">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Code</label>
+              <div class="input-group">
+                <input id="createCode" name="code" type="text" class="form-control" maxlength="12" minlength="6" placeholder="Coupon code" />
+                <button class="btn btn-outline-secondary" type="button" onclick="generateCode('createCode')">Generate</button>
+              </div>
+              <div class="text-danger small d-none" id="createCodeError"></div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Type</label>
+              <select id="createType" name="type" class="form-select" onchange="updateCreateType()">
+                <option value="PERCENTAGE">Percentage</option>
+                <option value="FLAT">Flat</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Discount</label>
+              <input id="createDiscount" name="discount" type="number" class="form-control" min="1" />
+              <div class="text-danger small d-none" id="createDiscountError"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Min Amount</label>
+              <input id="createMinAmount" name="minAmount" type="number" class="form-control" min="0" />
+              <div class="text-danger small d-none" id="createMinAmountError"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Max Amount</label>
+              <input id="createMaxAmount" name="maxAmount" type="number" class="form-control" min="0" />
+              <div class="text-danger small d-none" id="createMaxAmountError"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Start</label>
+              <input id="createStartAt" name="startAt" type="datetime-local" class="form-control" />
+              <div class="text-danger small d-none" id="createStartError"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">End</label>
+              <input id="createEndAt" name="endAt" type="datetime-local" class="form-control" />
+              <div class="text-danger small d-none" id="createEndError"></div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button class="btn btn-primary" onclick="submitCreateCoupon()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editCouponModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Coupon</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editCouponForm">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Code</label>
+              <div class="input-group">
+                <input id="editCode" name="code" type="text" class="form-control" maxlength="12" minlength="6" placeholder="Coupon code" />
+                <button class="btn btn-outline-secondary" type="button" onclick="generateCode('editCode')">Generate</button>
+              </div>
+              <div class="text-danger small d-none" id="editCodeError"></div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Type</label>
+              <select id="editType" name="type" class="form-select" onchange="updateEditType()">
+                <option value="PERCENTAGE">Percentage</option>
+                <option value="FLAT">Flat</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Discount</label>
+              <input id="editDiscount" name="discount" type="number" class="form-control" min="1" />
+              <div class="text-danger small d-none" id="editDiscountError"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Min Amount</label>
+              <input id="editMinAmount" name="minAmount" type="number" class="form-control" min="0" />
+              <div class="text-danger small d-none" id="editMinAmountError"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Max Amount</label>
+              <input id="editMaxAmount" name="maxAmount" type="number" class="form-control" min="0" />
+              <div class="text-danger small d-none" id="editMaxAmountError"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Start</label>
+              <input id="editStartAt" name="startAt" type="datetime-local" class="form-control" />
+              <div class="text-danger small d-none" id="editStartError"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">End</label>
+              <input id="editEndAt" name="endAt" type="datetime-local" class="form-control" />
+              <div class="text-danger small d-none" id="editEndError"></div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button class="btn btn-primary" onclick="submitEditCoupon()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+  let editingCouponId = null;
+  function showToast(message, type = 'primary'){
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0 show position-fixed top-50 start-50 translate-middle`;
+    toast.style.minWidth = '300px';
+    toast.style.zIndex = '1055';
+    toast.innerHTML = `<div class='d-flex'><div class='toast-body'>${message}</div><button class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast'></button></div>`;
+    document.body.appendChild(toast);
+    setTimeout(()=>toast.remove(), 3000);
+  }
+  function applyFilters(){
+    const params = new URLSearchParams();
+    const s = document.getElementById('search').value.trim();
+    const t = document.getElementById('type').value;
+    const st = document.getElementById('status').value;
+    if (s) params.append('search', s);
+    if (t) params.append('type', t);
+    if (st) params.append('status', st);
+    window.location.href = '/admin-coupon/admin-coupon-front?' + params.toString();
+  }
+  function openCreateModal(){
+    document.getElementById('createCouponForm').reset();
+    clearCreateErrors();
+    new bootstrap.Modal(document.getElementById('createCouponModal')).show();
+  }
+  function openEditModal(couponP){
+    const coupon = JSON.parse(couponP);
+    editingCouponId = coupon._id;
+    document.getElementById('editCode').value = coupon.code;
+    document.getElementById('editType').value = coupon.type;
+    document.getElementById('editDiscount').value = coupon.discount;
+    document.getElementById('editMinAmount').value = coupon.minAmount;
+    document.getElementById('editMaxAmount').value = coupon.maxAmount;
+    document.getElementById('editStartAt').value = toInputDateTime(coupon.startAt);
+    document.getElementById('editEndAt').value = toInputDateTime(coupon.endAt);
+    clearEditErrors();
+    new bootstrap.Modal(document.getElementById('editCouponModal')).show();
+  }
+  function toInputDateTime(dateStr){
+    const d = new Date(dateStr);
+    const pad = n => String(n).padStart(2,'0');
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth()+1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const mi = pad(d.getMinutes());
+    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  }
+  function clearCreateErrors(){
+    ['createCodeError','createDiscountError','createMinAmountError','createMaxAmountError','createStartError','createEndError'].forEach(id=>{
+      const el = document.getElementById(id);
+      el.classList.add('d-none');
+      el.textContent = '';
+    });
+  }
+  function clearEditErrors(){
+    ['editCodeError','editDiscountError','editMinAmountError','editMaxAmountError','editStartError','editEndError'].forEach(id=>{
+      const el = document.getElementById(id);
+      el.classList.add('d-none');
+      el.textContent = '';
+    });
+  }
+  function updateCreateType(){
+    // Optionally adjust min/max/discount fields for type
+  }
+  function updateEditType(){
+    // Optionally adjust min/max/discount fields for type
+  }
+  async function generateCode(targetId){
+    try{
+      const res = await axios.get('/admin-coupon/generate-code');
+      if(res.data.success){
+        document.getElementById(targetId).value = res.data.code;
+      }
+    }catch(err){
+      showToast('Error generating code','danger');
+    }
+  }
+  function validateCreateForm(){
+    clearCreateErrors();
+    const code = document.getElementById('createCode').value.trim();
+    const type = document.getElementById('createType').value;
+    const discount = Number(document.getElementById('createDiscount').value);
+    const minAmount = Number(document.getElementById('createMinAmount').value);
+    const maxAmount = Number(document.getElementById('createMaxAmount').value);
+    const startAt = document.getElementById('createStartAt').value;
+    const endAt = document.getElementById('createEndAt').value;
+    let ok = true;
+    const codePattern = /^[A-Za-z0-9]{6,12}$/;
+    if(!codePattern.test(code)){document.getElementById('createCodeError').classList.remove('d-none');document.getElementById('createCodeError').textContent='Invalid code';ok=false;}
+    if(!(discount>=1)){document.getElementById('createDiscountError').classList.remove('d-none');document.getElementById('createDiscountError').textContent='Discount min 1';ok=false;}
+    if(isNaN(minAmount)||minAmount<0){document.getElementById('createMinAmountError').classList.remove('d-none');document.getElementById('createMinAmountError').textContent='Invalid min';ok=false;}
+    if(isNaN(maxAmount)||maxAmount<=0||maxAmount<minAmount){document.getElementById('createMaxAmountError').classList.remove('d-none');document.getElementById('createMaxAmountError').textContent='Invalid max';ok=false;}
+    if(type==='FLAT'&&(discount<minAmount||discount>maxAmount)){document.getElementById('createDiscountError').classList.remove('d-none');document.getElementById('createDiscountError').textContent='Flat discount must be within min/max';ok=false;}
+    const s=new Date(startAt),e=new Date(endAt),now=new Date();
+    if(!(startAt&&!isNaN(s.getTime()))){document.getElementById('createStartError').classList.remove('d-none');document.getElementById('createStartError').textContent='Invalid start';ok=false;}
+    if(!(endAt&&!isNaN(e.getTime()))){document.getElementById('createEndError').classList.remove('d-none');document.getElementById('createEndError').textContent='Invalid end';ok=false;}
+    if(s>=e){document.getElementById('createStartError').classList.remove('d-none');document.getElementById('createStartError').textContent='Start must be before end';ok=false;}
+    if(s<now){document.getElementById('createStartError').classList.remove('d-none');document.getElementById('createStartError').textContent='Start cannot be past';ok=false;}
+    return ok;
+  }
+  async function submitCreateCoupon(){
+    if(!validateCreateForm())return;
+    const payload={
+      code:document.getElementById('createCode').value.trim(),
+      type:document.getElementById('createType').value,
+      discount:Number(document.getElementById('createDiscount').value),
+      minAmount:Number(document.getElementById('createMinAmount').value),
+      maxAmount:Number(document.getElementById('createMaxAmount').value),
+      startAt:document.getElementById('createStartAt').value,
+      endAt:document.getElementById('createEndAt').value
+    };
+    try{
+      const res=await axios.post('/admin-coupon/create',payload);
+      if(res.data.success){showToast(res.data.message||'Saved','success');setTimeout(()=>window.location.reload(),1200);}
+    }catch(err){showToast(err.response?.data?.message||'Error saving','danger');}
+  }
+  function validateEditForm(){
+    clearEditErrors();
+    const code = document.getElementById('editCode').value.trim();
+    const type = document.getElementById('editType').value;
+    const discount = Number(document.getElementById('editDiscount').value);
+    const minAmount = Number(document.getElementById('editMinAmount').value);
+    const maxAmount = Number(document.getElementById('editMaxAmount').value);
+    const startAt = document.getElementById('editStartAt').value;
+    const endAt = document.getElementById('editEndAt').value;
+    let ok = true;
+    const codePattern = /^[A-Za-z0-9]{6,12}$/;
+    if(!codePattern.test(code)){document.getElementById('editCodeError').classList.remove('d-none');document.getElementById('editCodeError').textContent='Invalid code';ok=false;}
+    if(!(discount>=1)){document.getElementById('editDiscountError').classList.remove('d-none');document.getElementById('editDiscountError').textContent='Discount min 1';ok=false;}
+    if(isNaN(minAmount)||minAmount<0){document.getElementById('editMinAmountError').classList.remove('d-none');document.getElementById('editMinAmountError').textContent='Invalid min';ok=false;}
+    if(isNaN(maxAmount)||maxAmount<=0||maxAmount<minAmount){document.getElementById('editMaxAmountError').classList.remove('d-none');document.getElementById('editMaxAmountError').textContent='Invalid max';ok=false;}
+    if(type==='FLAT'&&(discount<minAmount||discount>maxAmount)){document.getElementById('editDiscountError').classList.remove('d-none');document.getElementById('editDiscountError').textContent='Flat discount must be within min/max';ok=false;}
+    const s=new Date(startAt),e=new Date(endAt),now=new Date();
+    if(!(startAt&&!isNaN(s.getTime()))){document.getElementById('editStartError').classList.remove('d-none');document.getElementById('editStartError').textContent='Invalid start';ok=false;}
+    if(!(endAt&&!isNaN(e.getTime()))){document.getElementById('editEndError').classList.remove('d-none');document.getElementById('editEndError').textContent='Invalid end';ok=false;}
+    if(s>=e){document.getElementById('editStartError').classList.remove('d-none');document.getElementById('editStartError').textContent='Start must be before end';ok=false;}
+    return ok;
+  }
+  async function submitEditCoupon(){
+    if(!validateEditForm())return;
+    const payload={
+      code:document.getElementById('editCode').value.trim(),
+      type:document.getElementById('editType').value,
+      discount:Number(document.getElementById('editDiscount').value),
+      minAmount:Number(document.getElementById('editMinAmount').value),
+      maxAmount:Number(document.getElementById('editMaxAmount').value),
+      startAt:document.getElementById('editStartAt').value,
+      endAt:document.getElementById('editEndAt').value
+    };
+    try{
+      const res=await axios.put(`/admin-coupon/${editingCouponId}`,payload);
+      if(res.data.success){showToast(res.data.message||'Saved','success');setTimeout(()=>window.location.reload(),1200);}
+    }catch(err){showToast(err.response?.data?.message||'Error saving','danger');}
+  }
+  async function toggleCoupon(id,activateP){
+    try{
+      const activate = JSON.parse(activateP);
+      const res=await axios.put(`/admin-coupon/${id}/toggle`,{activate});
+      if(res.data.success){showToast(res.data.message,'success');setTimeout(()=>window.location.reload(),1000);}
+    }catch(err){showToast(err.response?.data?.message||'Error toggling','danger');}
+  }
+</script>
+</body>
+</html>
