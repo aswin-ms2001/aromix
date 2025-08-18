@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import Offer from "../../model/offer.js";
+import Coupon from "../../model/coupon.js";
 
 export default function startOfferCron() {
   // Run every minute
@@ -12,6 +13,13 @@ export default function startOfferCron() {
       await Offer.updateMany({ endAt: { $lt: now } }, { $set: { isActive: false } });
       // Deactivate offers not yet started
       await Offer.updateMany({ startAt: { $gt: now } }, { $set: { isActive: false } });
+
+            // Activate coupons within window
+      await Coupon.updateMany({ startAt: { $lte: now }, endAt: { $gte: now }, isNonBlocked: true }, { $set: { isActive: true } });
+      // Deactivate coupons past end
+      await Coupon.updateMany({ endAt: { $lt: now } }, { $set: { isActive: false } });
+      // Deactivate coupons not yet started
+      await Coupon.updateMany({ startAt: { $gt: now } }, { $set: { isActive: false } });
     } catch (err) {
       console.error("Offer cron error:", err);
     }

@@ -9,6 +9,8 @@ import { isProductAndCategoryActive ,getVariantStock } from "./services/userServ
 import * as cartService from "./services/userServices/cartServices.js";
 import currentUser from "../middleware/userIdentification/currentUser.js";
 import PDFDocument from "pdfkit";
+import { userCoupens } from "./services/userServices/coupenService.js";
+import Coupon from "../model/coupon.js";
 
 export const userCheckOut = async (req,res)=>{
     try {
@@ -17,11 +19,13 @@ export const userCheckOut = async (req,res)=>{
         if(!cartItems[0]) return res.redirect("/users-cart/user-cart-front")
         const addresses = await Address.find({userId}).sort({isDefault:-1,createdAt:-1}).lean();
         const defaultAddress = addresses.find(addr => addr.isDefault)|| null;
+        const coupens = await userCoupens(subtotal,userId);
         return res.render("user-views/user-checkout/checkout.ejs",{
             cart:cartItems,
             subtotal,
             addresses,
-            defaultAddress
+            defaultAddress,
+            coupens
         })
     } catch(err) {
         console.error(err);
@@ -675,4 +679,56 @@ export const downloadInvoice = async (req, res) => {
         console.error("Error in downloadInvoice:", err);
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
+};
+
+export const userCoupon = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const {coupon:couponCode} = req.query;
+    if (!couponCode || typeof couponCode !== "string") {
+      return res.status(400).json({ success: false, message: "Coupon code is required" });
+    }
+
+    // Find coupon
+    const coupon = await Coupon.findOne({ code: couponCode.trim() });
+
+    if (!coupon) {
+      return res.status(404).json({ success: false, message: "Invalid Coupon Code" });
+    }
+
+    // Check if coupon is active
+    if (!coupon.isActive || !coupon.isNonBlocked) {
+      return res.status(400).json({ success: false, message: "Coupon is not active" });
+    }
+
+    // Check date validity
+    const now = new Date();
+    if (now < coupon.startAt || now > coupon.endAt) {
+      return res.status(400).json({ success: false, message: "Coupon is not valid at this time" });
+    }
+
+    // Check if user has already used it
+    if (coupon.usedBy.includes(userId)) {
+      return res.status(400).json({ success: false, message: "You have already used this coupon" });
+    }
+
+    // Success
+    return res.status(200).json({
+      success: true,
+      message: "Coupon applied successfully",
+      data: {
+        code: coupon.code,
+        type: coupon.type,
+        discount: coupon.discount,
+        minAmount: coupon.minAmount,
+        maxAmount: coupon.maxAmount,
+      },
+    });
+
+  } catch (err) {
+    console.log("Error in server")
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 };

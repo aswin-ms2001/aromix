@@ -104,12 +104,12 @@
             <label class="form-check-label fw-bold" for="cod">Cash on Delivery</label>
           </div>
           <div class="form-check mb-2">
-            <input class="form-check-input" type="radio" name="paymentMethod" id="upi" value="upi" disabled>
-            <label class="form-check-label text-muted" for="upi">UPI (Coming Soon)</label>
+            <input class="form-check-input" type="radio" name="paymentMethod" id="razorpayOption" value="razorpay" >
+            <label class="form-check-label text-muted" for="upi">Online Payment </label>
           </div>
           <div class="form-check mb-2">
-            <input class="form-check-input" type="radio" name="paymentMethod" id="card" value="card" disabled>
-            <label class="form-check-label text-muted" for="card">Credit/Debit Card (Coming Soon)</label>
+            <input class="form-check-input" type="radio" name="paymentMethod" id="walletOption" value="wallet" >
+            <label class="form-check-label text-muted" for="card">Wallet </label>
           </div>
         </div>
       </div>
@@ -130,10 +130,36 @@
             </div>
           <% }) %>
           <hr>
-          <p class="d-flex justify-content-between mb-1"><span>Subtotal:</span> <span>₹<%= subtotal %></span></p>
-          <p class="d-flex justify-content-between mb-1"><span>Delivery:</span> <span>₹<%= subtotal > 1000 ? 0 : 50 %></span></p>
+             <div class="card mb-4">
+              <div class="card-header bg-info text-white">Apply Coupon</div>
+              <div class="card-body">
+                <div class="input-group mb-2">
+                  <select id="couponInput" class="form-select">
+                    <option value="" selected disabled>Choose a coupon</option>
+                    <% coupens.forEach(function (coupon) { %>
+                      <option value="<%= coupon.code %>">
+                        <%= coupon.code %> -
+                        <%= coupon.type === "FLAT"
+                            ? ("₹ " + coupon.discount + " off")
+                            : (coupon.discount + "% off") %>
+                      </option>
+                    <% }) %>
+                  </select>
+                                    
+                  <!-- <input id="couponInput" type="text" class="form-control" placeholder="Enter coupon code" /> -->
+                  <button class="btn btn-outline-primary" type="button" id="applyCouponBtn" onclick="applyCoupon()">Apply</button>
+                  <button class="btn btn-outline-danger d-none" id="removeCouponBtn" type="button" onclick="removeCoupon()">Remove</button>
+                </div>
+                <div class="text-success d-none" id="couponSuccess"></div>
+                <div class="text-danger d-none" id="couponError"></div>
+              </div>
+            </div>
           <hr>
-          <h5 class="d-flex justify-content-between fw-bold">Total: <span>₹<%= subtotal > 1000 ? subtotal : subtotal + 50 %></span></h5>
+          <p class="d-flex justify-content-between mb-1" id="subTotalAmount"><span>Subtotal: ₹</span> <span><%= subtotal %></span></p>
+          <p class="d-flex justify-content-between mb-1" id="deliveryAmount"><span>Delivery: ₹</span> <span><%= subtotal > 1000 ? 0 : 50 %></span></p>
+          <p class="d-flex justify-content-between mb-1 d-none" id="coupenAmount"><span>Coupon Discount: ₹</span> <span>  </span></p>
+          <hr>
+          <h5 class="d-flex justify-content-between fw-bold" id="grandTotalAmount"> Total: <span>₹<%= subtotal > 1000 ? subtotal : subtotal + 50 %></span></h5>
           <button class="btn btn-danger w-100 mt-3" onclick="placeOrder()">Place Order</button>
         </div>
       </div>
@@ -272,6 +298,7 @@
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
   <script>
+
     let selectedAddressId = "<%= defaultAddress ? defaultAddress._id : '' %>";
     console.log(selectedAddressId);
 
@@ -683,45 +710,159 @@ async function setDefault(id) {
       .map(word => word[0].toUpperCase() + word.slice(1))
       .join(" ");
   }
-  const cartItems = '<%- JSON.stringify(cart) %>';
+  const removeCoupenBtn = document.getElementById("removeCouponBtn");
+  const errDiv = document.getElementById("couponError");
+  const sucDiv = document.getElementById("couponSuccess");
+  let code = null;
+  async function  applyCoupon(){
+    const coupenInput = document.getElementById("couponInput").value.trim();
+    if(!coupenInput){
+      sucDiv.textContent = "";
+      sucDiv.classList.add("d-none");
+      errDiv.textContent = "Coupen Cannt be Empty";
+      errDiv.classList.remove("d-none");
+      return 
+      
+    }
+    code = coupenInput;
+    sucDiv.textContent = "Coupen Added Successfully";
+    sucDiv.classList.remove("d-none");
+    errDiv.textContent = "";
+    errDiv.classList.add("d-none");
+    removeCoupenBtn.classList.remove("d-none");
+    try{
+      console.log(code)
+      const res = await axios.get(`/user-oder/user-coupon?coupon=${encodeURIComponent(code)}`);
+      const {message,data}= res.data;
+      showToast(message,"success");
+      if(res.data.success){
+        const grandTotalEl = document.getElementById("grandTotalAmount").querySelectorAll("span")[0]
+        const subTotalAmount = Number(document.getElementById("subTotalAmount").querySelectorAll("span")[1].textContent.replace(/[^\d.]/g,''));
+        if(data.type === "PERCENTAGE"){
+          const coupenAmount =  document.getElementById("coupenAmount").querySelectorAll("span")[1];
+          const percentDiscount = subTotalAmount * .01 * Number(data.discount);
+          coupenAmount.textContent =  percentDiscount;
+          console.log(subTotalAmount,data.discount)
+          grandTotalEl.textContent = subTotalAmount <= 1000 ?  subTotalAmount - percentDiscount +50: subTotalAmount - percentDiscount;
+          document.getElementById("coupenAmount").classList.remove("d-none");
+
+        }else{
+          const coupenAmount = document.getElementById("coupenAmount").querySelectorAll("span")[1];
+          coupenAmount.textContent =  data.discount;
+          grandTotalEl.textContent = subTotalAmount<=1000 ? subTotalAmount - Number(data.discount) + 50 : subTotalAmount - Number(data.discount) + 50;
+          document.getElementById("coupenAmount").classList.remove("d-none");
+        }
+      }
+      console.log(data)
+    }catch(err){
+      showToast(err.response.data.message,"danger")
+    }
+    
+  }
+
+  function removeCoupon(){
+    document.getElementById("couponInput").value = "";
+    code = null;
+    removeCoupenBtn.classList.add("d-none");
+    sucDiv.textContent = "";
+    sucDiv.classList.add("d-none");
+    errDiv.textContent = "";
+    errDiv.classList.add("d-none");
+
+  }
+
+  window.addEventListener("beforeunload",(event)=>{
+
+  // Detect navigation type
+  const navEntries = performance.getEntriesByType("navigation");
+  const navType = navEntries.length > 0 ? navEntries[0].type : null;
+
+  if (navType === "reload") {
+    //  Store coupon only if reload
+    sessionStorage.setItem("coupon", code);
+    console.log(code);
+  } else if (navType === "navigate") {
+      // New navigation -> clear coupon
+      sessionStorage.removeItem("coupon");
+
+
+    } else if (navType === "back_forward") {
+      // Back/Forward navigation -> decide what to do (here we restore)
+
+      sessionStorage.removeItem("coupon");
+
+
+    }else {
+      //  Clear it if navigation (back, forward, close, etc.)
+
+      sessionStorage.removeItem("coupon");
+      
+    }
+  })
+
+    document.addEventListener("DOMContentLoaded",(domEvent)=>{
+      const code = sessionStorage.getItem("coupon");
+      if(code){
+        document.getElementById("couponInput").value = code;
+        console.log(code)
+        applyCoupon()
+      }
+    })
+  // window.addEventListener("pageshow",(event)=>{
+  //   console.log("page show")
+
+  // })
+const cartItems = '<%- JSON.stringify(cart) %>';
 async function placeOrder() {
-  try {
+
     const cart = JSON.parse(cartItems);
     const paymentMethod = document.querySelector("input[name=paymentMethod]:checked").value;
 
     console.log("Selected Payment Method:", paymentMethod);
+    return;
+    if(paymentMethod === "cod"){
+      try{
+        // Send request to backend
+        const res = await axios.post("/user-oder/oder", {
+          cart,
+          selectedAddressId,
+          paymentMethod
+        });
 
-    // Send request to backend
-    const res = await axios.post("/user-oder/oder", {
-      cart,
-      selectedAddressId,
-      paymentMethod
-    });
+        if (res.data.success) {
+          //  Show success toast
+          showToast(res.data.message, "success");
 
-    if (res.data.success) {
-      //  Show success toast
-      showToast(res.data.message, "success");
+          //  Redirect after short delay
+          setTimeout(() => {
+            window.location.href = res.data.redirect;
+          }, 2000);
+        }
+      }catch(err){
+        console.error("Error placing order:", err);
 
-      //  Redirect after short delay
-      setTimeout(() => {
-        window.location.href = res.data.redirect;
-      }, 2000);
+        //  Show error toast with backend message
+        const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
+        showToast(errorMessage, "danger");
+
+        //  If there are out-of-stock items, display them
+        if (err.response?.data?.outOfStockItems) {
+          console.warn("Out of stock items:", err.response.data.outOfStockItems);
+          err.response.data.outOfStockItems.forEach(item => {
+            showToast(`${item} is out of stock`, "warning");
+          });
+        }
+      }
+      
+    }else if(paymentMethod === "razorpay"){
+      try{
+
+      }catch(err){
+        
+      }
     }
-  } catch (err) {
-    console.error("Error placing order:", err);
 
-    //  Show error toast with backend message
-    const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
-    showToast(errorMessage, "danger");
 
-    //  If there are out-of-stock items, display them
-    if (err.response?.data?.outOfStockItems) {
-      console.warn("Out of stock items:", err.response.data.outOfStockItems);
-      err.response.data.outOfStockItems.forEach(item => {
-        showToast(`${item} is out of stock`, "warning");
-      });
-    }
-  }
 }
 
     function showToast(message, type="primary"){

@@ -23,5 +23,5 @@ userOder.post("/cancel-order/:id",userOderController.cancelOrder);
 userOder.post("/cancel-order-item/:orderId/:variantId",userOderController.cancelOrderItem);
 userOder.post("/request-return/:orderId/:variantId",userOderController.requestReturn);
 userOder.get("/download-invoice/:id",userOderController.downloadInvoice);
-
+userOder.get("/user-coupon",userOderController.userCoupon)
 export default userOder ;
