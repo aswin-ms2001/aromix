@@ -749,7 +749,7 @@ async function setDefault(id) {
         }else{
           const coupenAmount = document.getElementById("coupenAmount").querySelectorAll("span")[1];
           coupenAmount.textContent =  data.discount;
-          grandTotalEl.textContent = subTotalAmount<=1000 ? subTotalAmount - Number(data.discount) + 50 : subTotalAmount - Number(data.discount) + 50;
+          grandTotalEl.textContent = subTotalAmount<=1000 ? subTotalAmount - Number(data.discount) + 50 : subTotalAmount - Number(data.discount);
           document.getElementById("coupenAmount").classList.remove("d-none");
         }
       }else{

@@ -101,6 +101,7 @@ export const getUserCartFunction = async (userId) => {
         },
         variant: variant ? {
           _id: variant._id,
+          basePrice: variant.price,
           price: offer ? variant.price - (variant.price * offer *.01) : variant.price ,
           stock: variant.stock,
           images: variant.images,

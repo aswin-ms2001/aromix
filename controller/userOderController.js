@@ -59,13 +59,6 @@ export const userOrder = async (req, res) => {
     if(coupon){
         appliedCoupon = await coupenDetails(coupon,subtotal,userId);
     }
-    console.log(appliedCoupon)
-    //   return res.status(200).json({
-    //       success: true,
-    //       message: "Order placed successfully",
-    //     //   orderId: order._id,
-    //     //   redirect: `/user-oder/oder-status/${order._id}`
-    //   });
     // 4. Validate user cart IDs vs DB cart IDs
     const userVariantIds = cart.map(item => String(item.variant._id)).sort();
     const dbVariantIds = cartItems.map(item => String(item.variant._id)).sort();
@@ -94,21 +87,39 @@ export const userOrder = async (req, res) => {
         outOfStockItems
       });
     }
-
+    
+    var couponAmount = 0;
+    if(appliedCoupon){
+        if(appliedCoupon.type==="PERCENTAGE"){
+            couponAmount = appliedCoupon.discount * subtotal;
+        }else{
+            couponAmount = appliedCoupon.discount;
+        }
+    }else{
+        couponAmount = 0
+    }
     // 6. Prepare Order Items
-    const orderItems = cartItems.map(item => ({
+    const orderItems = cartItems.map((item) => {
+
+    const itemCouponDis = (item.itemTotal/subtotal)*couponAmount;
+    const roundedItemDis = Math.round(itemCouponDis);
+    const discountPerUnit = roundedItemDis/item.quantity;
+    return {
       productId: item.productId._id,
       variantId: item.variant._id,
       quantity: item.quantity,
-      basePrice: item.variant.price,
-      discountAmount: 0, // If any discounts
-      finalPrice: item.variant.price, // No discount applied
-      total: item.variant.price * item.quantity,
-      appliedOffer: null
-    }));
+      basePrice: item.variant.basePrice,
+      discountAmount: discountPerUnit, // coupon discount per item
+      finalPrice: item.variant.price - discountPerUnit, // No discount applied
+      total: item.variant.price * item.quantity - roundedItemDis ,
+      appliedOffer: appliedCoupon ? appliedCoupon.code : null, //coupon offer id
+    }
+    }
+    
+);
 
     // 7. Calculate totals
-    const discount = 0; // Apply coupon logic if needed
+    const discount = couponAmount; // Apply coupon logic if needed
     const shippingCharge = subtotal >1000 ? 0 :  50; // Add shipping logic if needed
     const grandTotal = subtotal - discount + shippingCharge;
 
@@ -133,7 +144,7 @@ export const userOrder = async (req, res) => {
       discount,
       shippingCharge,
       grandTotal,
-      appliedCoupon: null
+      appliedCoupon:  appliedCoupon ? appliedCoupon.code : null
     });
 
     await order.save();
@@ -145,7 +156,11 @@ export const userOrder = async (req, res) => {
         { $inc: { "variants.$.stock": -item.quantity } }
       );
     }
-
+    if(appliedCoupon){
+        await Coupon.updateOne({code:appliedCoupon.code},{
+            $addToSet:{usedBy:userId}
+        })
+    }
     // 10. Clear user cart
     await Cart.deleteMany({userId});
 
