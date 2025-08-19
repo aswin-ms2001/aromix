@@ -9,7 +9,7 @@ import { isProductAndCategoryActive ,getVariantStock } from "./services/userServ
 import * as cartService from "./services/userServices/cartServices.js";
 import currentUser from "../middleware/userIdentification/currentUser.js";
 import PDFDocument from "pdfkit";
-import { userCoupens } from "./services/userServices/coupenService.js";
+import { userCoupens, coupenDetails } from "./services/userServices/coupenService.js";
 import Coupon from "../model/coupon.js";
 
 export const userCheckOut = async (req,res)=>{
@@ -36,8 +36,8 @@ export const userCheckOut = async (req,res)=>{
 export const userOrder = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { cart, selectedAddressId, paymentMethod } = req.body;
-      
+    const { cart, selectedAddressId, paymentMethod,coupon } = req.body;
+    
     // 1. Validate payment method
     if (paymentMethod !== "cod") {
       return res.status(400).json({ success: false, message: "Only Cash On Delivery is Applicable" });
@@ -55,6 +55,17 @@ export const userOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: "Cart is Empty" });
     }
 
+    let appliedCoupon=null;
+    if(coupon){
+        appliedCoupon = await coupenDetails(coupon,subtotal,userId);
+    }
+    console.log(appliedCoupon)
+    //   return res.status(200).json({
+    //       success: true,
+    //       message: "Order placed successfully",
+    //     //   orderId: order._id,
+    //     //   redirect: `/user-oder/oder-status/${order._id}`
+    //   });
     // 4. Validate user cart IDs vs DB cart IDs
     const userVariantIds = cart.map(item => String(item.variant._id)).sort();
     const dbVariantIds = cartItems.map(item => String(item.variant._id)).sort();

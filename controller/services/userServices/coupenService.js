@@ -14,7 +14,7 @@ export const userCoupens = async (amount, userId) => {
           endAt: { $gte: now },
           minAmount: { $lte: amount },
           maxAmount: { $gte: amount },
-          usedBy: { $ne: new mongoose.Types.ObjectId(userId) } // userId not in usedBy
+          usedBy: { $nin: [new mongoose.Types.ObjectId(userId)]} // userId not in usedBy
         }
       },
       {
@@ -36,3 +36,27 @@ export const userCoupens = async (amount, userId) => {
     throw err;
   }
 };
+
+
+export const coupenDetails = async(couponCode, amount, userId)=>{
+  try{
+    const now = new Date()
+    const coupon = await Coupon.findOne({
+      code:couponCode,isActive:true,isNonBlocked:true,
+      startAt: { $lte: now },
+      endAt: { $gte: now },
+      minAmount: { $lte: amount },
+      maxAmount: { $gte: amount },
+      usedBy: { $nin: [new mongoose.Types.ObjectId(userId)] }
+    },{
+      code:1,
+      type:1,
+      discount:1
+    });
+    if(!coupon) return null;
+    return coupon;
+  }catch(err){
+    console.log(err);
+    return null;
+  }
+}

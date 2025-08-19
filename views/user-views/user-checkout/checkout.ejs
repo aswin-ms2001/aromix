@@ -752,9 +752,13 @@ async function setDefault(id) {
           grandTotalEl.textContent = subTotalAmount<=1000 ? subTotalAmount - Number(data.discount) + 50 : subTotalAmount - Number(data.discount) + 50;
           document.getElementById("coupenAmount").classList.remove("d-none");
         }
+      }else{
+        coupenInput = "";
+        showToast("Invalid Coupon","danger")
       }
       console.log(data)
     }catch(err){
+      coupenInput = ""
       showToast(err.response.data.message,"danger")
     }
     
@@ -817,26 +821,28 @@ async function placeOrder() {
 
     const cart = JSON.parse(cartItems);
     const paymentMethod = document.querySelector("input[name=paymentMethod]:checked").value;
-
+    const coupon = document.getElementById("couponInput").value.trim();
     console.log("Selected Payment Method:", paymentMethod);
-    return;
+    console.log(coupon);
     if(paymentMethod === "cod"){
       try{
         // Send request to backend
         const res = await axios.post("/user-oder/oder", {
           cart,
           selectedAddressId,
-          paymentMethod
+          paymentMethod,
+          coupon
         });
 
         if (res.data.success) {
           //  Show success toast
           showToast(res.data.message, "success");
-
+          
           //  Redirect after short delay
           setTimeout(() => {
             window.location.href = res.data.redirect;
           }, 2000);
+          return;
         }
       }catch(err){
         console.error("Error placing order:", err);
