@@ -91,7 +91,7 @@ export const userOrder = async (req, res) => {
     var couponAmount = 0;
     if(appliedCoupon){
         if(appliedCoupon.type==="PERCENTAGE"){
-            couponAmount = appliedCoupon.discount * subtotal;
+            couponAmount = appliedCoupon.discount * subtotal/100;
         }else{
             couponAmount = appliedCoupon.discount;
         }
@@ -180,10 +180,12 @@ export const userOrder = async (req, res) => {
 export const userOrderSuccessPage = async (req,res)=>{
     try{
         const id = req.params.id;
+        console.log(id)
         const order = await Order.findById(id); 
         if(!order || String(order.userId) !== String(req.user._id)) {
             return res.render("error.ejs");
         }
+        
         return res.render("user-views/user-account/user-profile/user-success.ejs",{
             order
         })

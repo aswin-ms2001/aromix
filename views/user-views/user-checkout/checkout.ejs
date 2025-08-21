@@ -296,7 +296,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
 
     let selectedAddressId = "<%= defaultAddress ? defaultAddress._id : '' %>";
@@ -837,7 +837,7 @@ async function placeOrder() {
         if (res.data.success) {
           //  Show success toast
           showToast(res.data.message, "success");
-          
+          sessionStorage.removeItem("coupon");
           //  Redirect after short delay
           setTimeout(() => {
             window.location.href = res.data.redirect;
@@ -863,8 +863,67 @@ async function placeOrder() {
     }else if(paymentMethod === "razorpay"){
       try{
 
+        // Get Razorpay order from backend
+        const res = await axios.post('/user-oder/create-razorpay-order', {
+          cart,
+          selectedAddressId,
+          paymentMethod,
+          coupon
+          });
+        if (res.data.success) {
+          const { order, tempOrderId } = res.data;
+          console.log(res.data)
+          const options = {
+            key: '<%= process.env.RAZORPAY_KEY_ID %>',
+            amount: order.amount,
+            currency: order.currency,
+            name: 'Aromix',
+            description: 'Order Payment',
+            order_id: order.id,
+            handler: async function (response) {
+              // Verify payment
+              try {
+                console.log("before varification to test res.data")
+                console.log(res.data);
+                console.log(response);
+                console.log("enterd varification");
+                const verifyRes = await axios.post('/user-oder/verify-razorpay-payment', {
+                  orderId: order.id,
+                  paymentId: response.razorpay_payment_id,
+                  signature: response.razorpay_signature,
+                  tempOrderId
+                });
+                if (verifyRes.data.success) {
+                  sessionStorage.removeItem("coupon");
+                  // console.log("success");
+                  // console.log(verifyRes)
+                  window.location.href = `/user-oder/oder-status/${verifyRes.data.orderId}`;
+                } else {
+                  window.location.href = `/user-oder/payment-failed/${verifyRes.data.orderId}`;
+                  console.log("failed");
+                  // console.log(verifyRes)
+                }
+              } catch (err) {
+                window.location.href = `/user-oder/payment-failed/${tempOrderId}`;
+                // console.log("catched");
+                // console.log(verifyRes)
+              }
+            },
+            prefill: {
+              name: '<%= currentUser.name %>',
+              email: '<%= currentUser.email %>'
+            },
+            theme: { color: '#2e0e46' }
+          };
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        } else {
+          alert(res.data.message);
+        }
+
       }catch(err){
-        
+        console.log(err);
+        console.log("error")
       }
     }
 

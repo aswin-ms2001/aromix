@@ -1,5 +1,6 @@
 import express from "express";
-import * as userOderController from "../controller/userOderController.js"
+import * as userOderController from "../controller/userOderController.js";
+import * as userOnlinePaymentController from "../controller/userOnlinePaymentController.js";
 import { userSessionMiddleware } from "../config/session.js";
 import { ensureAuthenticated} from "../middleware/authMiddleware/userAuthMiddleware.js";
 import passport from "../config/passport.js";
@@ -23,5 +24,10 @@ userOder.post("/cancel-order/:id",userOderController.cancelOrder);
 userOder.post("/cancel-order-item/:orderId/:variantId",userOderController.cancelOrderItem);
 userOder.post("/request-return/:orderId/:variantId",userOderController.requestReturn);
 userOder.get("/download-invoice/:id",userOderController.downloadInvoice);
-userOder.get("/user-coupon",userOderController.userCoupon)
+userOder.get("/user-coupon",userOderController.userCoupon);
+userOder.post("/create-razorpay-order", userOnlinePaymentController.createRazorpayOrderForUser);
+userOder.post("/verify-razorpay-payment", userOnlinePaymentController.verifyRazorpayPayment);
+userOder.get("/payment-failed",userOnlinePaymentController.userOrderFailurePage);
+// userOder.post("/wallet-payment", userOnlinePaymentController.walletPayment);
+
 export default userOder ;
