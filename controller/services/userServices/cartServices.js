@@ -78,11 +78,14 @@ export const getUserCartFunction = async (userId) => {
       const offer = await productOfferFinder(product._id, product.categoryId._id);
       // console.log(offer)
       let itemTotal = 0;
+      let itemTotalWithoutOffer = 0
       if(offer){
          itemTotal = variant ? variant.price * item.quantity * (1 - offer * .01) : 0;
+         itemTotalWithoutOffer = variant ? variant.price * item.quantity : 0;
         //  console.log(variant)
       }else{
          itemTotal = variant ? variant.price * item.quantity : 0;
+         itemTotalWithoutOffer = variant ? variant.price * item.quantity : 0;
       }
       
       // console.log(itemTotal)
@@ -98,12 +101,14 @@ export const getUserCartFunction = async (userId) => {
         },
         variant: variant ? {
           _id: variant._id,
+          basePrice: variant.price,
           price: offer ? variant.price - (variant.price * offer *.01) : variant.price ,
           stock: variant.stock,
           images: variant.images,
           volume: variant.volume
         } : null,
-        itemTotal
+        itemTotal,
+        itemTotalWithoutOffer
       };
     })
     ) ;
@@ -111,8 +116,9 @@ export const getUserCartFunction = async (userId) => {
 
     // console.log(activeCart)
     const subtotal = activeCart.reduce((sum, item) => sum + item.itemTotal, 0);
-
-    return { cartItems: activeCart, subtotal };
+    const subTotalWithoutOffer = activeCart.reduce((sum, item) => sum + item.itemTotalWithoutOffer, 0);
+    // console.log(subTotalWithoutOffer);
+    return { cartItems: activeCart, subtotal, subTotalWithoutOffer };
 
   } catch (err) {
     console.error("Error fetching user cart:", err);
