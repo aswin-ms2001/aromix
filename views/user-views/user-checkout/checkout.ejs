@@ -715,7 +715,7 @@ async function setDefault(id) {
   const sucDiv = document.getElementById("couponSuccess");
   let code = null;
   async function  applyCoupon(){
-    const coupenInput = document.getElementById("couponInput").value.trim();
+    let coupenInput = document.getElementById("couponInput").value.trim();
     if(!coupenInput){
       sucDiv.textContent = "";
       sucDiv.classList.add("d-none");
@@ -759,6 +759,7 @@ async function setDefault(id) {
       console.log(data)
     }catch(err){
       coupenInput = ""
+      console.log("catched")
       showToast(err.response.data.message,"danger")
     }
     
@@ -895,18 +896,18 @@ async function placeOrder() {
                 });
                 if (verifyRes.data.success) {
                   sessionStorage.removeItem("coupon");
-                  // console.log("success");
-                  // console.log(verifyRes)
+                  console.log("success");
+                  console.log(verifyRes)
                   window.location.href = `/user-oder/oder-status/${verifyRes.data.orderId}`;
                 } else {
                   window.location.href = `/user-oder/payment-failed/${verifyRes.data.orderId}`;
                   console.log("failed");
-                  // console.log(verifyRes)
+                  console.log(verifyRes)
                 }
               } catch (err) {
                 window.location.href = `/user-oder/payment-failed/${tempOrderId}`;
-                // console.log("catched");
-                // console.log(verifyRes)
+                console.log("catched");
+                console.log(verifyRes)
               }
             },
             prefill: {

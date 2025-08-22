@@ -114,10 +114,10 @@ export const getUserCartFunction = async (userId) => {
     ) ;
     activeCart.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    console.log(activeCart)
+    // console.log(activeCart)
     const subtotal = activeCart.reduce((sum, item) => sum + item.itemTotal, 0);
     const subTotalWithoutOffer = activeCart.reduce((sum, item) => sum + item.itemTotalWithoutOffer, 0);
-    console.log(subTotalWithoutOffer);
+    // console.log(subTotalWithoutOffer);
     return { cartItems: activeCart, subtotal, subTotalWithoutOffer };
 
   } catch (err) {

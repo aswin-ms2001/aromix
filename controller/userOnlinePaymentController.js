@@ -17,8 +17,9 @@ export const createRazorpayOrderForUser = async (req, res) => {
   try {
     const userId = req.user._id;
     const { cart, selectedAddressId, paymentMethod, coupon } = req.body;
-    console.log(req.body)
+   
     // 1. Validate payment method
+   
     if (paymentMethod !== "razorpay") {
       return res.status(400).json({ success: false, message: "Razorpay is not Selected" });
     }
@@ -34,11 +35,13 @@ export const createRazorpayOrderForUser = async (req, res) => {
     if (!cartItems.length) {
       return res.status(400).json({ success: false, message: "Cart is Empty" });
     }
-
+ 
     let appliedCoupon = null;
     if (coupon) {
       appliedCoupon = await coupenDetails(coupon, subtotal, userId);
     }
+
+   
     // 4. Validate user cart IDs vs DB cart IDs
     const userVariantIds = cart.map(item => String(item.variant._id)).sort();
     const dbVariantIds = cartItems.map(item => String(item.variant._id)).sort();
@@ -71,7 +74,7 @@ export const createRazorpayOrderForUser = async (req, res) => {
     var couponAmount = 0;
     if (appliedCoupon) {
       if (appliedCoupon.type === "PERCENTAGE") {
-        couponAmount = appliedCoupon.discount * subtotal;
+        couponAmount = appliedCoupon.discount * subtotal/100;
       } else {
         couponAmount = appliedCoupon.discount;
       }
@@ -128,8 +131,10 @@ export const createRazorpayOrderForUser = async (req, res) => {
     });
 
     await order.save();
-    const razorpayOrder = await createRazorpayOrder(grandTotal, order.orderId.toString())
 
+ 
+    const razorpayOrder = await createRazorpayOrder(grandTotal, order.orderId.toString())
+ 
     // 9. Reduce stock for each variant
     for (let item of cartItems) {
       await Product.updateOne(
@@ -141,10 +146,11 @@ export const createRazorpayOrderForUser = async (req, res) => {
       await Coupon.updateOne({ code: appliedCoupon.code }, {
         $addToSet: { usedBy: userId }
       })
-    }
+    };
+
     // 10. Clear user cart
     await Cart.deleteMany({userId});
-    console.log("Order created and extied")
+ 
     return res.status(200).json({
       success: true,
       order: razorpayOrder,
@@ -161,8 +167,8 @@ export const createRazorpayOrderForUser = async (req, res) => {
 export const verifyRazorpayPayment = async (req, res) => {
   try {
     const { orderId, paymentId, signature, tempOrderId } = req.body;
-    console.log(req.body);
-    console.log("enterd varification");
+
+
     const order = await Order.findById(tempOrderId);
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
     if (!verifyRazorpaySignature(orderId, paymentId, signature)) {
@@ -171,12 +177,12 @@ export const verifyRazorpayPayment = async (req, res) => {
       await order.save();
       return res.status(400).json({ success: false, message: "Payment verification failed" });
     }
-    console.log("paid")
+
     order.paymentStatus = "Paid";
     order.razorpayPaymentId = paymentId;
     order.orderStatus = "Pending";
     await order.save();
-    console.log("response send")
+
     res.json({ success: true, message: "Payment successful", orderId: order._id });
   } catch (err) {
     console.error("Error in verifyRazorpayPayment:", err);
@@ -188,7 +194,7 @@ export const verifyRazorpayPayment = async (req, res) => {
 export const userOrderFailurePage = async(req,res)=>{
   try{
       const id = req.params.id;
-      console.log(id)
+
       const order = await Order.findById(id); 
       if(!order || String(order.userId) !== String(req.user._id)) {
           return res.render("error.ejs");
