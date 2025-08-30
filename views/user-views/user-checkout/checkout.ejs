@@ -900,11 +900,13 @@ async function placeOrder() {
                   console.log(verifyRes)
                   window.location.href = `/user-oder/oder-status/${verifyRes.data.orderId}`;
                 } else {
+                  await axios.patch(`/user-oder/payment-failed/${tempOrderId}`)
                   window.location.href = `/user-oder/payment-failed/${verifyRes.data.orderId}`;
                   console.log("failed");
                   console.log(verifyRes)
                 }
               } catch (err) {
+                await axios.patch(`/user-oder/payment-failed/${tempOrderId}`)
                 window.location.href = `/user-oder/payment-failed/${tempOrderId}`;
                 console.log("catched");
                 console.log(verifyRes)
@@ -916,14 +918,16 @@ async function placeOrder() {
             },
             theme: { color: '#2e0e46' },
             modal:{
-              ondismiss:function(){
+              ondismiss:async function(){
+                await axios.patch(`/user-oder/payment-failed/${tempOrderId}`)
                 window.location.href = `/user-oder/payment-failed/${tempOrderId}`;
               }
             }
           };
           const rzp = new window.Razorpay(options);
 
-          rzp.on("payment-failed",function(response){
+          rzp.on("payment.failed",async function(response){
+            await axios.patch(`/user-oder/payment-failed/${tempOrderId}`)
             window.location.href = `/user-oder/payment-failed/${tempOrderId}`;
           })
 

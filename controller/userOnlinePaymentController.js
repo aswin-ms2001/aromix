@@ -191,6 +191,21 @@ export const verifyRazorpayPayment = async (req, res) => {
 };
 
 
+export const updateOrderFailedStatus = async (req,res)=>{
+  try{
+    const id = req.params.id;
+
+    const order = await Order.findById(id);
+    if(!order) return res.status(404).json({success:false});
+    order.paymentStatus = "Failed";
+    await order.save();
+    return res.status(200).json({success:true});
+  }catch(err){
+    console.log(err);
+    return res.status(404).json({success:false});
+  }
+}
+
 export const userOrderFailurePage = async(req,res)=>{
   try{
       const id = req.params.id;
