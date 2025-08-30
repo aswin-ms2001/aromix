@@ -27,7 +27,7 @@ userOder.get("/download-invoice/:id",userOderController.downloadInvoice);
 userOder.get("/user-coupon",userOderController.userCoupon);
 userOder.post("/create-razorpay-order", userOnlinePaymentController.createRazorpayOrderForUser);
 userOder.post("/verify-razorpay-payment", userOnlinePaymentController.verifyRazorpayPayment);
-userOder.get("/payment-failed",userOnlinePaymentController.userOrderFailurePage);
+userOder.get("/payment-failed/:id",userOnlinePaymentController.userOrderFailurePage);
 // userOder.post("/wallet-payment", userOnlinePaymentController.walletPayment);
 
 export default userOder ;

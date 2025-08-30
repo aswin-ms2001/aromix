@@ -914,9 +914,19 @@ async function placeOrder() {
               name: '<%= currentUser.name %>',
               email: '<%= currentUser.email %>'
             },
-            theme: { color: '#2e0e46' }
+            theme: { color: '#2e0e46' },
+            modal:{
+              ondismiss:function(){
+                window.location.href = `/user-oder/payment-failed/${tempOrderId}`;
+              }
+            }
           };
           const rzp = new window.Razorpay(options);
+
+          rzp.on("payment-failed",function(response){
+            window.location.href = `/user-oder/payment-failed/${tempOrderId}`;
+          })
+
           rzp.open();
         } else {
           alert(res.data.message);

@@ -11,6 +11,7 @@ import currentUser from "../middleware/userIdentification/currentUser.js";
 import PDFDocument from "pdfkit";
 import { userCoupens, coupenDetails } from "./services/userServices/coupenService.js";
 import Coupon from "../model/coupon.js";
+import Wallet from "../model/wallet.js";
 
 export const userCheckOut = async (req,res)=>{
     try {
@@ -455,6 +456,26 @@ export const cancelOrder = async (req, res) => {
             item.cancelReason = reason;
         });
 
+        if(order.paymentMethod !== "COD" && order.paymentStatus === "Paid"){
+
+            let wallet = await Wallet.findOne({ userId: order.userId });
+            if (!wallet) {
+                wallet = new Wallet({ userId: order.userId, balance: 0 });
+            }
+
+            const refundAmount = order.grandTotal; 
+            wallet.balance += refundAmount;
+            wallet.transactions.push({
+                type: "Credit",
+                amount: refundAmount,
+                description: `Refund for User Cancelled Order  - Order #${order.orderId}`,
+                orderId: order._id
+            });
+
+            await wallet.save();
+        }
+
+
         await order.save();
 
         // Restore stock for cancelled items
@@ -509,6 +530,8 @@ export const cancelOrderItem = async (req, res) => {
         itemToCancel.cancelStatus = 'Cancelled';
         itemToCancel.cancelReason = reason;
 
+
+
         // Recalculate order totals
         let newSubtotal = 0;
         let activeItemsCount = 0;
@@ -520,14 +543,39 @@ export const cancelOrderItem = async (req, res) => {
             }
         });
 
+        if(order.orderStatus==="Pending" && order.paymentMethod !== "COD" && order.paymentStatus==="Paid"){
+            // Process refund to wallet - only the specific item's total
+            let wallet = await Wallet.findOne({ userId: order.userId });
+            if (!wallet) {
+                wallet = new Wallet({ userId: order.userId, balance: 0 });
+            }
+
+            const refundAmount = activeItemsCount === 0 ? itemToCancel.finalPrice * itemToCancel.quantity + 50:itemToCancel.finalPrice * itemToCancel.quantity ; // This is already item.total (price * quantity)
+            wallet.balance += refundAmount;
+            wallet.transactions.push({
+                type: "Credit",
+                amount: refundAmount,
+                description: `Refund for User Cancelled Item  - Order #${order.orderId}`,
+                orderId: order._id
+            });
+
+            await wallet.save();
+        }
+
+
         // Update order totals
-        order.subtotal = newSubtotal;
-        order.shippingCharge = newSubtotal > 1000 ? 0 : 50;
-        order.grandTotal = newSubtotal + order.shippingCharge - order.discount;
+
 
         // If all items are cancelled, cancel the entire order
         if (activeItemsCount === 0) {
             order.orderStatus = 'Cancelled';
+            order.subtotal = newSubtotal;
+            order.shippingCharge = 0;
+            order.grandTotal = newSubtotal + order.shippingCharge ;
+        }else{
+            order.subtotal = newSubtotal;
+            order.shippingCharge = newSubtotal > 1000 ? 0 : 50;
+            order.grandTotal = newSubtotal + order.shippingCharge ;
         }
 
         await order.save();

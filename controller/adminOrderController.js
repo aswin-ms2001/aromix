@@ -332,10 +332,40 @@ export const updateOrderStatus = async (req, res) => {
         order.orderStatus = newStatus;
 
         // Update payment status when delivered
-        if (newStatus === "Delivered") {
+        if (newStatus === "Delivered" && order.paymentMethod === "COD") {
             order.paymentStatus = "Paid";
         }
 
+        
+
+        if(newStatus==="Cancelled"){
+            for (let item of order.items) {
+                    await Product.updateOne(
+                        { _id: item.productId, "variants._id": item.variantId },
+                        { $inc: { "variants.$.stock": item.quantity } }
+                    );
+                }
+
+            if(order.paymentMethod !== "COD" && order.paymentStatus === "Paid"){
+                // Process refund to wallet - only the specific item's total
+                let wallet = await Wallet.findOne({ userId: order.userId });
+                if (!wallet) {
+                    wallet = new Wallet({ userId: order.userId, balance: 0 });
+                }
+
+                const refundAmount = order.grandTotal; // This is already item.total (price * quantity)
+                wallet.balance += refundAmount;
+                wallet.transactions.push({
+                    type: "Credit",
+                    amount: refundAmount,
+                    description: `Refund for Admin Cancelled Order  - Order #${order.orderId}`,
+                    orderId: order._id
+                });
+
+                await wallet.save();
+            }        
+        }
+ 
         await order.save();
 
         res.json({ success: true, message: "Order status updated successfully" });
