@@ -324,6 +324,10 @@ export const updateOrderStatus = async (req, res) => {
              return res.status(400).json({ success: false, message: "You can only Confirm or Cancel while the order is Pending " });
         }
 
+        if(order.orderStatus === "Pending" && newStatus !== "Cancelled" && order.paymentMethod !== "COD" &&  order.paymentStatus !== "Paid"){
+             return res.status(400).json({ success: false, message: "This is Not a COD and the payment isn't successfull yet " });
+        }
+
         if(newStatus!== "Cancelled" && order.orderStatus !== "Pending" && newIndex-currentIndex >1 ){
             return res.status(400).json({ success: false, message: "Progression Should be Followed Step by step" });
         }

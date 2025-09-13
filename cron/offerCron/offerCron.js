@@ -4,7 +4,7 @@ import Coupon from "../../model/coupon.js";
 
 export default function startOfferCron() {
   // Run every minute
-  cron.schedule("*/1 * * * *", async () => {
+  cron.schedule("* *2 * * *", async () => {
     const now = new Date();
     try {
       // Activate offers within window

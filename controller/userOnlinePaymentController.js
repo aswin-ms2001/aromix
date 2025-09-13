@@ -222,4 +222,29 @@ export const userOrderFailurePage = async(req,res)=>{
       console.log(err);
       return res.render("error.ejs")
   }
-}
+};
+
+export const retryPayment = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+    if (order.paymentMethod !== "RAZORPAY") {
+      return res.status(400).json({ success: false, message: "Only Razorpay orders can be retried" });
+    }
+    if (order.paymentStatus !== "Failed") {
+      return res.status(400).json({ success: false, message: "Only failed payments can be retried" });
+    }
+
+    // Create new Razorpay order
+    const razorpayOrder = await createRazorpayOrder(order.grandTotal, order.orderId.toString());
+
+    return res.json({ success: true, razorpayOrder, order });
+  } catch (err) {
+    console.error("Error retrying payment:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};

@@ -29,6 +29,7 @@ userOder.post("/create-razorpay-order", userOnlinePaymentController.createRazorp
 userOder.post("/verify-razorpay-payment", userOnlinePaymentController.verifyRazorpayPayment);
 userOder.patch("/payment-failed/:id", userOnlinePaymentController.updateOrderFailedStatus)
 userOder.get("/payment-failed/:id",userOnlinePaymentController.userOrderFailurePage);
+userOder.post("/retry-payment/:id", userOnlinePaymentController.retryPayment);
 // userOder.post("/wallet-payment", userOnlinePaymentController.walletPayment);
 
 export default userOder ;
