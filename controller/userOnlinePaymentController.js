@@ -238,7 +238,9 @@ export const retryPayment = async (req, res) => {
     if (order.paymentStatus !== "Failed") {
       return res.status(400).json({ success: false, message: "Only failed payments can be retried" });
     }
-
+    if (order.orderStatus === "Cancelled" ) {
+      return res.status(400).json({ success: false, message: "You have already cancelled the order" });
+    }
     // Create new Razorpay order
     const razorpayOrder = await createRazorpayOrder(order.grandTotal, order.orderId.toString());
 

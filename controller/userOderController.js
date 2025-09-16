@@ -526,6 +526,30 @@ export const cancelOrderItem = async (req, res) => {
             return res.status(400).json({ success: false, message: "Item is already cancelled" });
         }
 
+        if(order.paymentMethod==="RAZORPAY" && order.paymentStatus !== "Paid"){
+            
+            order.orderStatus = 'Cancelled';
+            order.items.forEach(item => {
+                item.cancelStatus = 'Cancelled';
+                item.cancelReason = reason;
+            });
+
+            for (let item of order.items) {
+                await Product.updateOne(
+                    { _id: item.productId, "variants._id": item.variantId },
+                    { $inc: { "variants.$.stock": item.quantity } }
+                );
+            };
+
+            await order.save();
+
+            return res.json({
+                success: true,
+                message: "Your Order got cancelled,Because already Payment failed, Make new Order",
+            });
+
+        };
+
         // Cancel the specific item
         itemToCancel.cancelStatus = 'Cancelled';
         itemToCancel.cancelReason = reason;
