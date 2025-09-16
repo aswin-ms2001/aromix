@@ -505,7 +505,8 @@
       }
     } catch (err) {
       console.error(err);
-      alert("Error retrying payment. Please try again later.");
+      // alert("Error retrying payment. Please try again later.");
+      showToast(err.response?.data?.message || "Internal Server Error", "danger");
     }
   }
   </script>
