@@ -574,7 +574,8 @@ export const cancelOrderItem = async (req, res) => {
                 wallet = new Wallet({ userId: order.userId, balance: 0 });
             }
 
-            const refundAmount = activeItemsCount === 0 ? itemToCancel.finalPrice * itemToCancel.quantity + 50:itemToCancel.finalPrice * itemToCancel.quantity ; // This is already item.total (price * quantity)
+            // const refundAmount = activeItemsCount === 0 ? itemToCancel.finalPrice * itemToCancel.quantity + 50:itemToCancel.finalPrice * itemToCancel.quantity ; // This is already item.total (price * quantity)
+            const refundAmount =  itemToCancel.finalPrice * itemToCancel.quantity;
             wallet.balance += refundAmount;
             wallet.transactions.push({
                 type: "Credit",

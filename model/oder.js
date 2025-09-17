@@ -49,7 +49,7 @@ const orderSchema = new mongoose.Schema({
     mobile: String
   },
 
-  paymentMethod: { type: String, enum: ["COD", "RAZORPAY"], required: true },
+  paymentMethod: { type: String, enum: ["COD", "RAZORPAY","WALLET"], required: true },
   paymentStatus: { type: String, enum: ["Pending", "Paid", "Failed"], default: "Pending" },
 
 

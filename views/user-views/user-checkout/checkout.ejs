@@ -940,6 +940,41 @@ async function placeOrder() {
         console.log(err);
         console.log("error")
       }
+    }else if(paymentMethod ==="wallet"){
+        try{
+          // Send request to backend
+          const res = await axios.post("/user-oder/wallet-payment", {
+            cart,
+            selectedAddressId,
+            paymentMethod,
+            coupon
+          });
+
+          if (res.data.success) {
+            //  Show success toast
+            showToast(res.data.message, "success");
+            sessionStorage.removeItem("coupon");
+            //  Redirect after short delay
+            setTimeout(() => {
+              window.location.href = res.data.redirect;
+            }, 2000);
+            return;
+          }
+        }catch(err){
+          console.error("Error placing order:", err);
+
+          //  Show error toast with backend message
+          const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
+          showToast(errorMessage, "danger");
+
+          //  If there are out-of-stock items, display them
+          if (err.response?.data?.outOfStockItems) {
+            console.warn("Out of stock items:", err.response.data.outOfStockItems);
+            err.response.data.outOfStockItems.forEach(item => {
+              showToast(`${item} is out of stock`, "warning");
+            });
+          }
+        }
     }
 
 
