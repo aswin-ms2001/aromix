@@ -49,6 +49,16 @@ const userSchema = new mongoose.Schema({
     resetOtpExpires: {
         type: Date
     },
+    referralCode:{
+        type:String,
+        unique:true,
+        trim:true
+    },
+    referredBy:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"User",
+        default:null
+    }
 
     
 },{

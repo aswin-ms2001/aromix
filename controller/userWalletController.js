@@ -3,7 +3,10 @@ import Wallet from "../model/wallet.js";
 export const userWalletFront = async (req,res)=>{
   try {
     const userId = req.user._id; // Assuming user is authenticated and stored in req.user
-    const wallet = await Wallet.findOne({ userId });
+    let wallet = await Wallet.findOne({ userId });
+    if(!wallet){
+      wallet = new Wallet({userId,balance:0})
+    }
     console.log(wallet)
     wallet.transactions.sort((a,b)=>b.date - a.date);
     // If wallet does not exist, initialize one

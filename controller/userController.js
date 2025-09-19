@@ -3,7 +3,9 @@ import User from "../model/user.js";
 import passport from "../config/passport.js";
 import bcrypt from "bcrypt";
 import { sendOtpEmail, sendOtpPassword } from "../utils/sendOtp.js";
+import generateReferralCode from "../utils/referalGenerator.js"
 import Product from "../model/product.js";
+import Wallet from "../model/wallet.js";
 import { productActiveOfferLinker } from "./services/userServices/userOfferService.js";
 
 export const userloginPage = (req,res)=>{
@@ -117,6 +119,8 @@ export const signupPage = (req,res)=>{
 
 export const signup = async (req,res)=>{
     const {fullname,email,password}= req.body;
+    let code = req.body.code;
+    console.log(code);
     const existing = await User.findOne({email})
     if(existing && existing.isVerified){
         return res.render("user-views/login.ejs",
@@ -131,6 +135,13 @@ export const signup = async (req,res)=>{
 
     const hashedPassword = await bcrypt.hash(password,10);
 
+    let referralUser = null
+    if(code){
+      code = code.toUpperCase();
+      referralUser = await User.findOne({
+        referralCode:code
+      })
+    }
     const user = existing || new User({email});
     
     user.name= fullname;
@@ -139,7 +150,8 @@ export const signup = async (req,res)=>{
     user.otp = otp;
     user.otpExpires = otpExpires;
     user.isVerified = false;
-    
+    user.referredBy = referralUser ? referralUser._id: null;
+
     await user.save();
     await sendOtpEmail(email,otp);
     res.render("user-views/otpResend.ejs",{email});
@@ -170,11 +182,48 @@ export const verifyOtp = async (req, res) => {
       message: "Invalid OTP. Please try again."
     });
   }
-
+  let referralCode = generateReferralCode();
+  let isExistingReferral = await User.findOne({referralCode});
+  while(isExistingReferral){
+    referralCode = generateReferralCode();
+    isExistingReferral = await User.findOne({referralCode});
+  }
   user.isVerified = true;
   user.otp = undefined;
   user.otpExpires = undefined;
+  user.referralCode = referralCode;
   await user.save();
+
+  if(user.referredBy){
+    const referredByUser = await User.findById(user.referredBy);
+    let referredByUserWallet = await Wallet.findOne({userId:user.referredBy});
+    if(!referredByUserWallet && referredByUser){
+      referredByUserWallet = new Wallet({userId:referredByUser._id,balance: 0})
+    };
+
+    referredByUserWallet.balance += 100;
+
+    referredByUserWallet.transactions.push({
+      type:"Credit",
+      amount:100,
+      description:`Credited for referring User ${user.name}`,
+    });
+    await referredByUserWallet.save();
+
+    let userWallet = await Wallet.findById(user.id);
+
+    if(!userWallet){
+      userWallet = new Wallet({userId:user._id,balance: 0})
+    };
+
+    userWallet.balance += 100;
+    userWallet.transactions.push({
+      type:"Credit",
+      amount:100,
+      description:`Credited for Using Referral Code from ${referredByUser.name}`,
+    });
+    await userWallet.save();
+  }
 
   res.render("user-views/userVerified.ejs", {
     success: true,
