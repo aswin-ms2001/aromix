@@ -30,3 +30,27 @@ export const userWalletFront = async (req,res)=>{
     res.status(500).send("Server Error");
   }
 }
+
+export const userReferralFront = async (req, res) => {
+  try {
+    const user = req.user;
+    
+    // Check if user has a referral code (only for local auth users)
+    if (!user.referralCode) {
+      return res.render("user-views/user-account/user-profile/user-referral.ejs", {
+        user: user,
+        referralCode: null,
+        activePage: "referral"
+      });
+    }
+
+    res.render("user-views/user-account/user-profile/user-referral.ejs", {
+      user: user,
+      referralCode: user.referralCode,
+      activePage: "referral"
+    });
+  } catch (error) {
+    console.error("Error fetching referral page:", error);
+    res.status(500).send("Server Error");
+  }
+}

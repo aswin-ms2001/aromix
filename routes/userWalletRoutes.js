@@ -15,5 +15,6 @@ userWallet.use(ensureAuthenticated);
 
 
 userWallet.get("/user-wallet-front",walletController.userWalletFront);
+userWallet.get("/user-referral",walletController.userReferralFront);
 
 export default userWallet ;
