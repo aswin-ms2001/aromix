@@ -135,7 +135,7 @@ export const signup = async (req,res)=>{
 
     const hashedPassword = await bcrypt.hash(password,10);
 
-    let referralUser = null
+    let referralUser = null;
     if(code){
       code = code.toUpperCase();
       referralUser = await User.findOne({
@@ -154,6 +154,7 @@ export const signup = async (req,res)=>{
 
     await user.save();
     await sendOtpEmail(email,otp);
+    console.log("send")
     res.render("user-views/otpResend.ejs",{email});
 
 }
