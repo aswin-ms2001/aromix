@@ -28,7 +28,6 @@ tochangeBeforCommit:
 tochangeBeforeWalletMerge:
     razorpay and wallet pay error:
         ✔ while canceling the paid product, if the remaing amout in less than or equal to 1000 the remianing product is added 50 rs and when that product is calcelled additional 50 rs is transfered to the user account @done (9/17/2025, 6:48:21 PM)
-        ☐ earlier solved , that is refund 50 rs problem, when cancellig ,but ejs problem not solved\
-        ☐ wallet debit is not working , we need to add it and also validation of amount less than wallet is not working
+        ✔ wallet debit is not working , we need to add it and also validation of amount less than wallet is not working @done (9/21/2025, 2:52:03 AM)
 
         

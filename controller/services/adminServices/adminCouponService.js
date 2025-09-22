@@ -10,7 +10,8 @@ export function validateCouponPayload(body, isUpdate = false) {
   const max = Number(maxAmount);
   if (isNaN(min) || min < 0) errors.push("Invalid minimum amount");
   if (isNaN(max) || max <= 0 || max < min) errors.push("Invalid maximum amount");
-  if (type === "FLAT" && (disc < min || disc > max)) errors.push("Flat discount must be within min and max amount");
+  if (type === "FLAT" && (disc < min*20/100 || disc > min*50/100 )) errors.push("Flat discount must be greater than 20 % and less than 50 % of Minimum");
+  if (type === "PERCENTAGE" && (disc <10 || disc > 90))errors.push("Percentage discount must be greater than 90 % and less than 10 %");
   const start = new Date(startAt);
   const end = new Date(endAt);
   if (isNaN(start.getTime()) || isNaN(end.getTime())) errors.push("Invalid dates");

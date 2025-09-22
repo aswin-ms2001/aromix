@@ -100,11 +100,11 @@
         <div class="card p-4 mb-3 shadow-sm">
           <h5 class="text-danger fw-bold mb-3">Payment Method</h5>
           <div class="form-check mb-2">
-            <input class="form-check-input" type="radio" name="paymentMethod" id="cod" value="cod" checked>
+            <input class="form-check-input" type="radio" name="paymentMethod" id="cod" value="cod" <%- subtotal >1000 ? "disabled" : "checked"  %> >
             <label class="form-check-label fw-bold" for="cod">Cash on Delivery</label>
           </div>
           <div class="form-check mb-2">
-            <input class="form-check-input" type="radio" name="paymentMethod" id="razorpayOption" value="razorpay" >
+            <input class="form-check-input" type="radio" name="paymentMethod" id="razorpayOption" value="razorpay" <%- subtotal >1000 ? "checked" : ""  %>  >
             <label class="form-check-label text-muted" for="upi">Online Payment </label>
           </div>
           <div class="form-check mb-2">
@@ -446,6 +446,7 @@ document.getElementById("addForm").addEventListener("submit", async function (e)
         if (errorElement) errorElement.textContent = message;
       });
     } else {
+      console.log(err.response?.data?.message )
       showToast(err.response?.data?.message || "Something went wrong", "danger");
     }
   }
@@ -938,7 +939,7 @@ async function placeOrder() {
 
       }catch(err){
         console.log(err);
-        console.log("error")
+        showToast(err.response.data.message||"Some Error in Razorpay","danger")
       }
     }else if(paymentMethod ==="wallet"){
         try{

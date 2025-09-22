@@ -40,6 +40,11 @@ export const userOrder = async (req, res) => {
     const { cart, selectedAddressId, paymentMethod,coupon } = req.body;
     
     // 1. Validate payment method
+
+    if(!selectedAddressId){
+      return res.status(404).json({ success: false, message: "You didn't selected a Address" });
+    }
+
     if (paymentMethod !== "cod") {
       return res.status(400).json({ success: false, message: "Only Cash On Delivery is Applicable" });
     }
@@ -598,9 +603,16 @@ export const cancelOrderItem = async (req, res) => {
             order.shippingCharge = 0;
             order.grandTotal = newSubtotal + order.shippingCharge ;
         }else{
-            order.subtotal = newSubtotal;
-            order.shippingCharge = newSubtotal > 1000 ? 0 : 50;
-            order.grandTotal = newSubtotal + order.shippingCharge ;
+            if(order.paymentMethod === "cod"){
+                order.subtotal = newSubtotal;
+                order.shippingCharge = newSubtotal > 1000 ? 0 : 50;
+                order.grandTotal = newSubtotal + order.shippingCharge ;
+            }else{
+                order.subtotal = newSubtotal;
+                // order.shippingCharge = newSubtotal > 1000 ? 0 : 50;
+                order.grandTotal = newSubtotal + order.shippingCharge ;  
+            }
+
         }
 
         await order.save();

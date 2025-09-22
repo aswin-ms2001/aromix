@@ -322,7 +322,8 @@
     if(!(discount>=1)){document.getElementById('createDiscountError').classList.remove('d-none');document.getElementById('createDiscountError').textContent='Discount min 1';ok=false;}
     if(isNaN(minAmount)||minAmount<0){document.getElementById('createMinAmountError').classList.remove('d-none');document.getElementById('createMinAmountError').textContent='Invalid min';ok=false;}
     if(isNaN(maxAmount)||maxAmount<=0||maxAmount<minAmount){document.getElementById('createMaxAmountError').classList.remove('d-none');document.getElementById('createMaxAmountError').textContent='Invalid max';ok=false;}
-    if(type==='FLAT'&&(discount<minAmount||discount>maxAmount)){document.getElementById('createDiscountError').classList.remove('d-none');document.getElementById('createDiscountError').textContent='Flat discount must be within min/max';ok=false;}
+    if(type==='FLAT'&&(discount<minAmount*20/100||discount>minAmount*50/100)){document.getElementById('createDiscountError').classList.remove('d-none');document.getElementById('createDiscountError').textContent='Flat discount must be greater than 20 % and less than 50 % of Minimum';ok=false;}
+    if(type==='PERCENTAGE'&&(discount<10||discount>90)){document.getElementById('createDiscountError').classList.remove('d-none');document.getElementById('createDiscountError').textContent='Percentage discount must be greater than 10 % and less than 90 %';ok=false;}
     const s=new Date(startAt),e=new Date(endAt),now=new Date();
     if(!(startAt&&!isNaN(s.getTime()))){document.getElementById('createStartError').classList.remove('d-none');document.getElementById('createStartError').textContent='Invalid start';ok=false;}
     if(!(endAt&&!isNaN(e.getTime()))){document.getElementById('createEndError').classList.remove('d-none');document.getElementById('createEndError').textContent='Invalid end';ok=false;}
@@ -361,7 +362,8 @@
     if(!(discount>=1)){document.getElementById('editDiscountError').classList.remove('d-none');document.getElementById('editDiscountError').textContent='Discount min 1';ok=false;}
     if(isNaN(minAmount)||minAmount<0){document.getElementById('editMinAmountError').classList.remove('d-none');document.getElementById('editMinAmountError').textContent='Invalid min';ok=false;}
     if(isNaN(maxAmount)||maxAmount<=0||maxAmount<minAmount){document.getElementById('editMaxAmountError').classList.remove('d-none');document.getElementById('editMaxAmountError').textContent='Invalid max';ok=false;}
-    if(type==='FLAT'&&(discount<minAmount||discount>maxAmount)){document.getElementById('editDiscountError').classList.remove('d-none');document.getElementById('editDiscountError').textContent='Flat discount must be within min/max';ok=false;}
+    if(type==='FLAT'&&(discount<minAmount*20/100||discount>minAmount*50/100)){document.getElementById('editDiscountError').classList.remove('d-none');document.getElementById('editDiscountError').textContent='Flat discount must be greater than 20 % and less than 50 % of Minimum';ok=false;};
+    if(type==='PERCENTAGE'&&(discount<10||discount>90)){document.getElementById('editDiscountError').classList.remove('d-none');document.getElementById('editDiscountError').textContent='Percentage discount must be greater than 10 % and less than 90 %';ok=false;}    
     const s=new Date(startAt),e=new Date(endAt),now=new Date();
     if(!(startAt&&!isNaN(s.getTime()))){document.getElementById('editStartError').classList.remove('d-none');document.getElementById('editStartError').textContent='Invalid start';ok=false;}
     if(!(endAt&&!isNaN(e.getTime()))){document.getElementById('editEndError').classList.remove('d-none');document.getElementById('editEndError').textContent='Invalid end';ok=false;}

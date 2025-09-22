@@ -3,6 +3,7 @@ import Cart from "../model/cart.js";
 import Product from "../model/product.js";
 import Address from "../model/address.js";
 import Order from "../model/oder.js";
+import Wallet from "../model/wallet.js";
 import mongoose, { Mongoose } from "mongoose";
 import { productDetails } from "./adminController.js";
 import { isProductAndCategoryActive, getVariantStock } from "./services/userServices/productActivityCheckingService.js";
@@ -19,12 +20,16 @@ export const createRazorpayOrderForUser = async (req, res) => {
     const { cart, selectedAddressId, paymentMethod, coupon } = req.body;
    
     // 1. Validate payment method
-   
+   if(!selectedAddressId){
+      return res.status(404).json({ success: false, message: "You didn't selected a Address" });
+   }
+
     if (paymentMethod !== "razorpay") {
       return res.status(400).json({ success: false, message: "Razorpay is not Selected" });
     }
 
     // 2. Validate address
+    
     const address = await Address.findById(selectedAddressId);
     if (!address) {
       return res.status(404).json({ success: false, message: "Address Not Found" });
@@ -255,6 +260,11 @@ export const walletPayment = async(req,res)=>{
   try {
     const userId = req.user._id;
     const { cart, selectedAddressId, paymentMethod,coupon } = req.body;
+
+    console.log(userId)
+    if(!selectedAddressId){
+      return res.status(404).json({ success: false, message: "You didn't selected a Address" });
+    }
     
     // 1. Validate payment method
     if (paymentMethod !== "wallet") {
@@ -267,6 +277,7 @@ export const walletPayment = async(req,res)=>{
       return res.status(404).json({ success: false, message: "Address Not Found" });
     }
 
+    const wallet = await Wallet.findOne({userId}) 
     
     const { cartItems, subtotal } = await cartService.getUserCartFunction(userId);
     if (!cartItems.length) {
@@ -341,6 +352,14 @@ export const walletPayment = async(req,res)=>{
     const shippingCharge = subtotal >1000 ? 0 :  50; // Add shipping logic if needed
     const grandTotal = subtotal - discount + shippingCharge;
 
+    if(wallet.balance < grandTotal){
+        return res.status(400).json({
+        success: false,
+        message: "Insufficient Balance In Wallet",
+      });
+    }
+
+
     // 8. Create Order
     const order = new Order({
       userId,
@@ -366,6 +385,17 @@ export const walletPayment = async(req,res)=>{
     });
 
     await order.save();
+
+    wallet.balance -= grandTotal;
+    wallet.transactions.push({
+      type:"Debit",
+      amount:grandTotal,
+      description: `Amount Debited  for Order  - Order #${order.orderId}`,
+      orderId: order._id
+    })
+       
+
+    await wallet.save()
 
     // 9. Reduce stock for each variant
     for (let item of cartItems) {

@@ -14,7 +14,7 @@ adminSalesReportRoutes.get(
     adminSalesReportController.renderSalesReport
 );
 
-// Data API for table (server-side rendering helper if needed)
+
 adminSalesReportRoutes.get(
     "/data",
     adminSessionMiddleware,
@@ -22,7 +22,7 @@ adminSalesReportRoutes.get(
     adminSalesReportController.getSalesReportData
 );
 
-// Downloads for current page only
+
 adminSalesReportRoutes.get(
     "/download/pdf",
     adminSessionMiddleware,

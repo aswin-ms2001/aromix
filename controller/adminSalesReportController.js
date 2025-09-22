@@ -166,7 +166,7 @@ function buildDateFilter(range, startDate, endDate) {
         query.createdAt = { $gte: start, $lt: end };
     }
     // Include only completed/valid orders for sales reporting
-    query.orderStatus = { $in: ["Confirmed", "Shipped", "Out for Delivery", "Delivered"] };
+    query.orderStatus = { $in: [ "Delivered"] };
 
     return { query, start, end };
 }
