@@ -41,8 +41,10 @@ export const discoverPage = async (req, res) => {
 
     const isPriceSort = sort === 'lowToHigh' || sort === 'highToLow';
     const variantSortDirection = sort === 'lowToHigh' ? 1 : -1;
-
-    const productsToLink = await Product.aggregate([
+    console.log(variantSortDirection);
+    console.log(isPriceSort);
+    console.log(matchStage);
+    const products = await Product.aggregate([
       {
         $lookup: {
           from: "categories",
@@ -59,6 +61,40 @@ export const discoverPage = async (req, res) => {
         }
       },
       {
+        $lookup: {
+          from: "offers",
+          let: { productId: "$_id", categoryId: "$categoryId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$isActive", true] },
+                    { $eq: ["$isNonBlocked", true] },
+                    { $lte: ["$startAt", new Date()] },   // started
+                    { $gte: ["$endAt", new Date()] },     // not expired
+                    {
+                      $or: [
+                        { $eq: ["$productId", "$$productId"] },
+                        { $eq: ["$categoryId", "$$categoryId"] }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            { $sort: { discountPercent: -1 } }, // highest first
+            { $limit: 1 } // keep only biggest
+          ],
+          as: "offer"
+        }
+      },
+      {
+        $addFields: {
+          offer: { $arrayElemAt: ["$offer.discountPercent", 0] } // extract first object
+        }
+      },
+      {
         $addFields: {
           filteredVariants: {
             $filter: {
@@ -66,8 +102,40 @@ export const discoverPage = async (req, res) => {
               as: "variant",
               cond: {
                 $and: [
-                  { $gte: ["$$variant.price", minPrice] },
-                  { $lte: ["$$variant.price", maxPrice] }
+                  {
+                    $gte: [
+                      {
+                        $cond: [
+                          { $ifNull: ["$offer", false] }, // if offer exists
+                          {
+                            $multiply: [
+                              "$$variant.price",
+                              { $divide: [ { $subtract: [100, "$offer"] }, 100 ] }
+                            ]
+                          },
+                          "$$variant.price"
+                        ]
+                      },
+                      minPrice
+                    ]
+                  },
+                  {
+                    $lte: [
+                      {
+                        $cond: [
+                          { $ifNull: ["$offer", false] }, // if offer exists
+                          {
+                            $multiply: [
+                              "$$variant.price",
+                              { $divide: [ { $subtract: [100, "$offer"] }, 100 ] }
+                            ]
+                          },
+                          "$$variant.price"
+                        ]
+                      },
+                      maxPrice
+                    ]
+                  }
                 ]
               }
             }
@@ -97,11 +165,29 @@ export const discoverPage = async (req, res) => {
         }
       },
       {
+        $addFields: {
+          finalPrice: {
+            $cond: [
+              { $ifNull: ["$offer", false] }, // if offer exists
+              {
+                $multiply: [
+                  "$selectedVariant.price",
+                  { $divide: [ { $subtract: [100, "$offer"] }, 100 ] }
+                ]
+              },
+              "$selectedVariant.price"
+            ]
+          }
+        }
+      },
+      {
         $project: {
           name: 1,
           image: { $arrayElemAt: ["$selectedVariant.images", 0] },
           price: "$selectedVariant.price",
+          finalPrice:1,
           volume: "$selectedVariant.volume",
+          offer:1,
           createdAt: 1,
           categoryId:1
         }
@@ -110,8 +196,8 @@ export const discoverPage = async (req, res) => {
         $sort: (() => {
           if (sort === "asc") return { name: 1 };
           if (sort === "desc") return { name: -1 };
-          if (sort === "lowToHigh") return { price: 1 };
-          if (sort === "highToLow") return { price: -1 };
+          if (sort === "lowToHigh") return { finalPrice: 1 };
+          if (sort === "highToLow") return { finalPrice: -1 };
           return { createdAt: -1 };
         })()
       },
@@ -119,6 +205,7 @@ export const discoverPage = async (req, res) => {
       { $limit: limit }
     ]);
 
+    console.log(products)
     const totalCountAgg = await Product.aggregate([
       {
         $lookup: {
@@ -136,6 +223,40 @@ export const discoverPage = async (req, res) => {
         }
       },
       {
+        $lookup: {
+          from: "offers",
+          let: { productId: "$_id", categoryId: "$categoryId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$isActive", true] },
+                    { $eq: ["$isNonBlocked", true] },
+                    { $lte: ["$startAt", new Date()] },
+                    { $gte: ["$endAt", new Date()] },
+                    {
+                      $or: [
+                        { $eq: ["$productId", "$$productId"] },
+                        { $eq: ["$categoryId", "$$categoryId"] }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            { $sort: { discountPercent: -1 } },
+            { $limit: 1 }
+          ],
+          as: "offer"
+        }
+      },
+      {
+        $addFields: {
+          offer: { $arrayElemAt: ["$offer.discountPercent", 0] }
+        }
+      },
+      {
         $addFields: {
           filteredVariants: {
             $filter: {
@@ -143,8 +264,40 @@ export const discoverPage = async (req, res) => {
               as: "variant",
               cond: {
                 $and: [
-                  { $gte: ["$$variant.price", minPrice] },
-                  { $lte: ["$$variant.price", maxPrice] }
+                  {
+                    $gte: [
+                      {
+                        $cond: [
+                          { $ifNull: ["$offer", false] },
+                          {
+                            $multiply: [
+                              "$$variant.price",
+                              { $divide: [ { $subtract: [100, "$offer"] }, 100 ] }
+                            ]
+                          },
+                          "$$variant.price"
+                        ]
+                      },
+                      minPrice
+                    ]
+                  },
+                  {
+                    $lte: [
+                      {
+                        $cond: [
+                          { $ifNull: ["$offer", false] },
+                          {
+                            $multiply: [
+                              "$$variant.price",
+                              { $divide: [ { $subtract: [100, "$offer"] }, 100 ] }
+                            ]
+                          },
+                          "$$variant.price"
+                        ]
+                      },
+                      maxPrice
+                    ]
+                  }
                 ]
               }
             }
@@ -154,7 +307,9 @@ export const discoverPage = async (req, res) => {
       { $match: { filteredVariants: { $ne: [] } } },
       { $count: "total" }
     ]);
-    const products = await productActiveOfferLinker(productsToLink)
+
+    // const products = await productActiveOfferLinker(productsToLink)
+    console.log(products)
     const user = await User.findById(id);
     const totalProducts = totalCountAgg[0]?.total || 0;
     const totalPages = Math.ceil(totalProducts / limit);
