@@ -101,21 +101,23 @@
                 <td><%= new Date(order.createdAt).toLocaleDateString('en-IN') %></td>
                 <td>₹<%= order.grandTotal %></td>
                 <td>
-                  <span class="badge bg-${
+                  <span class="badge bg-<%= 
                     order.orderStatus === 'Delivered' ? 'success' :
                     order.orderStatus === 'Cancelled' ? 'danger' :
                     order.orderStatus === 'Shipped' ? 'info' :
                     order.orderStatus === 'Out for Delivery' ? 'warning' :
                     order.orderStatus === 'Confirmed' ? 'primary' :
                     'secondary'
-                  }"><%= order.orderStatus %></span>
+                  %>"><%= order.orderStatus %></span>
                 </td>
+
                 <td>
-                  <span class="badge bg-${
+                  <span class="badge bg-<%= 
                     order.paymentStatus === 'Paid' ? 'success' :
                     order.paymentStatus === 'Failed' ? 'danger' :
+                    order.paymentStatus === 'Pending' ? 'info' :
                     'warning'
-                  }"><%= order.paymentStatus %></span>
+                  %>"><%= order.paymentStatus %></span>
                 </td>
                 <td>
                   <button class="btn btn-sm" style="background-color: #d58dfb;" onclick="viewOrderDetails('<%= order._id %>')">

@@ -3,7 +3,8 @@ import Admin from "../model/admin.js";
 import Category from "../model/category.js";
 import upload from "../middleware/uploads/multer.js";
 import cloudinary from '../config/cloudinary.js'; 
-import Product from "../model/product.js"
+import Product from "../model/product.js";
+import Order from "../model/oder.js";
 
 import fs from 'fs'; 
 
@@ -40,8 +41,140 @@ export const login = async (req,res)=>{
 
 }
 
-export const dashboard = (req,res)=>{
-    res.render("admin-views/adminDashboard");
+export const dashboard = async (req,res)=>{
+    try {
+        const { period = 'yearly' } = req.query;
+        
+        // Calculate date range based on period
+        let startDate, endDate;
+        const now = new Date();
+        
+        switch(period) {
+            case 'daily':
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+                break;
+            case 'weekly':
+                const day = now.getDay();
+                const diffToMonday = (day + 6) % 7;
+                startDate = new Date(now);
+                startDate.setDate(now.getDate() - diffToMonday);
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 7);
+                break;
+            case 'monthly':
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                break;
+            case 'yearly':
+            default:
+                startDate = new Date(now.getFullYear(), 0, 1);
+                endDate = new Date(now.getFullYear() + 1, 0, 1);
+                break;
+        }
+
+        // Get orders within date range
+        const orders = await Order.find({
+            createdAt: { $gte: startDate, $lt: endDate },
+            orderStatus: { $in: ["Confirmed", "Shipped", "Out for Delivery", "Delivered"] }
+        }).populate('items.productId').lean();
+
+        // Calculate metrics
+        const totalRevenue = orders.reduce((sum, order) => sum + (order.grandTotal || 0), 0);
+        const totalOrders = orders.length;
+        const totalProductsSold = orders.reduce((sum, order) => 
+            sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
+        );
+
+        // Get unique customers
+        const uniqueCustomers = new Set(orders.map(order => order.userId.toString())).size;
+
+        // Best selling products (top 10)
+        const productSales = {};
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                const productId = item.productId._id.toString();
+                const productName = item.productId.name;
+                if (!productSales[productId]) {
+                    productSales[productId] = {
+                        name: productName,
+                        quantity: 0,
+                        revenue: 0
+                    };
+                }
+                productSales[productId].quantity += item.quantity;
+                productSales[productId].revenue += item.total;
+            });
+        });
+
+        const bestSellingProducts = Object.values(productSales)
+            .sort((a, b) => b.quantity - a.quantity)
+            .slice(0, 10);
+
+        // Best selling categories (top 10)
+        const categorySales = {};
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                const categoryName = item.productId.categoryName;
+                if (!categorySales[categoryName]) {
+                    categorySales[categoryName] = {
+                        name: categoryName,
+                        quantity: 0,
+                        revenue: 0
+                    };
+                }
+                categorySales[categoryName].quantity += item.quantity;
+                categorySales[categoryName].revenue += item.total;
+            });
+        });
+
+        const bestSellingCategories = Object.values(categorySales)
+            .sort((a, b) => b.quantity - a.quantity)
+            .slice(0, 10);
+
+        // Chart data for orders over time
+        const chartData = {};
+        orders.forEach(order => {
+            const date = new Date(order.createdAt).toISOString().split('T')[0];
+            if (!chartData[date]) {
+                chartData[date] = { orders: 0, revenue: 0 };
+            }
+            chartData[date].orders += 1;
+            chartData[date].revenue += order.grandTotal;
+        });
+
+        const chartLabels = Object.keys(chartData).sort();
+        const chartOrdersData = chartLabels.map(date => chartData[date].orders);
+        const chartRevenueData = chartLabels.map(date => chartData[date].revenue);
+
+        console.log(chartOrdersData,chartLabels,chartRevenueData)
+        res.render("admin-views/adminDashboard", {
+            period,
+            metrics: {
+                revenue: totalRevenue,
+                orders: totalOrders,
+                productsSold: totalProductsSold,
+                customers: uniqueCustomers
+            },
+            bestSellingProducts,
+            bestSellingCategories,
+            chartData: {
+                labels: chartLabels,
+                orders: chartOrdersData,
+                revenue: chartRevenueData
+            }
+        });
+    } catch (err) {
+        console.error("Dashboard error:", err);
+        res.render("admin-views/adminDashboard", {
+            period: 'yearly',
+            metrics: { revenue: 0, orders: 0, productsSold: 0, customers: 0 },
+            bestSellingProducts: [],
+            bestSellingCategories: [],
+            chartData: { labels: [], orders: [], revenue: [] }
+        });
+    }
 }
 
 export const addProduct = async (req,res)=>{
@@ -127,7 +260,6 @@ export const addProductPost = [
       const [categoryId, categoryName] = req.body.category.split("::");
       let variantsData = req.body.variants;
 
-     
       if (typeof variantsData === "string") {
         variantsData = JSON.parse(variantsData);
       }

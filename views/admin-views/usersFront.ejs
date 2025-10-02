@@ -16,6 +16,27 @@
   <div class="flex-grow-1 p-4" style="background-color: #1b1b1b; min-height: 100vh;">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="text-white">Users</h2>
+
+       <!-- Search Form -->
+      <form class="d-flex" method="GET" action="/admin-users/show">
+        <input
+          name="search"
+          class="form-control me-2"
+          type="text"
+          placeholder="Search by name or email"
+          style="width: 250px;"
+          value="<%= search || '' %>"
+        />
+        <button class="btn btn-outline-light me-2" type="submit">
+          <i class="bi bi-search"></i>
+        </button>
+
+        <% if (search) { %>
+          <a href="/admin-users/show" class="btn btn-outline-danger">
+            Clear
+          </a>
+        <% } %>
+      </form>
     </div>
 
     <div class="card p-3" style="background-color: #2e0e46; border: none; border-radius: 20px;">
@@ -62,13 +83,14 @@
         </div>
         <div>
           <% if (currentPage > 1) { %>
-            <a href="?page=<%= currentPage - 1 %>" class="btn btn-outline-light btn-sm">Previous</a>
+            <a href="?page=<%= currentPage - 1 %><%= search ? '&search=' + search : '' %>" class="btn btn-outline-light btn-sm">Previous</a>
           <% } %>
           <% if (currentPage < totalPages) { %>
-            <a href="?page=<%= currentPage + 1 %>" class="btn btn-outline-light btn-sm">Next</a>
+            <a href="?page=<%= currentPage + 1 %><%= search ? '&search=' + search : '' %>" class="btn btn-outline-light btn-sm">Next</a>
           <% } %>
         </div>
       </div>
+
     </div>
   </div>
 </div>

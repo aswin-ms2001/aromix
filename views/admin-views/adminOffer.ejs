@@ -22,7 +22,15 @@
       <div class="row g-3">
         <div class="col-md-4 d-flex">
           <input class="form-control me-2" id="search" placeholder="Search by name" value="<%= search || '' %>">
-          <button class="btn btn-outline-light" onclick="applyFilters()"><i class="bi bi-search"></i></button>
+          <button class="btn btn-outline-light me-2" onclick="applyFilters()">
+            <i class="bi bi-search"></i>
+          </button>
+
+          <% if (search || type || status) { %>
+            <button class="btn btn-outline-danger" type="button" onclick="clearFilters()">
+              <i class="bi bi-x-circle"></i>
+            </button>
+          <% } %>
         </div>
         <div class="col-md-3">
           <select id="type" class="form-select" onchange="applyFilters()">
@@ -318,7 +326,15 @@
     }catch(err){
       showToast(err.response?.data?.message || 'Error toggling', 'danger');
     }
-  }
+  };
+
+  function clearFilters() {
+  document.getElementById('search').value = '';
+  document.getElementById('type').value = '';
+  document.getElementById('status').value = '';
+  window.location.href = '/admin-offer/admin-offer-front';
+}
+
 </script>
 </body>
 </html>

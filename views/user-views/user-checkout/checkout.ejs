@@ -65,8 +65,8 @@
             <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#addAddressModal">+ Add New</button>
           </div>
 
-          <% if (addresses && addresses.length > 0) { %>
-            <div class="address-scroll" id="addressList">
+          <div class="address-scroll" id="addressList">
+            <% if (addresses && addresses.length > 0) { %>
               <% addresses.forEach(addr => { %>
                 <div class="address-card <%= addr.isDefault ? 'border border-danger' : '' %>" id="address-<%= addr._id %>">
                   <% if(addr.isDefault){ %>
@@ -78,22 +78,19 @@
                   <p class="mb-1"><%= addr.country %> - <%= addr.pincode %></p>
                   <small class="text-muted">Mobile: <%= addr.mobile %></small>
                   <div class="mt-2 d-grid gap-1">
-                    <button class="btn btn-outline-success btn-sm" onclick="selectForDelivery('<%= addr._id %>')">
-                      Deliver Here
-                    </button>
-                    <button class="btn btn-outline-primary btn-sm" data-address='<%- JSON.stringify(addr) %>' onclick='handleOpenEditModal(this)'>
-                      Edit
-                    </button>
+                    <button class="btn btn-outline-success btn-sm" onclick="selectForDelivery('<%= addr._id %>')">Deliver Here</button>
+                    <button class="btn btn-outline-primary btn-sm" data-address='<%- JSON.stringify(addr) %>' onclick='handleOpenEditModal(this)'>Edit</button>
                     <% if(!addr.isDefault){ %>
                       <button class="btn btn-outline-warning btn-sm" onclick="setDefault('<%= addr._id %>')">Set Default</button>
                     <% } %>
                   </div>
                 </div>
               <% }) %>
-            </div>
-          <% } else { %>
-            <p class="text-muted">No address found. Please add an address to proceed.</p>
-          <% } %>
+            <% } else { %>
+              <p class="text-muted" id="noAddressMsg">No address found. Please add an address to proceed.</p>
+            <% } %>
+          </div>
+
         </div>
 
         <!-- Payment Section -->
@@ -664,6 +661,12 @@ async function setDefault(id) {
 
     // ✅ DOM Helpers
     function appendAddressToDOM(address){
+      const container = document.getElementById("addressList");
+      
+      // Remove "No address found" message if present
+      const msg = document.getElementById("noAddressMsg");
+      if (msg) msg.remove();
+
       const html = `
         <div class="address-card" id="address-${address._id}">
           ${address.isDefault ? '<span class="badge bg-success">Default</span>' : ''}
@@ -678,8 +681,10 @@ async function setDefault(id) {
             ${!address.isDefault ? `<button class="btn btn-outline-warning btn-sm" onclick="setDefault('${address._id}')">Set Default</button>` : ''}
           </div>
         </div>`;
-      document.getElementById("addressList").insertAdjacentHTML("beforeend", html);
+
+      container.insertAdjacentHTML("beforeend", html);
     }
+
 
     function updateAddressInDOM(address){
       const card = document.getElementById(`address-${address._id}`);
@@ -716,8 +721,10 @@ async function setDefault(id) {
   const sucDiv = document.getElementById("couponSuccess");
   let code = null;
   async function  applyCoupon(){
+    console.log("triggered")
     let coupenInput = document.getElementById("couponInput").value.trim();
     if(!coupenInput){
+      console.log("no coupen in applycoupen")
       sucDiv.textContent = "";
       sucDiv.classList.add("d-none");
       errDiv.textContent = "Coupen Cannt be Empty";
@@ -725,6 +732,7 @@ async function setDefault(id) {
       return 
       
     }
+    console.log("not enterd no coupen in applycoupen")
     code = coupenInput;
     sucDiv.textContent = "Coupen Added Successfully";
     sucDiv.classList.remove("d-none");
@@ -746,12 +754,13 @@ async function setDefault(id) {
           console.log(subTotalAmount,data.discount)
           grandTotalEl.textContent = subTotalAmount <= 1000 ?  subTotalAmount - percentDiscount +50: subTotalAmount - percentDiscount;
           document.getElementById("coupenAmount").classList.remove("d-none");
-
+          sessionStorage.setItem("coupon", code);
         }else{
           const coupenAmount = document.getElementById("coupenAmount").querySelectorAll("span")[1];
           coupenAmount.textContent =  data.discount;
           grandTotalEl.textContent = subTotalAmount<=1000 ? subTotalAmount - Number(data.discount) + 50 : subTotalAmount - Number(data.discount);
           document.getElementById("coupenAmount").classList.remove("d-none");
+          sessionStorage.setItem("coupon", code);
         }
       }else{
         coupenInput = "";
@@ -774,7 +783,13 @@ async function setDefault(id) {
     sucDiv.classList.add("d-none");
     errDiv.textContent = "";
     errDiv.classList.add("d-none");
-
+    sessionStorage.removeItem("coupon");
+    const grandTotalEl = document.getElementById("grandTotalAmount").querySelectorAll("span")[0]
+    const subTotalAmount = Number(document.getElementById("subTotalAmount").querySelectorAll("span")[1].textContent.replace(/[^\d.]/g,''));
+    const coupenAmount =  document.getElementById("coupenAmount").querySelectorAll("span")[1];
+    grandTotalEl.textContent = subTotalAmount<=1000 ? subTotalAmount + 50 : subTotalAmount;
+    coupenAmount.textContent = "";
+    document.getElementById("coupenAmount").classList.add("d-none");
   }
 
   window.addEventListener("beforeunload",(event)=>{
@@ -785,32 +800,33 @@ async function setDefault(id) {
 
   if (navType === "reload") {
     //  Store coupon only if reload
-    sessionStorage.setItem("coupon", code);
-    console.log(code);
+    // sessionStorage.setItem("coupon", code);
+    console.log('reload by beforunload')
   } else if (navType === "navigate") {
       // New navigation -> clear coupon
       sessionStorage.removeItem("coupon");
-
+      console.log("navigae")
 
     } else if (navType === "back_forward") {
       // Back/Forward navigation -> decide what to do (here we restore)
 
       sessionStorage.removeItem("coupon");
-
+      console.log("back forward")
 
     }else {
       //  Clear it if navigation (back, forward, close, etc.)
 
       sessionStorage.removeItem("coupon");
-      
+      console.log("else")
     }
   })
 
     document.addEventListener("DOMContentLoaded",(domEvent)=>{
       const code = sessionStorage.getItem("coupon");
-      if(code){
+      if(code && code !== "null"){
         document.getElementById("couponInput").value = code;
-        console.log(code)
+        console.log("coupen code at reload")
+        console.log(code);
         applyCoupon()
       }
     })

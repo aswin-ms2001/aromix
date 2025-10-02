@@ -22,7 +22,7 @@
       <div class="col-md-6 p-0">
 
         <div class="login-box">
-          <form action="/admin/login" method="POST" class="w-100 login-form">
+          <form id="loginForm" action="/admin/login" method="POST" class="w-100 login-form" novalidate>
               <%if(errorMessage){%>
                 <div class="text-danger text-center mb-4">
                   <%= errorMessage %>
@@ -35,7 +35,8 @@
             <h2 class="text-center mb-4 login-heading">Admin Login</h2>
 
             <div class="mb-4">
-              <input type="email" name="email" placeholder="Enter Your Email" required class="form-control">
+              <input id="email" type="email" name="email" placeholder="Enter Your Email" required class="form-control">
+              <div id="emailError" class="text-danger small mt-1"></div>
             </div>
 
             <div class="mb-4 position-relative">
@@ -43,6 +44,7 @@
               <button type="button" class="btn btn-sm btn-outline-light position-absolute top-50 end-0 translate-middle-y me-2" id="togglePassword">
                 👁️
               </button>
+              <div id="passwordError" class="text-danger small mt-1"></div>
             </div>
 
             <div class="d-grid">
@@ -55,6 +57,56 @@
   </div>
 
   <!-- Your JS script should go here -->
-  <script src="/js/admin-javascript/adminLogin.js"></script>
+  <!-- <script src="/js/admin-javascript/adminLogin.js"></script> -->
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("passwordInput").value.trim();
+
+  const emailErrorDiv = document.getElementById("emailError");
+  const passwordErrorDiv = document.getElementById("passwordError");
+
+  // Clear old errors
+  emailErrorDiv.textContent = '';
+  passwordErrorDiv.textContent = '';
+
+  let valid = true;
+
+  // Email validation
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email) {
+    emailErrorDiv.textContent = "Email is required";
+    valid = false;
+  } else if (!emailPattern.test(email)) {
+    emailErrorDiv.textContent = "Please enter a valid email address";
+    valid = false;
+  }
+
+  // Password validation
+  if (!password) {
+    passwordErrorDiv.textContent = "Password is required";
+    valid = false;
+  } else if (password.length < 6) {
+    passwordErrorDiv.textContent = "Password must be at least 6 characters";
+    valid = false;
+  }
+
+  if (valid) {
+    this.submit(); // submit if all good
+  }
+});
+
+const toggleBtn = document.getElementById('togglePassword');
+const passwordInput = document.getElementById('passwordInput');
+
+toggleBtn.addEventListener('click', () => {
+  const isPassword = passwordInput.type === 'password';
+  passwordInput.type = isPassword ? 'text' : 'password';
+  toggleBtn.textContent = isPassword ? '🙈' : '👁️';
+});
+
+  </script>
 </body>
 </html>

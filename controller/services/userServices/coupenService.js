@@ -3,6 +3,8 @@ import Coupon from "../../../model/coupon.js";
 
 export const userCoupens = async (amount, userId) => {
   try {
+
+    console.log("enterd coupen")
     const now = new Date();
 
     const coupensForUser = await Coupon.aggregate([

@@ -30,4 +30,15 @@ tochangeBeforeWalletMerge:
         ✔ while canceling the paid product, if the remaing amout in less than or equal to 1000 the remianing product is added 50 rs and when that product is calcelled additional 50 rs is transfered to the user account @done (9/17/2025, 6:48:21 PM)
         ✔ wallet debit is not working , we need to add it and also validation of amount less than wallet is not working @done (9/21/2025, 2:52:03 AM)
 
-        
+complition week:
+    ☐ sales report pdf xl
+    ☐ graph that shown day week month
+    ✔ filter after offer @done (9/26/2025, 5:38:19 PM)
+    ☐ status code as document
+    ☐ js form validation in the user login using javascript
+    ☐ cancel search option
+    ✔ remove coupon not workig and addig coupon then refresng not working at first and front end have problem in calculating the price in checkout @done (9/29/2025, 8:26:06 PM)
+    ☐ sales report and invoice should be redesigned with add product name , quantity ,payment method in sale report  in tables
+    ✔ solve coupen cannot be empty prblem also when canceling the coupen there is a message solve that also and make the correct amout in gui while changing the applied coupen @done (9/29/2025, 8:26:16 PM)
+    ✔ new user adding first address , it is not rendering in checkout front end but in backend it is added, @done (9/29/2025, 9:10:22 PM)
+    ✔ user and admin orderd product status is not showing properly @done (10/1/2025, 9:13:28 PM)

@@ -33,13 +33,32 @@
           <!-- Unified Filter/Search/Sort Form -->
           <form class="mb-3" method="GET" action="/users-products/discover">
 
-            <!-- Search -->
-            <div class="d-flex ms-1 mb-3">
-              <input class="form-control me-2" type="search" name="search" placeholder="Search..." value="<%= typeof search !== 'undefined' ? search : '' %>" />
-              <button class="btn btn-outline-dark" type="submit">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
+          <!-- Search -->
+          <div class="d-flex ms-1 mb-3">
+            <input 
+              class="form-control me-2" 
+              type="search" 
+              id="searchInput"
+              name="search" 
+              placeholder="Search..." 
+              value="<%= typeof search !== 'undefined' ? search : '' %>" 
+            />
+
+            <!-- Search Button -->
+            <button class="btn btn-outline-dark me-2" type="submit">
+              <i class="bi bi-search"></i>
+            </button>
+
+            <!-- Clear Search Button -->
+            <button 
+              type="button" 
+              class="btn btn-outline-secondary" 
+              onclick="clearSearch()"
+            >
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
+
 
             <hr>
 
@@ -239,6 +258,12 @@
 
       return true;
     }
+
+    function clearSearch() {
+      const searchInput = document.getElementById('searchInput');
+      searchInput.value = '';   // Clear input field
+      searchInput.form.submit(); // Resubmit form to refresh results
+  }
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

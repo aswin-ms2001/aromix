@@ -15,6 +15,7 @@ import Wallet from "../model/wallet.js";
 
 export const userCheckOut = async (req,res)=>{
     try {
+        console.log("Enterd")
         const userId = req.user._id;
         const {cartItems,subtotal} = await cartService.getUserCartFunction(userId);
         if(!cartItems[0]) return res.redirect("/users-cart/user-cart-front")

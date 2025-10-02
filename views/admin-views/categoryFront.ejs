@@ -25,17 +25,21 @@
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="text-white">Category</h2>
-      <form method="GET" class="d-flex" action="">
-        <input 
-          class="form-control me-2" 
-          type="text" 
-          name="search" 
-          placeholder="Search" 
-          value="<%= searchQuery || '' %>" 
-          style="width: 250px;" 
-        />
-        <button class="btn btn-light" type="submit">Search</button>
-      </form>
+        <form method="GET" class="d-flex" action="">
+          <input 
+            class="form-control me-2" 
+            type="text" 
+            name="search" 
+            placeholder="Search" 
+            value="<%= searchQuery || '' %>" 
+            style="width: 250px;" 
+          />
+          <button class="btn btn-light me-2" type="submit">Search</button>
+
+          <% if (searchQuery) { %>
+            <a href="/adminCategory/category" class="btn btn-outline-danger">Clear</a>
+          <% } %>
+        </form>
     </div>
 
     <!-- Category Table -->

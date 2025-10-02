@@ -9,8 +9,16 @@ export const showUsers = async (req, res) => {
   try {
     const perPage = 4;
     const page = parseInt(req.query.page) || 1;
+    const search = req.query.search || "";
 
     const query = { isVerified: true };
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } }
+      ];
+    }
 
     const users = await User.find(query)
       .skip((page - 1) * perPage)
@@ -24,12 +32,14 @@ export const showUsers = async (req, res) => {
       users,
       currentPage: page,
       totalPages,
+      search
     });
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).send("Server Error");
   }
 };
+
 
 export const block = async (req, res) => {
   try {
