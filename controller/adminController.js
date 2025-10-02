@@ -43,7 +43,13 @@ export const login = async (req,res)=>{
 
 export const dashboard = async (req,res)=>{
     try {
-        const { period = 'yearly' } = req.query;
+        const { 
+            period = 'yearly',
+            customDate,
+            customMonth,
+            customYear,
+            customWeekStart
+        } = req.query;
         
         // Calculate date range based on period
         let startDate, endDate;
@@ -51,33 +57,57 @@ export const dashboard = async (req,res)=>{
         
         switch(period) {
             case 'daily':
-                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+                if (customDate) {
+                    startDate = new Date(customDate);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate = new Date(customDate);
+                    endDate.setHours(23, 59, 59, 999);
+                } else {
+                    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+                }
                 break;
             case 'weekly':
-                const day = now.getDay();
-                const diffToMonday = (day + 6) % 7;
-                startDate = new Date(now);
-                startDate.setDate(now.getDate() - diffToMonday);
-                startDate.setHours(0, 0, 0, 0);
-                endDate = new Date(startDate);
-                endDate.setDate(startDate.getDate() + 7);
+                if (customWeekStart) {
+                    startDate = new Date(customWeekStart);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate = new Date(startDate);
+                    endDate.setDate(startDate.getDate() + 7);
+                } else {
+                    const day = now.getDay();
+                    const diffToMonday = (day + 6) % 7;
+                    startDate = new Date(now);
+                    startDate.setDate(now.getDate() - diffToMonday);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate = new Date(startDate);
+                    endDate.setDate(startDate.getDate() + 7);
+                }
                 break;
             case 'monthly':
-                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                if (customMonth && customYear) {
+                    startDate = new Date(customYear, customMonth - 1, 1);
+                    endDate = new Date(customYear, customMonth, 1);
+                } else {
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                }
                 break;
             case 'yearly':
             default:
-                startDate = new Date(now.getFullYear(), 0, 1);
-                endDate = new Date(now.getFullYear() + 1, 0, 1);
+                if (customYear) {
+                    startDate = new Date(customYear, 0, 1);
+                    endDate = new Date(parseInt(customYear) + 1, 0, 1);
+                } else {
+                    startDate = new Date(now.getFullYear(), 0, 1);
+                    endDate = new Date(now.getFullYear() + 1, 0, 1);
+                }
                 break;
         }
 
         // Get orders within date range
         const orders = await Order.find({
             createdAt: { $gte: startDate, $lt: endDate },
-            orderStatus: { $in: ["Confirmed", "Shipped", "Out for Delivery", "Delivered"] }
+            orderStatus: { $in: [ "Delivered"] }
         }).populate('items.productId').lean();
 
         // Calculate metrics
@@ -133,24 +163,89 @@ export const dashboard = async (req,res)=>{
             .sort((a, b) => b.quantity - a.quantity)
             .slice(0, 10);
 
-        // Chart data for orders over time
+        // Chart data for orders over time based on period
         const chartData = {};
-        orders.forEach(order => {
-            const date = new Date(order.createdAt).toISOString().split('T')[0];
-            if (!chartData[date]) {
-                chartData[date] = { orders: 0, revenue: 0 };
-            }
-            chartData[date].orders += 1;
-            chartData[date].revenue += order.grandTotal;
-        });
+        let chartLabels = [];
+        let chartOrdersData = [];
+        let chartRevenueData = [];
 
-        const chartLabels = Object.keys(chartData).sort();
-        const chartOrdersData = chartLabels.map(date => chartData[date].orders);
-        const chartRevenueData = chartLabels.map(date => chartData[date].revenue);
+        if (period === 'daily') {
+            // Hourly data for daily view
+            for (let hour = 0; hour < 24; hour += 2) {
+                const hourLabel = `${hour.toString().padStart(2, '0')}:00 - ${(hour + 2).toString().padStart(2, '0')}:00`;
+                chartLabels.push(hourLabel);
+                chartData[hour] = { orders: 0, revenue: 0 };
+            }
+            
+            orders.forEach(order => {
+                const hour = new Date(order.createdAt).getHours();
+                const hourGroup = Math.floor(hour / 2) * 2;
+                chartData[hourGroup].orders += 1;
+                chartData[hourGroup].revenue += order.grandTotal;
+            });
+            
+            chartOrdersData = chartLabels.map((_, index) => chartData[index * 2].orders);
+            chartRevenueData = chartLabels.map((_, index) => chartData[index * 2].revenue);
+            
+        } else if (period === 'weekly') {
+            // Daily data for weekly view (Sunday to Saturday)
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            days.forEach((day, index) => {
+                chartLabels.push(day);
+                chartData[index] = { orders: 0, revenue: 0 };
+            });
+            
+            orders.forEach(order => {
+                const dayOfWeek = new Date(order.createdAt).getDay();
+                chartData[dayOfWeek].orders += 1;
+                chartData[dayOfWeek].revenue += order.grandTotal;
+            });
+            
+            chartOrdersData = days.map((_, index) => chartData[index].orders);
+            chartRevenueData = days.map((_, index) => chartData[index].revenue);
+            
+        } else if (period === 'monthly') {
+            // Daily data for monthly view
+            const daysInMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                chartLabels.push(day.toString());
+                chartData[day] = { orders: 0, revenue: 0 };
+            }
+            
+            orders.forEach(order => {
+                const day = new Date(order.createdAt).getDate();
+                chartData[day].orders += 1;
+                chartData[day].revenue += order.grandTotal;
+            });
+            
+            chartOrdersData = chartLabels.map(day => chartData[parseInt(day)].orders);
+            chartRevenueData = chartLabels.map(day => chartData[parseInt(day)].revenue);
+            
+        } else if (period === 'yearly') {
+            // Monthly data for yearly view
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            months.forEach((month, index) => {
+                chartLabels.push(month);
+                chartData[index] = { orders: 0, revenue: 0 };
+            });
+            
+            orders.forEach(order => {
+                const month = new Date(order.createdAt).getMonth();
+                chartData[month].orders += 1;
+                chartData[month].revenue += order.grandTotal;
+            });
+            
+            chartOrdersData = months.map((_, index) => chartData[index].orders);
+            chartRevenueData = months.map((_, index) => chartData[index].revenue);
+        }
 
         console.log(chartOrdersData,chartLabels,chartRevenueData)
         res.render("admin-views/adminDashboard", {
             period,
+            customDate,
+            customMonth,
+            customYear,
+            customWeekStart,
             metrics: {
                 revenue: totalRevenue,
                 orders: totalOrders,

@@ -26,21 +26,67 @@
 
     <div class="d-flex">
         <!-- Sidebar Include -->
-        <%- include('./partials/sidebar') %>
+         <div style="background-color: #1b1b1b;">
+            <%- include('./partials/sidebar') %>
+         </div>
+
+        
 
         <!-- Main Content -->
         <div class="flex-grow-1 p-4" style="background-color: #1b1b1b;">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="text-white">Sales Summary</h2>
-                <div class="d-flex align-items-center">
-                    <select class="form-select me-3" style="width: 120px;" onchange="changePeriod(this.value)">
+                <div class="d-flex align-items-center gap-3">
+                    <select class="form-select" style="width: 120px;" id="periodSelect" onchange="toggleCustomInputs()">
                         <option value="daily" <%= period === 'daily' ? 'selected' : '' %>>Daily</option>
                         <option value="weekly" <%= period === 'weekly' ? 'selected' : '' %>>Weekly</option>
                         <option value="monthly" <%= period === 'monthly' ? 'selected' : '' %>>Monthly</option>
                         <option value="yearly" <%= period === 'yearly' ? 'selected' : '' %>>Yearly</option>
                     </select>
-                    <button class="btn btn-light me-2">PDF Download</button>
-                    <button class="btn btn-light">XL Download</button>
+                    
+                    <!-- Custom Date Input for Daily -->
+                    <div id="dailyInput" style="display: none;">
+                        <input type="date" class="form-control" id="customDate" value="<%= customDate || '' %>" style="width: 150px;">
+                    </div>
+                    
+                    <!-- Custom Week Input for Weekly -->
+                    <div id="weeklyInput" style="display: none;">
+                        <input type="date" class="form-control" id="customWeekStart" value="<%= customWeekStart || '' %>" style="width: 150px;">
+                    </div>
+                    
+                    <!-- Custom Month/Year Input for Monthly -->
+                    <div id="monthlyInput" style="display: none;">
+                        <select class="form-select me-2" id="customMonth" style="width: 100px;">
+                            <option value="1" <%= customMonth === '1' ? 'selected' : '' %>>Jan</option>
+                            <option value="2" <%= customMonth === '2' ? 'selected' : '' %>>Feb</option>
+                            <option value="3" <%= customMonth === '3' ? 'selected' : '' %>>Mar</option>
+                            <option value="4" <%= customMonth === '4' ? 'selected' : '' %>>Apr</option>
+                            <option value="5" <%= customMonth === '5' ? 'selected' : '' %>>May</option>
+                            <option value="6" <%= customMonth === '6' ? 'selected' : '' %>>Jun</option>
+                            <option value="7" <%= customMonth === '7' ? 'selected' : '' %>>Jul</option>
+                            <option value="8" <%= customMonth === '8' ? 'selected' : '' %>>Aug</option>
+                            <option value="9" <%= customMonth === '9' ? 'selected' : '' %>>Sep</option>
+                            <option value="10" <%= customMonth === '10' ? 'selected' : '' %>>Oct</option>
+                            <option value="11" <%= customMonth === '11' ? 'selected' : '' %>>Nov</option>
+                            <option value="12" <%= customMonth === '12' ? 'selected' : '' %>>Dec</option>
+                        </select>
+                        <select class="form-select" id="customYear" style="width: 80px;">
+                            <% for(let year = new Date().getFullYear() - 5; year <= new Date().getFullYear() + 1; year++) { %>
+                                <option value="<%= year %>" <%= customYear == year ? 'selected' : '' %>><%= year %></option>
+                            <% } %>
+                        </select>
+                    </div>
+                    
+                    <!-- Custom Year Input for Yearly -->
+                    <div id="yearlyInput" style="display: none;">
+                        <select class="form-select" id="customYearOnly" style="width: 100px;">
+                            <% for(let year = new Date().getFullYear() - 5; year <= new Date().getFullYear() + 1; year++) { %>
+                                <option value="<%= year %>" <%= customYear == year ? 'selected' : '' %>><%= year %></option>
+                            <% } %>
+                        </select>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="applyCustomPeriod()">Apply</button>
                 </div>
             </div>
 
@@ -239,10 +285,54 @@
             }
         });
 
-        // Change period function
-        function changePeriod(period) {
-            window.location.href = `/admin/dashboard?period=${period}`;
+        // Toggle custom inputs based on period selection
+        function toggleCustomInputs() {
+            const period = document.getElementById('periodSelect').value;
+            
+            // Hide all custom inputs
+            document.getElementById('dailyInput').style.display = 'none';
+            document.getElementById('weeklyInput').style.display = 'none';
+            document.getElementById('monthlyInput').style.display = 'none';
+            document.getElementById('yearlyInput').style.display = 'none';
+            
+            // Show relevant input
+            if (period === 'daily') {
+                document.getElementById('dailyInput').style.display = 'block';
+            } else if (period === 'weekly') {
+                document.getElementById('weeklyInput').style.display = 'block';
+            } else if (period === 'monthly') {
+                document.getElementById('monthlyInput').style.display = 'block';
+            } else if (period === 'yearly') {
+                document.getElementById('yearlyInput').style.display = 'block';
+            }
         }
+        
+        // Apply custom period with parameters
+        function applyCustomPeriod() {
+            const period = document.getElementById('periodSelect').value;
+            let url = `/admin/dashboard?period=${period}`;
+            
+            if (period === 'daily') {
+                const customDate = document.getElementById('customDate').value;
+                if (customDate) url += `&customDate=${customDate}`;
+            } else if (period === 'weekly') {
+                const customWeekStart = document.getElementById('customWeekStart').value;
+                if (customWeekStart) url += `&customWeekStart=${customWeekStart}`;
+            } else if (period === 'monthly') {
+                const customMonth = document.getElementById('customMonth').value;
+                const customYear = document.getElementById('customYear').value;
+                if (customMonth) url += `&customMonth=${customMonth}`;
+                if (customYear) url += `&customYear=${customYear}`;
+            } else if (period === 'yearly') {
+                const customYear = document.getElementById('customYearOnly').value;
+                if (customYear) url += `&customYear=${customYear}`;
+            }
+            
+            window.location.href = url;
+        }
+        
+        // Initialize custom inputs on page load
+        toggleCustomInputs();
     </script>
 </body>
 </html>
