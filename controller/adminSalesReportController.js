@@ -57,35 +57,91 @@ export const getSalesReportData = async (req, res) => {
     }
 };
 
-// Download current page as PDF
+// Download full period data as PDF
 export const downloadSalesReportPdf = async (req, res) => {
     try {
-        const { range = "day", startDate, endDate, page = 1, limit = 10 } = req.query;
+        const { range = "day", startDate, endDate } = req.query;
         const { query } = buildDateFilter(range, startDate, endDate);
-        const { items } = await fetchSalesData(query, Number(page), Number(limit));
-        const metrics = calculateMetrics(items);
+        
+        // Get ALL orders for the period (not paginated)
+        const orders = await Order.find(query)
+            .populate({ path: "userId", select: "name email" })
+            .populate({ path: "items.productId", select: "name" })
+            .sort({ createdAt: -1 })
+            .lean();
+
+        const metrics = calculateMetrics(orders);
 
         res.setHeader("Content-Type", "application/pdf");
-        res.setHeader("Content-Disposition", `attachment; filename=SalesReport_Page_${page}.pdf`);
+        res.setHeader("Content-Disposition", `attachment; filename=Aromix_SalesReport_${range}_${new Date().toISOString().split('T')[0]}.pdf`);
 
         const doc = new PDFDocument({ size: "A4", margin: 40 });
         doc.pipe(res);
 
-        doc.fontSize(18).text("Sales Report", { underline: true });
-        doc.moveDown();
-        doc.fontSize(10).text(`Range: ${range.toUpperCase()}`);
-        doc.text(`Page: ${page}`);
-        doc.moveDown();
-
-        doc.fontSize(12).text(`Overall Orders: ${metrics.count}`);
-        doc.text(`Overall Amount: Rs ${metrics.amount}`);
-        doc.text(`Overall Discount: Rs ${metrics.discount}`);
+        // Company Header
+        doc.fontSize(24).text("AROMIX", { align: "center" });
+        doc.fontSize(16).text("Sales Report", { align: "center" });
         doc.moveDown();
 
-        doc.fontSize(12).text("Orders (current page)");
+        // Report Details
+        doc.fontSize(12).text(`Report Period: ${range.toUpperCase()}`);
+        if (startDate && endDate) {
+            doc.text(`Date Range: ${new Date(startDate).toLocaleDateString('en-IN')} to ${new Date(endDate).toLocaleDateString('en-IN')}`);
+        }
+        doc.text(`Generated On: ${new Date().toLocaleString('en-IN')}`);
+        doc.moveDown();
+
+        // Summary
+        doc.fontSize(14).text("SUMMARY", { underline: true });
+        doc.fontSize(12).text(`Total Orders: ${metrics.count}`);
+        doc.text(`Total Revenue: ₹${metrics.amount.toLocaleString()}`);
+        doc.text(`Total Discount: ₹${metrics.discount.toLocaleString()}`);
+        doc.moveDown();
+
+        // Orders Table
+        doc.fontSize(14).text("DETAILED ORDERS", { underline: true });
         doc.moveDown(0.5);
-        items.forEach((o) => {
-            doc.fontSize(10).text(`Order: ${o.orderId} | Date: ${new Date(o.createdAt).toLocaleString("en-IN")} | Total: Rs ${o.grandTotal} | Discount: Rs ${o.discount}`);
+
+        // Table headers
+        const tableTop = doc.y;
+        const itemHeight = 20;
+        const col1 = 50;
+        const col2 = 120;
+        const col3 = 200;
+        const col4 = 280;
+        const col5 = 360;
+        const col6 = 440;
+        const col7 = 520;
+
+        // Headers
+        doc.fontSize(10).text("Order ID", col1, tableTop);
+        doc.text("Date", col2, tableTop);
+        doc.text("Customer", col3, tableTop);
+        doc.text("Payment", col4, tableTop);
+        doc.text("Status", col5, tableTop);
+        doc.text("Total", col6, tableTop);
+        doc.text("Discount", col7, tableTop);
+
+        // Draw header line
+        doc.moveTo(col1, tableTop + 15).lineTo(col7 + 60, tableTop + 15).stroke();
+
+        let currentY = tableTop + 20;
+
+        orders.forEach((order, index) => {
+            if (currentY > 700) { // New page if needed
+                doc.addPage();
+                currentY = 50;
+            }
+
+            doc.fontSize(8).text(order.orderId, col1, currentY);
+            doc.text(new Date(order.createdAt).toLocaleDateString('en-IN'), col2, currentY);
+            doc.text(order.userId.name, col3, currentY);
+            doc.text(order.paymentMethod, col4, currentY);
+            doc.text(order.orderStatus, col5, currentY);
+            doc.text(`₹${order.grandTotal}`, col6, currentY);
+            doc.text(`₹${order.discount}`, col7, currentY);
+
+            currentY += itemHeight;
         });
 
         doc.end();
@@ -95,39 +151,60 @@ export const downloadSalesReportPdf = async (req, res) => {
     }
 };
 
-// Download current page as CSV (Excel compatible)
+// Download full period data as CSV (Excel compatible)
 export const downloadSalesReportExcel = async (req, res) => {
     try {
-        const { range = "day", startDate, endDate, page = 1, limit = 10 } = req.query;
+        const { range = "day", startDate, endDate } = req.query;
         const { query } = buildDateFilter(range, startDate, endDate);
-        const { items } = await fetchSalesData(query, Number(page), Number(limit));
-        const metrics = calculateMetrics(items);
+        
+        // Get ALL orders for the period (not paginated)
+        const orders = await Order.find(query)
+            .populate({ path: "userId", select: "name email" })
+            .populate({ path: "items.productId", select: "name" })
+            .sort({ createdAt: -1 })
+            .lean();
+
+        const metrics = calculateMetrics(orders);
 
         const rows = [];
-        rows.push(["Sales Report"]);
-        rows.push([`Range: ${range}`]);
-        rows.push([`Page: ${page}`]);
+        
+        // Company Header
+        rows.push(["AROMIX SALES REPORT"]);
         rows.push([]);
-        rows.push(["Overall Orders", "Overall Amount", "Overall Discount"]);
-        rows.push([metrics.count, metrics.amount, metrics.discount]);
+        rows.push([`Report Period: ${range.toUpperCase()}`]);
+        if (startDate && endDate) {
+            rows.push([`Date Range: ${new Date(startDate).toLocaleDateString('en-IN')} to ${new Date(endDate).toLocaleDateString('en-IN')}`]);
+        }
+        rows.push([`Generated On: ${new Date().toLocaleString('en-IN')}`]);
         rows.push([]);
-        rows.push(["Order ID", "Date", "Payment", "Status", "Subtotal", "Discount", "Shipping", "Grand Total"]);
-        items.forEach(o => {
+        
+        // Summary
+        rows.push(["SUMMARY"]);
+        rows.push(["Total Orders", "Total Revenue", "Total Discount"]);
+        rows.push([metrics.count, `₹${metrics.amount.toLocaleString()}`, `₹${metrics.discount.toLocaleString()}`]);
+        rows.push([]);
+        
+        // Detailed Orders
+        rows.push(["DETAILED ORDERS"]);
+        rows.push(["Order ID", "Date", "Customer", "Payment Method", "Status", "Subtotal", "Discount", "Shipping", "Grand Total"]);
+        
+        orders.forEach(order => {
             rows.push([
-                o.orderId,
-                new Date(o.createdAt).toLocaleString("en-IN"),
-                o.paymentMethod,
-                o.orderStatus,
-                o.subtotal,
-                o.discount,
-                o.shippingCharge,
-                o.grandTotal
+                order.orderId,
+                new Date(order.createdAt).toLocaleString("en-IN"),
+                order.userId.name,
+                order.paymentMethod,
+                order.orderStatus,
+                order.subtotal,
+                order.discount,
+                order.shippingCharge,
+                order.grandTotal
             ]);
         });
 
         const csv = rows.map(r => r.map(escapeCsv).join(",")).join("\n");
         res.setHeader("Content-Type", "text/csv");
-        res.setHeader("Content-Disposition", `attachment; filename=SalesReport_Page_${page}.csv`);
+        res.setHeader("Content-Disposition", `attachment; filename=Aromix_SalesReport_${range}_${new Date().toISOString().split('T')[0]}.csv`);
         res.send(csv);
     } catch (err) {
         console.error("downloadSalesReportExcel error", err);
@@ -176,6 +253,7 @@ async function fetchSalesData(query, page, limit) {
     const [items, totalItems] = await Promise.all([
         Order.find(query)
             .populate({ path: "userId", select: "name email" })
+            .populate({ path: "items.productId", select: "name" })
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
