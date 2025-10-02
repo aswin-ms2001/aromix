@@ -102,46 +102,58 @@ export const downloadSalesReportPdf = async (req, res) => {
         doc.fontSize(14).text("DETAILED ORDERS", { underline: true });
         doc.moveDown(0.5);
 
-        // Table headers
-        const tableTop = doc.y;
-        const itemHeight = 20;
-        const col1 = 50;
-        const col2 = 120;
-        const col3 = 200;
-        const col4 = 280;
-        const col5 = 360;
-        const col6 = 440;
-        const col7 = 520;
-
-        // Headers
-        doc.fontSize(10).text("Order ID", col1, tableTop);
-        doc.text("Date", col2, tableTop);
-        doc.text("Customer", col3, tableTop);
-        doc.text("Payment", col4, tableTop);
-        doc.text("Status", col5, tableTop);
-        doc.text("Total", col6, tableTop);
-        doc.text("Discount", col7, tableTop);
-
-        // Draw header line
-        doc.moveTo(col1, tableTop + 15).lineTo(col7 + 60, tableTop + 15).stroke();
-
-        let currentY = tableTop + 20;
-
         orders.forEach((order, index) => {
-            if (currentY > 700) { // New page if needed
+            // Check if we need a new page
+            if (doc.y > 650) {
                 doc.addPage();
-                currentY = 50;
             }
 
-            doc.fontSize(8).text(order.orderId, col1, currentY);
-            doc.text(new Date(order.createdAt).toLocaleDateString('en-IN'), col2, currentY);
-            doc.text(order.userId.name, col3, currentY);
-            doc.text(order.paymentMethod, col4, currentY);
-            doc.text(order.orderStatus, col5, currentY);
-            doc.text(`₹${order.grandTotal}`, col6, currentY);
-            doc.text(`₹${order.discount}`, col7, currentY);
-
-            currentY += itemHeight;
+            // Order Header
+            doc.fontSize(12).text(`Order #${order.orderId}`, { underline: true });
+            doc.moveDown(0.3);
+            
+            // Order Details in two columns
+            const leftCol = 50;
+            const rightCol = 300;
+            let currentY = doc.y;
+            
+            // Left column - Basic info
+            doc.fontSize(10).text(`Date: ${new Date(order.createdAt).toLocaleString('en-IN')}`, leftCol, currentY);
+            doc.text(`Customer: ${order.userId.name}`, leftCol, currentY + 15);
+            doc.text(`Email: ${order.userId.email}`, leftCol, currentY + 30);
+            doc.text(`Payment: ${order.paymentMethod}`, leftCol, currentY + 45);
+            doc.text(`Status: ${order.orderStatus}`, leftCol, currentY + 60);
+            
+            // Right column - Financial info
+            doc.text(`Subtotal: ₹${order.subtotal}`, rightCol, currentY);
+            doc.text(`Discount: ₹${order.discount}`, rightCol, currentY + 15);
+            doc.text(`Shipping: ₹${order.shippingCharge}`, rightCol, currentY + 30);
+            doc.fontSize(12).text(`Grand Total: ₹${order.grandTotal}`, rightCol, currentY + 45);
+            
+            // Products section
+            doc.moveDown(1);
+            doc.fontSize(11).text("Products:", { underline: true });
+            doc.moveDown(0.3);
+            
+            let productY = doc.y;
+            order.items.forEach((item, itemIndex) => {
+                if (productY > 700) { // New page if needed for products
+                    doc.addPage();
+                    productY = 50;
+                }
+                
+                doc.fontSize(9).text(`• ${item.productId.name}`, 60, productY);
+                doc.text(`  Quantity: ${item.quantity}`, 60, productY + 12);
+                doc.text(`  Price: ₹${item.finalPrice} each`, 60, productY + 24);
+                doc.text(`  Total: ₹${item.total}`, 60, productY + 36);
+                
+                productY += 50; // Space for each product
+            });
+            
+            // Draw separator line
+            doc.moveDown(0.5);
+            doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+            doc.moveDown(0.5);
         });
 
         doc.end();
@@ -195,11 +207,28 @@ export const downloadSalesReportExcel = async (req, res) => {
                 order.userId.name,
                 order.paymentMethod,
                 order.orderStatus,
-                order.subtotal,
-                order.discount,
-                order.shippingCharge,
-                order.grandTotal
+                `₹${order.subtotal}`,
+                `₹${order.discount}`,
+                `₹${order.shippingCharge}`,
+                `₹${order.grandTotal}`
             ]);
+        });
+        
+        // Add product details section
+        rows.push([]);
+        rows.push(["PRODUCT DETAILS"]);
+        rows.push(["Order ID", "Product Name", "Quantity", "Unit Price", "Total Price"]);
+        
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                rows.push([
+                    order.orderId,
+                    item.productId.name,
+                    item.quantity,
+                    `₹${item.finalPrice}`,
+                    `₹${item.total}`
+                ]);
+            });
         });
 
         const csv = rows.map(r => r.map(escapeCsv).join(",")).join("\n");
