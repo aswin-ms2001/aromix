@@ -5,6 +5,9 @@ import { ensureAuthenticated} from "../middleware/authMiddleware/userAuthMiddlew
 import passport from "../config/passport.js";
 import currentUser from "../middleware/userIdentification/currentUser.js";
 import { validateUserIdMatch } from "../middleware/validationUserIdMatch/validationUserIdMatch.js";
+import { pageNotFound } from "../middleware/errorMiddleware/pageNotFound.js";
+
+
 
 const userProfile = express.Router();
 
@@ -19,5 +22,6 @@ userProfile.put("/verify-password-otp/:id",ensureAuthenticated,userProfileContol
 userProfile.put('/send-email-verification/:id',ensureAuthenticated,userProfileContoller.userEmailVerification);
 userProfile.put("/update-user-email/:id",ensureAuthenticated,userProfileContoller.updateUserEmail)
 userProfile.put("/update-user-name-phone/:id",ensureAuthenticated,userProfileContoller.updateUserNameAndPhone)
+userProfile.use(pageNotFound)
 
 export default userProfile;

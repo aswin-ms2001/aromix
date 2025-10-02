@@ -6,6 +6,8 @@ import { userLoginSession } from "../middleware/loginSessionHandler/loginSession
 import passport from "../config/passport.js"
 import currentUser from "../middleware/userIdentification/currentUser.js";
 import flash from "connect-flash"
+import { pageNotFound } from "../middleware/errorMiddleware/pageNotFound.js";
+
 
 const userRoutes = express.Router();
 
@@ -31,7 +33,7 @@ userRoutes.post("/forgot-password",userController.forgotPasswordPost);
 userRoutes.post("/verify-reset-otp",userController.verifyResetOtp);
 userRoutes.put("/update-password",userController.updatePassword);
 userRoutes.post("/resendResetOtp",userController.resendResetOtp)
-
+userRoutes.use(pageNotFound);
 
 
 export default userRoutes;

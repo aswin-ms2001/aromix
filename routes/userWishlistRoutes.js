@@ -4,6 +4,8 @@ import { ensureAuthenticated} from "../middleware/authMiddleware/userAuthMiddlew
 import passport from "../config/passport.js";
 import currentUser from "../middleware/userIdentification/currentUser.js";
 import * as wishlistController  from "../controller/wishlistController.js";
+import { pageNotFound } from "../middleware/errorMiddleware/pageNotFound.js";
+
 
 const userWishlist = express.Router();
 
@@ -16,7 +18,7 @@ userWishlist.use(ensureAuthenticated);
 userWishlist.get("/user-wishlist-front",wishlistController.userWishlist);
 userWishlist.post("/add-to-wishlist/:productId/:variantId",wishlistController.addToWishlist);
 userWishlist.delete("/delete-from-wishlist/:productId/:variantId",wishlistController.deleteFromWishlist);
-
+userWishlist.use(pageNotFound)
 
 
 export default userWishlist ;

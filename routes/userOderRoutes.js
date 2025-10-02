@@ -6,6 +6,8 @@ import { ensureAuthenticated} from "../middleware/authMiddleware/userAuthMiddlew
 import passport from "../config/passport.js";
 import { validateUserIdMatch } from "../middleware/validationUserIdMatch/validationUserIdMatch.js";
 import currentUser from "../middleware/userIdentification/currentUser.js";
+import { pageNotFound } from "../middleware/errorMiddleware/pageNotFound.js";
+
 
 const userOder = express.Router();
 
@@ -31,5 +33,7 @@ userOder.patch("/payment-failed/:id", userOnlinePaymentController.updateOrderFai
 userOder.get("/payment-failed/:id",userOnlinePaymentController.userOrderFailurePage);
 userOder.post("/retry-payment/:id", userOnlinePaymentController.retryPayment);
 userOder.post("/wallet-payment", userOnlinePaymentController.walletPayment);
+userOder.use(pageNotFound);
+
 
 export default userOder ;

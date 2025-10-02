@@ -2,6 +2,7 @@ import express from "express";
 import {adminSessionMiddleware} from "../config/session.js";
 import * as adminController from "../controller/adminController.js";
 import adminAuthMiddleware from "../middleware/authMiddleware/adminAuthMiddleware.js";
+import { pageNotFound } from "../middleware/errorMiddleware/pageNotFound.js";
 
 
 const productRouter = express.Router();
@@ -16,5 +17,6 @@ productRouter.put("/block/:id",adminAuthMiddleware, adminController.blockProduct
 productRouter.get("/edit/:id",adminAuthMiddleware, adminController.editProduct);
 productRouter.put("/edit/:id",adminAuthMiddleware, adminController.editProductPost);
 productRouter.post("/add-new-variants/:productId",adminAuthMiddleware, adminController.addNewVariants);
+productRouter.use(pageNotFound)
 
 export default productRouter;

@@ -4,6 +4,8 @@ import { ensureAuthenticated} from "../middleware/authMiddleware/userAuthMiddlew
 import passport from "../config/passport.js";
 import currentUser from "../middleware/userIdentification/currentUser.js";
 import * as walletController  from "../controller/userWalletController.js";
+import { pageNotFound } from "../middleware/errorMiddleware/pageNotFound.js";
+
 
 const userWallet = express.Router();
 
@@ -16,5 +18,6 @@ userWallet.use(ensureAuthenticated);
 
 userWallet.get("/user-wallet-front",walletController.userWalletFront);
 userWallet.get("/user-referral",walletController.userReferralFront);
+userWallet.use(pageNotFound);
 
 export default userWallet ;

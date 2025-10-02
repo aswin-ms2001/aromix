@@ -5,6 +5,8 @@ import { ensureAuthenticated} from "../middleware/authMiddleware/userAuthMiddlew
 import passport from "../config/passport.js";
 import { validateUserIdMatch } from "../middleware/validationUserIdMatch/validationUserIdMatch.js";
 import currentUser from "../middleware/userIdentification/currentUser.js";
+import { pageNotFound } from "../middleware/errorMiddleware/pageNotFound.js";
+
 
 const userAddress = express.Router();
 
@@ -19,5 +21,6 @@ userAddress.post("/create-new-address/:id",validateUserIdMatch,userAddressContol
 userAddress.patch("/set-default-address/:id",validateUserIdMatch,userAddressContoller.setDefaultAddress);
 userAddress.put("/edit-address/:id",validateUserIdMatch,userAddressContoller.editAddress);
 userAddress.delete("/delete-address/:id",validateUserIdMatch,userAddressContoller.deleteAddress);
+userAddress.use(pageNotFound);
 
 export default userAddress;

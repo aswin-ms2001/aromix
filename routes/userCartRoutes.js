@@ -5,6 +5,8 @@ import { ensureAuthenticated} from "../middleware/authMiddleware/userAuthMiddlew
 import passport from "../config/passport.js";
 import { validateUserIdMatch } from "../middleware/validationUserIdMatch/validationUserIdMatch.js";
 import currentUser from "../middleware/userIdentification/currentUser.js";
+import { pageNotFound } from "../middleware/errorMiddleware/pageNotFound.js";
+
 
 const userCart = express.Router();
 
@@ -19,6 +21,6 @@ userCart.post("/user-add-cart/:productId/:variantId",userCartController.addToCar
 userCart.post("/user-add-cart-wishlist-delete",userCartController.addToCartDeleteFromWishlist);
 userCart.patch("/update-quantity/:cartId",userCartController.updateCartQuantity);
 userCart.delete("/remove/:cartId",userCartController.deleteCart);
-
+userCart.use(pageNotFound);
 
 export default userCart ;
