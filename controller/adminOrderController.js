@@ -56,7 +56,7 @@ export const adminOrderFront = async (req, res) => {
                 }
             });
         });
-
+        
         // Get unique statuses for filter dropdown
         const statuses = await Order.distinct('orderStatus');
 
