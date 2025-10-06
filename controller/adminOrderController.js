@@ -2,6 +2,7 @@ import Order from "../model/oder.js";
 import Product from "../model/product.js";
 import Wallet from "../model/wallet.js";
 import User from "../model/user.js";
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 export const adminOrderFront = async (req, res) => {
     try {
@@ -92,7 +93,7 @@ export const getOrderDetails = async (req, res) => {
             .lean();
 
         if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
         }
 
         // Add variant details to each item
@@ -293,7 +294,7 @@ export const getOrderDetails = async (req, res) => {
 
     } catch (err) {
         console.error("Error in getOrderDetails:", err);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -304,7 +305,7 @@ export const updateOrderStatus = async (req, res) => {
 
         const order = await Order.findById(orderId);
         if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
         }
 
         // Validate status progression
@@ -315,21 +316,21 @@ export const updateOrderStatus = async (req, res) => {
         if (newStatus === "Cancelled") {
             // Allow cancellation only for pending orders
             if (order.orderStatus !== "Pending") {
-                return res.status(400).json({ success: false, message: "Only pending orders can be cancelled" });
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Only pending orders can be cancelled" });
             }
         } else if (newIndex === -1 || newIndex < currentIndex) {
-            return res.status(400).json({ success: false, message: "Invalid status progression" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Invalid status progression" });
         }
         if(order.orderStatus === "Pending" && newStatus !== "Cancelled" && newIndex - currentIndex > 1){
-             return res.status(400).json({ success: false, message: "You can only Confirm or Cancel while the order is Pending " });
+             return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "You can only Confirm or Cancel while the order is Pending " });
         }
 
         if(order.orderStatus === "Pending" && newStatus !== "Cancelled" && order.paymentMethod !== "COD" &&  order.paymentStatus !== "Paid"){
-             return res.status(400).json({ success: false, message: "This is Not a COD and the payment isn't successfull yet " });
+             return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "This is Not a COD and the payment isn't successfull yet " });
         }
 
         if(newStatus!== "Cancelled" && order.orderStatus !== "Pending" && newIndex-currentIndex >1 ){
-            return res.status(400).json({ success: false, message: "Progression Should be Followed Step by step" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Progression Should be Followed Step by step" });
         }
 
         // Update order status
@@ -376,7 +377,7 @@ export const updateOrderStatus = async (req, res) => {
 
     } catch (err) {
         console.error("Error in updateOrderStatus:", err);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -388,21 +389,21 @@ export const verifyReturn = async (req, res) => {
 
         const order = await Order.findById(orderId);
         if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
         }
 
         if (order.orderStatus !== "Delivered") {
-            return res.status(400).json({ success: false, message: "Returns can only be processed for delivered orders" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Returns can only be processed for delivered orders" });
         }
 
         // Find the specific item
         const itemToReturn = order.items.find(item => item.variantId.toString() === variantId);
         if (!itemToReturn) {
-            return res.status(404).json({ success: false, message: "Order item not found" });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order item not found" });
         }
 
         if (itemToReturn.returnStatus !== "Requested") {
-            return res.status(400).json({ success: false, message: "Item is not in requested status" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Item is not in requested status" });
         }
 
         if (action === "approve") {
@@ -445,11 +446,11 @@ export const verifyReturn = async (req, res) => {
 
             res.json({ success: true, message: "Return request rejected" });
         } else {
-            return res.status(400).json({ success: false, message: "Invalid action" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Invalid action" });
         }
 
     } catch (err) {
         console.error("Error in verifyReturn:", err);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
     }
 };

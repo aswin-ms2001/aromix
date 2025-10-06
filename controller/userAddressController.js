@@ -1,5 +1,6 @@
 import User from "../model/user.js";
 import Address from "../model/address.js";
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 export const userAddressFront = async (req,res)=>{
  try {
@@ -7,7 +8,7 @@ export const userAddressFront = async (req,res)=>{
 
     const user = await User.findById(id);
     if (!user) {
-      return res.status(404).render("error.ejs", { message: "User not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).render("error.ejs", { message: "User not found" });
     }
 
     const addresses = await Address.find({ userId: id }).lean();
@@ -52,15 +53,15 @@ export const createNewAddress = async (req, res) => {
     const pinPattern = /^[0-9]{6}$/;
 
     if (!name || !house || !street || !city || !state || !country || !mobile || !pincode) {
-      return res.status(400).json({ success: false, message: "All fields are required." });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "All fields are required." });
     }
 
     if (!phonePattern.test(mobile)) {
-      return res.status(400).json({ success: false, message: "Invalid mobile number." });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Invalid mobile number." });
     }
 
     if (!pinPattern.test(pincode)) {
-      return res.status(400).json({ success: false, message: "Invalid pincode." });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Invalid pincode." });
     }
 
 
@@ -87,11 +88,11 @@ export const createNewAddress = async (req, res) => {
     console.log("before save adress")
     await newAddress.save();
     console.log("after save adress")
-    return res.status(201).json({ success: true, message: "Address created successfully." , address:newAddress});
+    return res.status(HTTP_STATUS.CREATED).json({ success: true, message: "Address created successfully." , address:newAddress});
 
   } catch (err) {
     console.error("Create Address Error:", err);
-    return res.status(500).json({ success: false, message: "Server error." });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error." });
   }
 };
 
@@ -101,7 +102,7 @@ export const setDefaultAddress = async (req, res) => {
     const { selectedDefaultAddressId } = req.body;
 
     if (!selectedDefaultAddressId) {
-      return res.status(400).json({ success: false, message: "No address selected" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "No address selected" });
     }
 
 
@@ -118,17 +119,17 @@ export const setDefaultAddress = async (req, res) => {
     );
 
     if (!updated) {
-      return res.status(404).json({ success: false, message: "Address not found or unauthorized" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Address not found or unauthorized" });
     }
 
-    res.status(200).json({
+    res.status(HTTP_STATUS.OK).json({
       success: true,
       message: "Default address updated successfully",
     });
 
   } catch (error) {
     console.error("Set default address error:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal server error" });
   }
 };
 
@@ -139,14 +140,14 @@ export const editAddress = async (req, res) => {
     const { payload, addressId } = req.body;
 
     if (!addressId || !payload) {
-      return res.status(400).json({success: false, message: "Invalid request" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({success: false, message: "Invalid request" });
     }
 
    
     const address = await Address.findOne({ _id: addressId, userId });
 
     if (!address) {
-      return res.status(404).json({success: false, message: "Address not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({success: false, message: "Address not found" });
     }
 
     
@@ -161,11 +162,11 @@ export const editAddress = async (req, res) => {
 
     await address.save();
 
-    return res.status(200).json({ success: true, message: "Address updated successfully",address });
+    return res.status(HTTP_STATUS.OK).json({ success: true, message: "Address updated successfully",address });
 
   } catch (err) {
     console.log("Edit Address Error:", err);
-    return res.status(500).json({success: false, message: "Something went wrong" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({success: false, message: "Something went wrong" });
   }
 };
 
@@ -176,19 +177,19 @@ export const deleteAddress = async (req, res) => {
     const { addressId } = req.body;
 
     if (!addressId) {
-      return res.status(400).json({ success: false, message: "Address ID is required." });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Address ID is required." });
     }
 
     const deleted = await Address.findOneAndDelete({ _id: addressId, userId });
 
     if (!deleted) {
-      return res.status(404).json({ success: false, message: "Address not found or already deleted." });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Address not found or already deleted." });
     }
 
-    return res.status(200).json({ success: true, message: "Address deleted successfully." });
+    return res.status(HTTP_STATUS.OK).json({ success: true, message: "Address deleted successfully." });
 
   } catch (err) {
     console.error("Delete address error:", err);
-    return res.status(500).json({ success: false, message: "Internal Server Error." });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error." });
   }
 };

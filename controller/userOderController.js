@@ -12,6 +12,7 @@ import PDFDocument from "pdfkit";
 import { userCoupens, coupenDetails } from "./services/userServices/coupenService.js";
 import Coupon from "../model/coupon.js";
 import Wallet from "../model/wallet.js";
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 export const userCheckOut = async (req,res)=>{
     try {
@@ -31,7 +32,7 @@ export const userCheckOut = async (req,res)=>{
         })
     } catch(err) {
         console.error(err);
-        res.status(500).send("Internal Server Error");
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internal Server Error");
     }
 }
 
@@ -43,23 +44,23 @@ export const userOrder = async (req, res) => {
     // 1. Validate payment method
 
     if(!selectedAddressId){
-      return res.status(404).json({ success: false, message: "You didn't selected a Address" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "You didn't selected a Address" });
     }
 
     if (paymentMethod !== "cod") {
-      return res.status(400).json({ success: false, message: "Only Cash On Delivery is Applicable" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Only Cash On Delivery is Applicable" });
     }
 
     // 2. Validate address
     const address = await Address.findById(selectedAddressId);
     if (!address) {
-      return res.status(404).json({ success: false, message: "Address Not Found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Address Not Found" });
     }
 
    
     const { cartItems, subtotal } = await cartService.getUserCartFunction(userId);
     if (!cartItems.length) {
-      return res.status(400).json({ success: false, message: "Cart is Empty" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Cart is Empty" });
     }
 
     let appliedCoupon=null;
@@ -75,7 +76,7 @@ export const userOrder = async (req, res) => {
       userVariantIds.every((id, index) => id === dbVariantIds[index]);
 
     if (!allMatch) {
-      return res.status(400).json({ success: false, message: "Admin modified your cart items. Please refresh your cart." });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Admin modified your cart items. Please refresh your cart." });
     }
 
     // 5. Check stock availability
@@ -88,7 +89,7 @@ export const userOrder = async (req, res) => {
     }
 
     if (outOfStockItems.length > 0) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Some items are out of stock",
         outOfStockItems
@@ -171,7 +172,7 @@ export const userOrder = async (req, res) => {
     // 10. Clear user cart
     await Cart.deleteMany({userId});
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       message: "Order placed successfully",
       orderId: order._id,
@@ -180,7 +181,7 @@ export const userOrder = async (req, res) => {
 
   } catch (err) {
     console.error("Error in userOrder:", err);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -270,7 +271,7 @@ export const getOrderDetails = async (req, res) => {
             .lean();
 
         if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
         }
 
         console.log(order.items[0].productId.variants);
@@ -431,7 +432,7 @@ export const getOrderDetails = async (req, res) => {
 
     } catch (err) {
         console.error("Error in getOrderDetails:", err);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -442,17 +443,17 @@ export const cancelOrder = async (req, res) => {
         const { reason } = req.body;
 
         if (!reason || reason.trim().length === 0) {
-            return res.status(400).json({ success: false, message: "Cancellation reason is required" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Cancellation reason is required" });
         }
 
         const order = await Order.findOne({ _id: orderId, userId });
 
         if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
         }
 
         if (order.orderStatus !== 'Pending') {
-            return res.status(400).json({ success: false, message: "Only pending orders can be cancelled" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Only pending orders can be cancelled" });
         }
 
         // Update order status and add cancellation details
@@ -496,7 +497,7 @@ export const cancelOrder = async (req, res) => {
 
     } catch (err) {
         console.error("Error in cancelOrder:", err);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -508,28 +509,28 @@ export const cancelOrderItem = async (req, res) => {
         const { reason } = req.body;
 
         if (!reason || reason.trim().length === 0) {
-            return res.status(400).json({ success: false, message: "Cancellation reason is required" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Cancellation reason is required" });
         }
 
         const order = await Order.findOne({ _id: orderId, userId });
 
         if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
         }
 
         if (order.orderStatus !== 'Pending') {
-            return res.status(400).json({ success: false, message: "Only pending orders can have items cancelled" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Only pending orders can have items cancelled" });
         }
 
         // Find the specific item to cancel
         const itemToCancel = order.items.find(item => item.variantId.toString() === variantId);
         
         if (!itemToCancel) {
-            return res.status(404).json({ success: false, message: "Order item not found" });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order item not found" });
         }
 
         if (itemToCancel.cancelStatus === 'Cancelled') {
-            return res.status(400).json({ success: false, message: "Item is already cancelled" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Item is already cancelled" });
         }
 
         if(order.paymentMethod==="RAZORPAY" && order.paymentStatus !== "Paid"){
@@ -632,7 +633,7 @@ export const cancelOrderItem = async (req, res) => {
 
     } catch (err) {
         console.error("Error in cancelOrderItem:", err);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -644,32 +645,32 @@ export const requestReturn = async (req, res) => {
         const { reason } = req.body;
 
         if (!reason || reason.trim().length === 0) {
-            return res.status(400).json({ success: false, message: "Return reason is required" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Return reason is required" });
         }
 
         const order = await Order.findOne({ _id: orderId, userId });
 
         if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
         }
 
         if (order.orderStatus !== 'Delivered') {
-            return res.status(400).json({ success: false, message: "Only delivered orders can be returned" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Only delivered orders can be returned" });
         }
 
         // Find the specific item to return
         const itemToReturn = order.items.find(item => item.variantId.toString() === variantId);
         
         if (!itemToReturn) {
-            return res.status(404).json({ success: false, message: "Order item not found" });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order item not found" });
         }
 
         if (itemToReturn.cancelStatus === 'Cancelled') {
-            return res.status(400).json({ success: false, message: "Cancelled items cannot be returned" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Cancelled items cannot be returned" });
         }
 
         if (itemToReturn.returnStatus !== 'Not Requested') {
-            return res.status(400).json({ success: false, message: "Return request already exists for this item" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Return request already exists for this item" });
         }
 
         // Update only the specific item with return request
@@ -683,7 +684,7 @@ export const requestReturn = async (req, res) => {
 
     } catch (err) {
         console.error("Error in requestReturn:", err);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -697,11 +698,11 @@ export const downloadInvoice = async (req, res) => {
             .lean();
 
         if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
         }
 
         if (order.orderStatus !== 'Delivered') {
-            return res.status(400).json({ success: false, message: "Invoice can only be downloaded for delivered orders" });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Invoice can only be downloaded for delivered orders" });
         }
 
         // Create PDF document
@@ -791,7 +792,7 @@ export const downloadInvoice = async (req, res) => {
 
     } catch (err) {
         console.error("Error in downloadInvoice:", err);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -801,34 +802,34 @@ export const userCoupon = async (req, res) => {
 
     const {coupon:couponCode} = req.query;
     if (!couponCode || typeof couponCode !== "string") {
-      return res.status(400).json({ success: false, message: "Coupon code is required" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Coupon code is required" });
     }
 
     // Find coupon
     const coupon = await Coupon.findOne({ code: couponCode.trim() });
 
     if (!coupon) {
-      return res.status(404).json({ success: false, message: "Invalid Coupon Code" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Invalid Coupon Code" });
     }
 
     // Check if coupon is active
     if (!coupon.isActive || !coupon.isNonBlocked) {
-      return res.status(400).json({ success: false, message: "Coupon is not active" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Coupon is not active" });
     }
 
     // Check date validity
     const now = new Date();
     if (now < coupon.startAt || now > coupon.endAt) {
-      return res.status(400).json({ success: false, message: "Coupon is not valid at this time" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Coupon is not valid at this time" });
     }
 
     // Check if user has already used it
     if (coupon.usedBy.includes(userId)) {
-      return res.status(400).json({ success: false, message: "You have already used this coupon" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "You have already used this coupon" });
     }
 
     // Success
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       message: "Coupon applied successfully",
       data: {
@@ -843,6 +844,6 @@ export const userCoupon = async (req, res) => {
   } catch (err) {
     console.log("Error in server")
     console.error(err);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
   }
 };

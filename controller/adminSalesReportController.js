@@ -1,5 +1,6 @@
 import Order from "../model/oder.js";
 import PDFDocument from "pdfkit";
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 // Render sales report page
 export const renderSalesReport = async (req, res) => {
@@ -31,7 +32,7 @@ export const renderSalesReport = async (req, res) => {
         });
     } catch (err) {
         console.error("renderSalesReport error", err);
-        res.status(500).render("error", { status: 500, message: "Internal Server Error" });
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error", { status: 500, message: "Internal Server Error" });
     }
 };
 
@@ -53,7 +54,7 @@ export const getSalesReportData = async (req, res) => {
         res.json({ success: true, ...pagination, metrics });
     } catch (err) {
         console.error("getSalesReportData error", err);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -159,7 +160,7 @@ export const downloadSalesReportPdf = async (req, res) => {
         doc.end();
     } catch (err) {
         console.error("downloadSalesReportPdf error", err);
-        res.status(500).send("Internal Server Error");
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internal Server Error");
     }
 };
 
@@ -237,7 +238,7 @@ export const downloadSalesReportExcel = async (req, res) => {
         res.send(csv);
     } catch (err) {
         console.error("downloadSalesReportExcel error", err);
-        res.status(500).send("Internal Server Error");
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internal Server Error");
     }
 };
 

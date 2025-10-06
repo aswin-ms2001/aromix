@@ -13,6 +13,7 @@ import PDFDocument from "pdfkit";
 import { userCoupens, coupenDetails } from "./services/userServices/coupenService.js";
 import Coupon from "../model/coupon.js";
 import { createRazorpayOrder, verifyRazorpaySignature } from "./services/paymentServices/paymentServices.js";
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 export const createRazorpayOrderForUser = async (req, res) => {
   try {
@@ -21,24 +22,24 @@ export const createRazorpayOrderForUser = async (req, res) => {
    
     // 1. Validate payment method
    if(!selectedAddressId){
-      return res.status(404).json({ success: false, message: "You didn't selected a Address" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "You didn't selected a Address" });
    }
 
     if (paymentMethod !== "razorpay") {
-      return res.status(400).json({ success: false, message: "Razorpay is not Selected" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Razorpay is not Selected" });
     }
 
     // 2. Validate address
     
     const address = await Address.findById(selectedAddressId);
     if (!address) {
-      return res.status(404).json({ success: false, message: "Address Not Found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Address Not Found" });
     }
 
 
     const { cartItems, subtotal } = await cartService.getUserCartFunction(userId);
     if (!cartItems.length) {
-      return res.status(400).json({ success: false, message: "Cart is Empty" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Cart is Empty" });
     }
  
     let appliedCoupon = null;
@@ -56,7 +57,7 @@ export const createRazorpayOrderForUser = async (req, res) => {
       userVariantIds.every((id, index) => id === dbVariantIds[index]);
 
     if (!allMatch) {
-      return res.status(400).json({ success: false, message: "Admin modified your cart items. Please refresh your cart." });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Admin modified your cart items. Please refresh your cart." });
     }
 
     // 5. Check stock availability
@@ -69,7 +70,7 @@ export const createRazorpayOrderForUser = async (req, res) => {
     }
 
     if (outOfStockItems.length > 0) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Some items are out of stock",
         outOfStockItems
@@ -156,7 +157,7 @@ export const createRazorpayOrderForUser = async (req, res) => {
     // 10. Clear user cart
     await Cart.deleteMany({userId});
  
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       order: razorpayOrder,
       tempOrderId: order._id
@@ -164,7 +165,7 @@ export const createRazorpayOrderForUser = async (req, res) => {
 
   } catch (err) {
     console.error("Error in userOrder:", err);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -175,12 +176,12 @@ export const verifyRazorpayPayment = async (req, res) => {
 
 
     const order = await Order.findById(tempOrderId);
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+    if (!order) return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
     if (!verifyRazorpaySignature(orderId, paymentId, signature)) {
       console.log("failee")
       order.paymentStatus = "Failed";
       await order.save();
-      return res.status(400).json({ success: false, message: "Payment verification failed" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Payment verification failed" });
     }
 
     order.paymentStatus = "Paid";
@@ -191,7 +192,7 @@ export const verifyRazorpayPayment = async (req, res) => {
     res.json({ success: true, message: "Payment successful", orderId: order._id });
   } catch (err) {
     console.error("Error in verifyRazorpayPayment:", err);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -201,13 +202,13 @@ export const updateOrderFailedStatus = async (req,res)=>{
     const id = req.params.id;
 
     const order = await Order.findById(id);
-    if(!order) return res.status(404).json({success:false});
+    if(!order) return res.status(HTTP_STATUS.NOT_FOUND).json({success:false});
     order.paymentStatus = "Failed";
     await order.save();
-    return res.status(200).json({success:true});
+    return res.status(HTTP_STATUS.OK).json({success:true});
   }catch(err){
     console.log(err);
-    return res.status(404).json({success:false});
+    return res.status(HTTP_STATUS.NOT_FOUND).json({success:false});
   }
 }
 
@@ -235,16 +236,16 @@ export const retryPayment = async (req, res) => {
     const order = await Order.findById(orderId);
 
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
     }
     if (order.paymentMethod !== "RAZORPAY") {
-      return res.status(400).json({ success: false, message: "Only Razorpay orders can be retried" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Only Razorpay orders can be retried" });
     }
     if (order.paymentStatus !== "Failed") {
-      return res.status(400).json({ success: false, message: "Only failed payments can be retried" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Only failed payments can be retried" });
     }
     if (order.orderStatus === "Cancelled" ) {
-      return res.status(400).json({ success: false, message: "You have already cancelled the order" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "You have already cancelled the order" });
     }
     // Create new Razorpay order
     const razorpayOrder = await createRazorpayOrder(order.grandTotal, order.orderId.toString());
@@ -252,7 +253,7 @@ export const retryPayment = async (req, res) => {
     return res.json({ success: true, razorpayOrder, order });
   } catch (err) {
     console.error("Error retrying payment:", err);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -263,25 +264,25 @@ export const walletPayment = async(req,res)=>{
 
     console.log(userId)
     if(!selectedAddressId){
-      return res.status(404).json({ success: false, message: "You didn't selected a Address" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "You didn't selected a Address" });
     }
     
     // 1. Validate payment method
     if (paymentMethod !== "wallet") {
-      return res.status(400).json({ success: false, message: "Somthing Wrong on Wallet Payment" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Somthing Wrong on Wallet Payment" });
     }
 
     // 2. Validate address
     const address = await Address.findById(selectedAddressId);
     if (!address) {
-      return res.status(404).json({ success: false, message: "Address Not Found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Address Not Found" });
     }
 
     const wallet = await Wallet.findOne({userId}) 
     
     const { cartItems, subtotal } = await cartService.getUserCartFunction(userId);
     if (!cartItems.length) {
-      return res.status(400).json({ success: false, message: "Cart is Empty" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Cart is Empty" });
     }
 
     let appliedCoupon=null;
@@ -297,7 +298,7 @@ export const walletPayment = async(req,res)=>{
       userVariantIds.every((id, index) => id === dbVariantIds[index]);
 
     if (!allMatch) {
-      return res.status(400).json({ success: false, message: "Admin modified your cart items. Please refresh your cart." });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Admin modified your cart items. Please refresh your cart." });
     }
 
     // 5. Check stock availability
@@ -310,7 +311,7 @@ export const walletPayment = async(req,res)=>{
     }
 
     if (outOfStockItems.length > 0) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Some items are out of stock",
         outOfStockItems
@@ -353,7 +354,7 @@ export const walletPayment = async(req,res)=>{
     const grandTotal = subtotal - discount + shippingCharge;
 
     if(wallet.balance < grandTotal){
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Insufficient Balance In Wallet",
       });
@@ -412,7 +413,7 @@ export const walletPayment = async(req,res)=>{
     // 10. Clear user cart
     await Cart.deleteMany({userId});
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       message: "Order placed successfully",
       orderId: order._id,
@@ -421,6 +422,6 @@ export const walletPayment = async(req,res)=>{
 
   } catch (err) {
     console.error("Error in userOrder:", err);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
   }
 }

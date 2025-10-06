@@ -1,5 +1,6 @@
 import Coupon from "../model/coupon.js";
 import { validateCouponPayload, generateCouponCode } from "./services/adminServices/adminCouponService.js";
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 export const adminCouponFront = async (req, res) => {
   try {
@@ -47,11 +48,11 @@ export const adminCouponFront = async (req, res) => {
 export const createCoupon = async (req, res) => {
   try {
     const { errors, start, end } = validateCouponPayload(req.body, false);
-    if (errors.length) return res.status(400).json({ success: false, message: errors[0] });
+    if (errors.length) return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: errors[0] });
 
     // Unique code
     const existing = await Coupon.findOne({ code: { $regex: `^${req.body.code.trim()}$`, $options: "i" } });
-    if (existing) return res.status(400).json({ success: false, message: "Coupon code already exists" });
+    if (existing) return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Coupon code already exists" });
 
     const coupon = new Coupon({
       code: req.body.code.trim(),
@@ -70,7 +71,7 @@ export const createCoupon = async (req, res) => {
     res.json({ success: true, message: "Coupon created" });
   } catch (err) {
     console.error("createCoupon error:", err);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -78,17 +79,17 @@ export const updateCoupon = async (req, res) => {
   try {
     const couponId = req.params.id;
     const coupon = await Coupon.findById(couponId);
-    if (!coupon) return res.status(404).json({ success: false, message: "Coupon not found" });
+    if (!coupon) return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Coupon not found" });
 
     const { errors, start, end } = validateCouponPayload(req.body, true);
-    if (errors.length) return res.status(400).json({ success: false, message: errors[0] });
+    if (errors.length) return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: errors[0] });
 
     // Unique code check excluding self
     const existing = await Coupon.findOne({
       _id: { $ne: couponId },
       code: { $regex: `^${req.body.code.trim()}$`, $options: "i" },
     });
-    if (existing) return res.status(400).json({ success: false, message: "Coupon code already in use" });
+    if (existing) return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Coupon code already in use" });
 
     coupon.code = req.body.code.trim();
     coupon.type = req.body.type;
@@ -102,7 +103,7 @@ export const updateCoupon = async (req, res) => {
     res.json({ success: true, message: "Coupon updated" });
   } catch (err) {
     console.error("updateCoupon error:", err);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -111,10 +112,10 @@ export const toggleCouponActive = async (req, res) => {
     const couponId = req.params.id;
     const { activate } = req.body; // true|false
     const coupon = await Coupon.findById(couponId);
-    if (!coupon) return res.status(404).json({ success: false, message: "Coupon not found" });
+    if (!coupon) return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Coupon not found" });
     const now = new Date();
     if (!(coupon.startAt <= now && now <= coupon.endAt)) {
-      return res.status(400).json({ success: false, message: "Coupon can only be toggled within its active window" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Coupon can only be toggled within its active window" });
     }
     if (activate) {
       coupon.isActive = !!activate;
@@ -127,7 +128,7 @@ export const toggleCouponActive = async (req, res) => {
     res.json({ success: true, message: `Coupon ${coupon.isActive ? "activated" : "deactivated"}` });
   } catch (err) {
     console.error("toggleCouponActive error:", err);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -136,6 +137,6 @@ export const generateCode = (req, res) => {
     const code = generateCouponCode();
     res.json({ success: true, code });
   } catch (err) {
-    res.status(500).json({ success: false, message: "Error generating code" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Error generating code" });
   }
 };

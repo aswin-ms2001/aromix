@@ -7,6 +7,7 @@ import { isProductAndCategoryActive } from "./services/userServices/productActiv
 import { removeFromWishlist } from "./services/userServices/wishlistServices.js";
 import * as cartService from "./services/userServices/cartServices.js";
 import { productOfferFinder } from "./services/userServices/userOfferService.js";
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 export const userCartFront = async (req,res)=>{
     try{
@@ -32,7 +33,7 @@ export const addToCart = async (req, res) => {
 
     const isActive = await isProductAndCategoryActive(productId);
     if (!isActive) {
-      return res.status(403).json({
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
         success: false,
         message: "This product or its category is blocked",
         redirect : "/users-products/discover"
@@ -45,19 +46,19 @@ export const addToCart = async (req, res) => {
     if (!cartResult.success) {
       
       if (cartResult.message.includes("Maximum quantity")) {
-        return res.status(400).json(cartResult); 
+        return res.status(HTTP_STATUS.BAD_REQUEST).json(cartResult); 
       }else if(cartResult.message.includes("Cannot Add") || cartResult.message.includes("Product Out")){
-        return res.status(409).json(cartResult);
+        return res.status(HTTP_STATUS.CONFLICT).json(cartResult);
       } else {
-        return res.status(500).json(cartResult); 
+        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(cartResult); 
       }
     }
 
-    return res.status(200).json(cartResult);
+    return res.status(HTTP_STATUS.OK).json(cartResult);
 
   } catch (err) {
     console.error("Error in addToCart:", err);
-    return res.status(500).json({ success: false, message: "Internal server error" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal server error" });
   }
 };
 
@@ -69,7 +70,7 @@ export const addToCartDeleteFromWishlist = async (req, res) => {
 
     const isActive = await isProductAndCategoryActive(productId);
     if (!isActive) {
-      return res.status(403).json({
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
         success: false,
         message: "This product or its category is blocked",
         redirect: "/users-products/discover"
@@ -85,7 +86,7 @@ export const addToCartDeleteFromWishlist = async (req, res) => {
         const wishlistResult = await removeFromWishlist(userId, productId, variantId);
 
         if (!wishlistResult) {
-          return res.status(409).json({
+          return res.status(HTTP_STATUS.CONFLICT).json({
             success: false,
             message: "Max quantity reached. Also failed to remove from wishlist. Please remove manually.",
             cartStatus: "failed",
@@ -93,7 +94,7 @@ export const addToCartDeleteFromWishlist = async (req, res) => {
           });
         }
 
-        return res.status(409).json({
+        return res.status(HTTP_STATUS.CONFLICT).json({
           success: false,
           message: "Max quantity reached. Removed from wishlist.",
           cartStatus: "failed",
@@ -102,7 +103,7 @@ export const addToCartDeleteFromWishlist = async (req, res) => {
       }
 
 
-      return res.status(500).json(cartResult);
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(cartResult);
     }
 
 
@@ -118,14 +119,14 @@ export const addToCartDeleteFromWishlist = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       message: "Item moved to cart successfully."
     });
 
   } catch (err) {
     console.error("Error in addToCartDeleteFromWishlist:", err);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Server error while moving item to cart"
     });
@@ -139,7 +140,7 @@ export const updateCartQuantity = async (req, res) => {
     const cartId = req.params.cartId;
 
     if (!["increment", "decrement"].includes(action)) {
-      return res.status(400).json({ success: false, message: "Invalid action" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Invalid action" });
     }
 
    
@@ -150,12 +151,12 @@ export const updateCartQuantity = async (req, res) => {
     });
     // console.log(cartItem.productId._id,cartItem.productId.categoryId._id);
     if (!cartItem) {
-      return res.status(404).json({ success: false, message: "Cart item not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Cart item not found" });
     }
 
    
     if (cartItem.productId.blocked || (cartItem.productId.categoryId && cartItem.productId.categoryId.blocked)) {
-      return res.status(403).json({
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
         success: false,
         message: "Product or Category is Blocked",
         redirect: "/users-products/discover"
@@ -165,7 +166,7 @@ export const updateCartQuantity = async (req, res) => {
     
     const variant = cartItem.productId.variants.id(cartItem.variantId);
     if (!variant) {
-      return res.status(404).json({ success: false, message: "Variant not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Variant not found" });
     }
 
     let newQuantity = cartItem.quantity;
@@ -173,15 +174,15 @@ export const updateCartQuantity = async (req, res) => {
 
     if (action === "increment") {
       if (newQuantity >= 10) {
-        return res.status(400).json({ success: false, message: "Max quantity limit reached" });
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Max quantity limit reached" });
       }
       if (newQuantity + 1 > variant.stock) {
-        return res.status(400).json({ success: false, message: "Only " + variant.stock + " left in stock" });
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Only " + variant.stock + " left in stock" });
       }
       newQuantity++;
     } else if (action === "decrement") {
       if (newQuantity <= 1) {
-        return res.status(400).json({ success: false, message: "Quantity cannot be less than 1" });
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Quantity cannot be less than 1" });
       }
       newQuantity--;
     }
@@ -232,7 +233,7 @@ export const updateCartQuantity = async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -245,18 +246,18 @@ export const deleteCart = async (req, res) => {
    
     const cartItem = await Cart.findById(cartId);
     if (!cartItem) {
-      return res.status(404).json({ success: false, message: "Cart item not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Cart item not found" });
     }
 
 
     if (cartItem.userId.toString() !== userId.toString()) {
-      return res.status(403).json({ success: false, message: "Unauthorized access" });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ success: false, message: "Unauthorized access" });
     }
 
    
     const isActive = await isProductAndCategoryActive(cartItem.productId);
     if (!isActive) {
-      return res.status(403).json({
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
         success: false,
         message: "Product or Category is Blocked",
         redirect: "/users-products/discover"
@@ -289,7 +290,7 @@ export const deleteCart = async (req, res) => {
 
     const {cartItems, subtotal} = await cartService.getUserCartFunction(userId)
     
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       message: "Item removed from cart",
       subtotal,
@@ -300,6 +301,6 @@ export const deleteCart = async (req, res) => {
 
   } catch (err) {
     console.error("Error removing cart item:", err);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, message: "Internal Server Error" });
   }
 };

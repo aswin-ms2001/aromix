@@ -5,7 +5,7 @@ import upload from "../middleware/uploads/multer.js";
 import cloudinary from '../config/cloudinary.js'; 
 import Product from "../model/product.js";
 import Order from "../model/oder.js";
-
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 import fs from 'fs'; 
 
 export const loginPage = (req,res)=>{
@@ -36,7 +36,7 @@ export const login = async (req,res)=>{
 
     }catch(err){
         console.log(err);
-        res.status(500).send("Internal Server Error")
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internal Server Error")
     }
 
 }
@@ -278,7 +278,7 @@ export const addProduct = async (req,res)=>{
         res.render("admin-views/adminProductAddingpage.ejs",{categories});
     }catch(err){
         console.log(err);
-        res.status(500).send("internal server error");
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("internal server error");
     }
 
 }
@@ -303,7 +303,7 @@ export const uploader = [
     upload.single('image'),
     (req, res) => {
       if (!req.file) {
-        return res.status(400).send("No file uploaded.");
+        return res.status(HTTP_STATUS.BAD_REQUEST).send("No file uploaded.");
       }
       res.json({ imageUrl: req.file.path });
     }
@@ -517,10 +517,10 @@ export const blockCategory = async (req, res) => {
     const { blocked } = req.body;
 
     await Category.findByIdAndUpdate(id, { blocked });
-    res.status(200).json({ message: 'Category status updated' });
+    res.status(HTTP_STATUS.OK).json({ message: 'Category status updated' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Error updating category' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Error updating category' });
   }
 };
 
@@ -531,7 +531,7 @@ export const editProduct = async (req,res)=>{
 
     const product = await Product.findById(productId).lean();
     if (!product) {
-      return res.status(404).send("Product not found");
+      return res.status(HTTP_STATUS.NOT_FOUND).send("Product not found");
     }
 
 
@@ -543,7 +543,7 @@ export const editProduct = async (req,res)=>{
     });
   } catch (err) {
     console.error("Error in editProduct controller:", err);
-    res.status(500).send("Server error");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Server error");
   }
 }
 
@@ -568,7 +568,7 @@ export const getEditCategoryPost =  async (req, res) => {
     const categoryId = req.params.id;
 
     if (!categoryName || !categoryName.trim()) {
-      return res.status(400).json({ message: 'Category name is required' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'Category name is required' });
     }
 
 
@@ -578,7 +578,7 @@ export const getEditCategoryPost =  async (req, res) => {
 
     console.log(duplicate);
     if(duplicate[0]){
-      return res.status(404).json({ message: 'Category Name Already exist' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'Category Name Already exist' });
     }
     const updatedCategory = await Category.findByIdAndUpdate(
       categoryId,
@@ -587,13 +587,13 @@ export const getEditCategoryPost =  async (req, res) => {
     );
 
     if (!updatedCategory) {
-      return res.status(404).json({ message: 'Category not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'Category not found' });
     }
 
     res.json({ message: 'Category updated successfully', category: updatedCategory });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Server error' });
   }
 }
 
@@ -685,7 +685,7 @@ export const editProductPost = [
         }
 
         if (req.body[`variants[${i}].price`] <= 0) {
-          return res.status(400).json({ message: "Product price cannot be zero or less" });
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: "Product price cannot be zero or less" });
         }
 
         if (existingVariant) {
@@ -730,10 +730,10 @@ export const editProductPost = [
         });
       }
 
-      res.status(200).json({ message: "Product updated successfully" });
+      res.status(HTTP_STATUS.OK).json({ message: "Product updated successfully" });
     } catch (err) {
       console.error("Error updating product:", err);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
     }
   },
 ];
@@ -753,7 +753,7 @@ export const addNewVariants = [
       // Validate product exists
       const product = await Product.findById(productId);
       if (!product) {
-        return res.status(404).json({
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           success: false,
           message: "Product not found",
         });
@@ -761,7 +761,7 @@ export const addNewVariants = [
 
       // Ensure we actually have variants in body
       if (!Array.isArray(req.body.newVariants) || req.body.newVariants.length === 0) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "No variants provided",
         });
@@ -780,31 +780,31 @@ export const addNewVariants = [
 
         // ===== VALIDATIONS =====
         if (!volume || volume <= 0) {
-          return res.status(400).json({
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: `Variant ${i + 1}: Volume must be a positive number`,
           });
         }
         if (!price || price <= 0) {
-          return res.status(400).json({
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: `Variant ${i + 1}: Price must be a positive number`,
           });
         }
         if (stock < 0) {
-          return res.status(400).json({
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: `Variant ${i + 1}: Stock must be a non-negative number`,
           });
         }
         if (!description || !description.trim()) {
-          return res.status(400).json({
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: `Variant ${i + 1}: Description is required`,
           });
         }
         if (!descriptionPattern.test(description.trim())) {
-          return res.status(400).json({
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: `Variant ${i + 1}: Description must start with a letter followed by at least 5 characters`,
           });
@@ -816,7 +816,7 @@ export const addNewVariants = [
         );
 
         if (filesForVariant.length < 4) {
-          return res.status(400).json({
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: `Variant ${i + 1}: All 4 images are required`,
           });
@@ -858,7 +858,7 @@ export const addNewVariants = [
       });
     } catch (err) {
       console.error("Error adding new variants:", err);
-      res.status(500).json({
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: "Internal server error",
       });

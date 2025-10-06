@@ -1,4 +1,5 @@
 import Wallet from "../model/wallet.js";
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 export const userWalletFront = async (req,res)=>{
   try {
@@ -27,7 +28,7 @@ export const userWalletFront = async (req,res)=>{
     });
   } catch (error) {
     console.error("Error fetching wallet:", error);
-    res.status(500).send("Server Error");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Server Error");
   }
 }
 
@@ -51,6 +52,6 @@ export const userReferralFront = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching referral page:", error);
-    res.status(500).send("Server Error");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Server Error");
   }
 }

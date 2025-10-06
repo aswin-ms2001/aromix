@@ -1,6 +1,7 @@
 import express from "express";
 import Admin from "../model/admin.js";
 import User from "../model/user.js";
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 // import upload from "../middleware/uploads/multer.js";
 // import cloudinary from '../config/cloudinary.js'; 
 // import Product from "../model/product.js"
@@ -36,7 +37,7 @@ export const showUsers = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching users:", error);
-    res.status(500).send("Server Error");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Server Error");
   }
 };
 
@@ -48,9 +49,9 @@ export const block = async (req, res) => {
 
     await User.findByIdAndUpdate(userId, { blocked });
 
-    res.status(200).json({ message: "User status updated" });
+    res.status(HTTP_STATUS.OK).json({ message: "User status updated" });
   } catch (err) {
     console.error("Error updating user block status:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
   }
 };

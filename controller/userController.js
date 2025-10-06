@@ -7,6 +7,7 @@ import generateReferralCode from "../utils/referalGenerator.js"
 import Product from "../model/product.js";
 import Wallet from "../model/wallet.js";
 import { productActiveOfferLinker } from "./services/userServices/userOfferService.js";
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 export const userloginPage = (req,res)=>{
     const errorMessage = req.flash("error")
@@ -30,13 +31,13 @@ export const logout = (req, res) => {
   req.logout(err => {
     if (err) {
       console.error("Logout error:", err);
-      return res.status(500).send('Logout failed');
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Logout failed');
     }
 
     req.session.destroy(err => {
       if (err) {
         console.error("Session destroy error:", err);
-        return res.status(500).send('Failed to destroy session');
+        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Failed to destroy session');
       }
 
       res.clearCookie('userSessionId');
@@ -51,7 +52,7 @@ export const logoutPage = (req,res)=>{
     res.render("user-views/userLogout")
   }catch(err){
     console.log(err)
-    return res.status(500).send("Internel Server Error")
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internel Server Error")
   }
 }
 
@@ -109,7 +110,7 @@ export const landingPageView = async (req, res) => {
     res.render("user-views/landingPage", { perfumes,currentUser: req.user || null });
   } catch (error) {
     console.error('Error loading landing page perfumes:', error);
-    res.status(500).render("error", { message: "Something went wrong while loading the landing page." });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error", { message: "Something went wrong while loading the landing page." });
   }
 };
 
@@ -236,7 +237,7 @@ export const resentOtp = async (req,res)=>{
     const { email } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user || user.isVerified) return res.status(400).send("Invalid request");
+    if (!user || user.isVerified) return res.status(HTTP_STATUS.BAD_REQUEST).send("Invalid request");
   
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = Date.now() + 60 * 1000;
@@ -291,7 +292,7 @@ export const forgotPasswordPost = async (req, res) => {
 
   } catch (error) {
     console.error("Error in forgotPasswordPost:", error);
-    return res.status(500).render("user-views/forgotPassword", { error: "Something went wrong", email: "" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("user-views/forgotPassword", { error: "Something went wrong", email: "" });
   }
 };
 
@@ -332,7 +333,7 @@ export const verifyResetOtp = async (req, res) => {
 
   } catch (error) {
     console.error("Error in verifyResetOtp:", error);
-    res.status(500).send("Internal Server Error");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Internal Server Error");
   }
 };
 
@@ -345,21 +346,21 @@ export const updatePassword = async (req, res) => {
 
    
     if (!newPassword || !confirmPassword) {
-      return res.status(400).json({ error: "All fields are required." });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "All fields are required." });
     }
 
     if (newPassword !== confirmPassword) {
-      return res.status(400).json({ error: "Passwords do not match." });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Passwords do not match." });
     }
 
     if(!passwordPattern.test(newPassword)){
-      return res.status(400).json({ error: "Password must be at least 8 characters long, include uppercase, lowercase, number, and special character." });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Password must be at least 8 characters long, include uppercase, lowercase, number, and special character." });
     }
    
     const user = await User.findOne({ email });
 
     if (!user || !user.resetOtp || !user.resetOtpExpires) {
-      return res.status(400).json({ error: "Invalid or expired OTP process. Please try again." });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Invalid or expired OTP process. Please try again." });
     }
 
 
@@ -374,11 +375,11 @@ export const updatePassword = async (req, res) => {
     await user.save();
 
 
-    return res.status(200).json({ message: "Password updated successfully. You can now log in." });
+    return res.status(HTTP_STATUS.OK).json({ message: "Password updated successfully. You can now log in." });
 
   } catch (error) {
     console.error("Error in updatePassword:", error);
-    return res.status(500).json({ error: "Something went wrong. Please try again later." });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Something went wrong. Please try again later." });
   }
 };
 
@@ -431,7 +432,7 @@ export const resendResetOtp = async (req, res) => {
 
   } catch (error) {
     console.error("Error in resendResetOtp:", error);
-    return res.status(500).render("user-views/forgotPassword", {
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("user-views/forgotPassword", {
       error: "Something went wrong. Please try again.",
       email: ""
     });

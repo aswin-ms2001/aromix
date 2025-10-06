@@ -6,12 +6,13 @@ import mongoose from "mongoose";
 import { getRelatedProducts } from "./services/userServices/relatedProductServices.js";
 import { getWishlistVariantIds } from "./services/userServices/wishlistServices.js";
 import { productActiveOfferLinker,productOfferFinder } from "./services/userServices/userOfferService.js";
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 // import { productDetails } from "./adminController.js";
 
 export const discoverPage = async (req, res) => {
   try {
     const id = req.user._id;
-    if(!id) return res.status(500).render("error");
+    if(!id) return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error");
     const page = parseInt(req.query.page) || 1;
     const limit = 6;
     const skip = (page - 1) * limit;
@@ -331,7 +332,7 @@ export const discoverPage = async (req, res) => {
 
   } catch (err) {
     console.error("Error in discoverPage:", err);
-    res.status(500).render("error");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error");
   }
 };
 
@@ -374,7 +375,7 @@ export const productDetails = async (req, res) => {
     const product = productAggregation[0];
 
     if (!product) {
-      return res.status(404).render("error", { message: "Product not found or has been blocked" });
+      return res.status(HTTP_STATUS.NOT_FOUND).render("error", { message: "Product not found or has been blocked" });
     } 
     const categoryId = product.categoryId;
     const relatedProductsToLink = await getRelatedProducts(product);
@@ -393,6 +394,6 @@ export const productDetails = async (req, res) => {
 
   } catch (error) {
     console.error("Error loading product details:", error);
-    res.status(500).render("error", { message: "Internal Server Error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error", { message: "Internal Server Error" });
   }
 };
