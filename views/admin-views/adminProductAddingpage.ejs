@@ -163,7 +163,7 @@ function addVariant() {
 
 document.getElementById('product-form').addEventListener('submit', function (e) {
   let hasError = false;
-  const namePattern = /^[a-zA-Z]{4,}.*/;
+  const namePattern = /^[A-Za-z]{4}[A-Za-z\s]{0,16}$/;
   const descriptionPattern = /^[a-zA-Z]\w{5,}/;
   // Clear all previous error messages
   document.querySelectorAll('.text-danger').forEach(el => el.textContent = '');

@@ -129,8 +129,9 @@
   };
 
   signupForm.addEventListener("submit", (e) => {
+    e.preventDefault()
     let valid = true;
-
+    const namePattern = /^[A-Za-z.\s]{3,40}$/;
     // Clear all custom error messages first
     document.querySelectorAll(".field-error").forEach(el => el.remove());
 
@@ -138,7 +139,22 @@
     if (fullnameField.value.trim() === "") {
       showError(fullnameField, "Please enter your full name.");
       valid = false;
-    }
+    } else if (fullnameField.value.trim().length < 3) {
+      showError(fullnameField, "Name must be at least 3 characters.");
+      valid = false;
+    } else if (fullnameField.value.trim().length > 40) {
+      showError(fullnameField, "Name cannot exceed 40 characters.");
+      valid = false;
+    } else if (!namePattern.test(fullnameField.value.trim())) {
+      showError(fullnameField, "Only letters, spaces, and periods are allowed.");
+      valid = false;
+    } else if (/^[.\s]/.test(fullnameField.value.trim()) || /[.\s]$/.test(fullnameField.value.trim())) {
+      showError(fullnameField, "Name cannot start or end with a dot or space.");
+      valid = false;
+    } else if (/\.\.|  /.test(fullnameField.value.trim())) {
+      showError(fullnameField, "Name cannot contain consecutive dots or spaces.");
+      valid = false;
+    } 
 
     // Email
     if (emailField.value.trim() === "") {
@@ -179,7 +195,9 @@
       confirmPasswordError.style.display = "none";
     }
 
-    if (!valid) e.preventDefault();
+    if (valid){
+      signupForm.submit()
+    } ;
   });
 </script>
 
