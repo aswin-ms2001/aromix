@@ -486,12 +486,15 @@ export const cancelOrder = async (req, res) => {
         await order.save();
 
         // Restore stock for cancelled items
-        for (let item of order.items) {
-            await Product.updateOne(
-                { _id: item.productId, "variants._id": item.variantId },
-                { $inc: { "variants.$.stock": item.quantity } }
-            );
+        if(!(order.paymentMethod === "RAZORPAY" && order.paymentStatus === "Failed")){
+            for (let item of order.items) {
+                await Product.updateOne(
+                    { _id: item.productId, "variants._id": item.variantId },
+                    { $inc: { "variants.$.stock": item.quantity } }
+                );
+            }
         }
+
 
         res.json({ success: true, message: "Order cancelled successfully" });
 
@@ -541,12 +544,12 @@ export const cancelOrderItem = async (req, res) => {
                 item.cancelReason = reason;
             });
 
-            for (let item of order.items) {
-                await Product.updateOne(
-                    { _id: item.productId, "variants._id": item.variantId },
-                    { $inc: { "variants.$.stock": item.quantity } }
-                );
-            };
+            // for (let item of order.items) {
+            //     await Product.updateOne(
+            //         { _id: item.productId, "variants._id": item.variantId },
+            //         { $inc: { "variants.$.stock": item.quantity } }
+            //     );
+            // };
 
             await order.save();
 

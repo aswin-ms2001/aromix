@@ -9,7 +9,7 @@ import { productDetails } from "./adminController.js";
 import { isProductAndCategoryActive, getVariantStock } from "./services/userServices/productActivityCheckingService.js";
 import * as cartService from "./services/userServices/cartServices.js";
 import currentUser from "../middleware/userIdentification/currentUser.js";
-import PDFDocument from "pdfkit";
+import { isSufficient } from "./services/userServices/orderProductQuantityservice.js";
 import { userCoupens, coupenDetails } from "./services/userServices/coupenService.js";
 import Coupon from "../model/coupon.js";
 import { createRazorpayOrder, verifyRazorpaySignature } from "./services/paymentServices/paymentServices.js";
@@ -200,11 +200,17 @@ export const verifyRazorpayPayment = async (req, res) => {
 export const updateOrderFailedStatus = async (req,res)=>{
   try{
     const id = req.params.id;
-
+    console.log("entered")
     const order = await Order.findById(id);
     if(!order) return res.status(HTTP_STATUS.NOT_FOUND).json({success:false});
     order.paymentStatus = "Failed";
     await order.save();
+    for (let item of order.items) {
+        await Product.updateOne(
+            { _id: item.productId, "variants._id": item.variantId },
+            { $inc: { "variants.$.stock": item.quantity } }
+        );
+    }
     return res.status(HTTP_STATUS.OK).json({success:true});
   }catch(err){
     console.log(err);
@@ -246,7 +252,33 @@ export const retryPayment = async (req, res) => {
     }
     if (order.orderStatus === "Cancelled" ) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "You have already cancelled the order" });
+    };
+
+    const variantIdArray = order.items.map((ele)=>{
+      return {
+        productId:ele.productId,
+        variantId:ele.variantId,
+        quantity:ele.quantity
+      }
+    });
+    const sufficient = await isSufficient(variantIdArray);
+    if(!sufficient){
+        order.orderStatus = 'Cancelled';
+        order.items.forEach(item => {
+            item.cancelStatus = 'Cancelled';
+            item.cancelReason = "Cancelled Due to some Product are Out of Quantity";
+        });
+        await order.save();
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Some Items are Out of Quantity,Order Cancelled" });
     }
+        // 9. Reduce stock for each variant
+    for (let item of variantIdArray) {
+      await Product.updateOne(
+        { _id: item.productId, "variants._id": item.variantId },
+        { $inc: { "variants.$.stock": -item.quantity } }
+      );
+    }
+
     // Create new Razorpay order
     const razorpayOrder = await createRazorpayOrder(order.grandTotal, order.orderId.toString());
 

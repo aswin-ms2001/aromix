@@ -105,15 +105,18 @@
                 if (verifyRes.data.success) {
                   window.location.href = `/user-oder/oder-status/${order._id}`;
                 } else {
+                  await axios.patch(`/user-oder/payment-failed/${order._id}`);
                   window.location.href = `/user-oder/payment-failed/${order._id}`;
                 }
               } catch (err) {
+                await axios.patch(`/user-oder/payment-failed/${order._id}`);
                 window.location.href = `/user-oder/payment-failed/${order._id}`;
               }
             },
             modal: {
-              ondismiss: function () {
+              ondismiss:async function () {
                 // User closed Razorpay popup
+                await axios.patch(`/user-oder/payment-failed/${order._id}`);
                 window.location.href = `/user-oder/payment-failed/${order._id}`;
               }
             },
@@ -121,7 +124,8 @@
           };
 
           const rzp = new Razorpay(options);
-          rzp.on("payment.failed", function () {
+          rzp.on("payment.failed",async function (response) {
+            await axios.patch(`/user-oder/payment-failed/${order._id}`);
             window.location.href = `/user-oder/payment-failed/${order._id}`;
           });
           rzp.open();
