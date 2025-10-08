@@ -344,12 +344,19 @@ export const updateOrderStatus = async (req, res) => {
         
 
         if(newStatus==="Cancelled"){
-            for (let item of order.items) {
-                    await Product.updateOne(
-                        { _id: item.productId, "variants._id": item.variantId },
-                        { $inc: { "variants.$.stock": item.quantity } }
-                    );
-                }
+            if(!(order.paymentMethod === "RAZORPAY" && order.paymentStatus === "Failed")){
+                for (let item of order.items) {
+                        await Product.updateOne(
+                            { _id: item.productId, "variants._id": item.variantId },
+                            { $inc: { "variants.$.stock": item.quantity } }
+                        );
+                    }
+            };
+
+            order.items.forEach(item => {
+                item.cancelStatus = 'Cancelled';
+                item.cancelReason = "Cancelled By Admin";
+            });
 
             if(order.paymentMethod !== "COD" && order.paymentStatus === "Paid"){
                 // Process refund to wallet - only the specific item's total
