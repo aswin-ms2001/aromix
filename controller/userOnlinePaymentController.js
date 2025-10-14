@@ -310,7 +310,10 @@ export const walletPayment = async(req,res)=>{
       return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Address Not Found" });
     }
 
-    const wallet = await Wallet.findOne({userId}) 
+    let wallet = await Wallet.findOne({userId}) ;
+    if(!wallet){
+      wallet = new Wallet({userId,balance:0})
+    }
     
     const { cartItems, subtotal } = await cartService.getUserCartFunction(userId);
     if (!cartItems.length) {

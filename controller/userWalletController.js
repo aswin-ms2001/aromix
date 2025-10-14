@@ -11,6 +11,19 @@ export const userWalletFront = async (req,res)=>{
     console.log(wallet)
     wallet.transactions.sort((a,b)=>b.date - a.date);
     // If wallet does not exist, initialize one
+
+
+    const page = parseInt(req.query.page) || 1; // current page
+    const limit = 5; // transactions per page
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+
+    const totalTransactions = wallet.transactions.length;
+    const totalPages = Math.ceil(totalTransactions / limit);
+
+    // Slice transactions for the current page
+    const paginatedTransactions = wallet.transactions.slice(startIndex, endIndex);
+
     if (!wallet) {
       return res.render("user-views/user-account/user-profile/user-wallet.ejs", {
         user: req.user,
@@ -23,7 +36,9 @@ export const userWalletFront = async (req,res)=>{
     res.render("user-views/user-account/user-profile/user-wallet.ejs", {
       user: req.user,
       balance: wallet.balance,
-      transactions: wallet.transactions,
+      transactions: paginatedTransactions,
+      currentPage:page,
+      totalPages,
       activePage:"wallet"
     });
   } catch (error) {
