@@ -65,12 +65,7 @@ export const createNewAddress = async (req, res) => {
     }
 
 
-    // if (isDefault) {
-    //   await Address.updateMany(
-    //     { userId: userIdFromSession },
-    //     { $set: { isDefault: false } }
-    //   );
-    // }
+
 
    
     const newAddress = new Address({
@@ -85,9 +80,9 @@ export const createNewAddress = async (req, res) => {
       pincode,
     });
 
-    console.log("before save adress")
+    
     await newAddress.save();
-    console.log("after save adress")
+  
     return res.status(HTTP_STATUS.CREATED).json({ success: true, message: "Address created successfully." , address:newAddress});
 
   } catch (err) {

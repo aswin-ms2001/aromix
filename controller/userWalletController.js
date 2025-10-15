@@ -8,7 +8,7 @@ export const userWalletFront = async (req,res)=>{
     if(!wallet){
       wallet = new Wallet({userId,balance:0})
     }
-    console.log(wallet)
+   
     wallet.transactions.sort((a,b)=>b.date - a.date);
     // If wallet does not exist, initialize one
 
@@ -43,7 +43,7 @@ export const userWalletFront = async (req,res)=>{
     });
   } catch (error) {
     console.error("Error fetching wallet:", error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Server Error");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error.ejs");
   }
 }
 
@@ -67,6 +67,6 @@ export const userReferralFront = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching referral page:", error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Server Error");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error.ejs");
   }
 }

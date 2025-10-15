@@ -66,7 +66,7 @@ export const deleteFromWishlist = async (req, res) => {
     try {
         const userId = req.user?._id;
         const { productId, variantId } = req.params;
-        console.log("Entered")
+ 
         if (!mongoose.Types.ObjectId.isValid(userId)) {
             return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Invalid User ID" });
         }
@@ -79,7 +79,7 @@ export const deleteFromWishlist = async (req, res) => {
 
         const active = await isProductAndCategoryActive(productId);
         if (!active) {
-          console.log("blocked")
+          
             return res.status(HTTP_STATUS.FORBIDDEN).json({
                 success: false,
                 message: "Item is blocked",

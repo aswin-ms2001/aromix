@@ -6,7 +6,7 @@ export const productOfferFinder = async(productId,categoryId)=>{
         if(!mongoose.Types.ObjectId.isValid(productId)) return null;
         if(!mongoose.Types.ObjectId.isValid(categoryId)) return null;
         productId = new mongoose.Types.ObjectId(productId);
-        // console.log("Entered")
+        
         const offerDetails = await Offer.aggregate([
         {
             $match:{
@@ -29,7 +29,7 @@ export const productOfferFinder = async(productId,categoryId)=>{
             }
         }
     ]);
-    // console.log(offerDetails)
+    
         if(offerDetails.length<1){
             return null;
         }else{
@@ -47,7 +47,7 @@ export const productActiveOfferLinker = async (product)=>{
         const updatedProducts = await Promise.all(
             product.map(async(ele)=>{
                 try{
-                    // console.log(ele)
+                    
                     const offer = await productOfferFinder(ele._id,ele.categoryId);
                     return {
                         ...ele,offer

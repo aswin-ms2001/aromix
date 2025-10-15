@@ -20,7 +20,7 @@ export const login = async (req,res)=>{
     try{
         const details = await Admin.find();
         const [adminDetails] = details;
-        console.log(adminDetails)
+      
         if(adminDetails.email === req.body.email && adminDetails.password === req.body.password){
             req.session.admin = {
                 id:adminDetails._id,
@@ -239,7 +239,7 @@ export const dashboard = async (req,res)=>{
             chartRevenueData = months.map((_, index) => chartData[index].revenue);
         }
 
-        console.log(chartOrdersData,chartLabels,chartRevenueData)
+        
         res.render("admin-views/adminDashboard", {
             period,
             customDate,
@@ -747,8 +747,7 @@ export const addNewVariants = [
     try {
       const productId = req.params.productId;
 
-      // Log incoming body for debugging
-      // console.log("Incoming body:", req.body);
+
 
       // Validate product exists
       const product = await Product.findById(productId);

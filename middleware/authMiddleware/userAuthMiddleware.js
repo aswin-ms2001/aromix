@@ -17,10 +17,3 @@ export function ensureAuthenticated(req, res, next) {
   }
 }
 
-  // Check if user is verified (for email/OTP verification systems)
-  // export function ensureVerified(req, res, next) {
-  //   if (req.user?.isVerified) {
-  //     return next();
-  //   }
-  //   res.status(403).send('Please verify your account first');
-  // }

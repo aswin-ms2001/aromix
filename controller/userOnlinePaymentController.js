@@ -177,8 +177,11 @@ export const verifyRazorpayPayment = async (req, res) => {
 
     const order = await Order.findById(tempOrderId);
     if (!order) return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
+    if(order.orderStatus==="Cancelled"){
+      return res.status(HTTP_STATUS.CONFLICT).json({ success: false, message: "Order was Cancelled" });
+    }
     if (!verifyRazorpaySignature(orderId, paymentId, signature)) {
-      console.log("failee")
+      
       order.paymentStatus = "Failed";
       await order.save();
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: "Payment verification failed" });
@@ -200,7 +203,7 @@ export const verifyRazorpayPayment = async (req, res) => {
 export const updateOrderFailedStatus = async (req,res)=>{
   try{
     const id = req.params.id;
-    console.log("entered")
+   
     const order = await Order.findById(id);
     if(!order) return res.status(HTTP_STATUS.NOT_FOUND).json({success:false});
     order.paymentStatus = "Failed";
@@ -294,7 +297,7 @@ export const walletPayment = async(req,res)=>{
     const userId = req.user._id;
     const { cart, selectedAddressId, paymentMethod,coupon } = req.body;
 
-    console.log(userId)
+    
     if(!selectedAddressId){
       return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "You didn't selected a Address" });
     }

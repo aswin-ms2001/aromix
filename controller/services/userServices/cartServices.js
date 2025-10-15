@@ -5,6 +5,14 @@ import mongoose from "mongoose";
 import Cart from "../../../model/cart.js";
 import { getVariantStock } from "./productActivityCheckingService.js";
 import { productOfferFinder } from "./userOfferService.js";
+/**
+ * @async 
+ * @function addToUserCart
+ * @param {mongoose.Types.ObjectId} userId 
+ * @param {mongoose.Types.ObjectId} productId 
+ * @param {mongoose.Types.ObjectId} variantId 
+ * @returns {Promise<{success: boolean, message: string, cartItem?: object}>}
+ */
 
 export const addToUserCart = async (userId, productId, variantId) => {
   try {
@@ -74,21 +82,21 @@ export const getUserCartFunction = async (userId) => {
         v => v._id.toString() === item.variantId.toString()
       );
 
-      // console.log(product._id, product.categoryId._id);
+      
       const offer = await productOfferFinder(product._id, product.categoryId._id);
-      // console.log(offer)
+     
       let itemTotal = 0;
       let itemTotalWithoutOffer = 0
       if(offer){
          itemTotal = variant ? variant.price * item.quantity * (1 - offer * .01) : 0;
          itemTotalWithoutOffer = variant ? variant.price * item.quantity : 0;
-        //  console.log(variant)
+       
       }else{
          itemTotal = variant ? variant.price * item.quantity : 0;
          itemTotalWithoutOffer = variant ? variant.price * item.quantity : 0;
       }
       
-      // console.log(itemTotal)
+     
       return {
         _id: item._id,
         userId: item.userId,
@@ -114,10 +122,10 @@ export const getUserCartFunction = async (userId) => {
     ) ;
     activeCart.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    // console.log(activeCart)
+    
     const subtotal = activeCart.reduce((sum, item) => sum + item.itemTotal, 0);
     const subTotalWithoutOffer = activeCart.reduce((sum, item) => sum + item.itemTotalWithoutOffer, 0);
-    // console.log(subTotalWithoutOffer);
+   
     return { cartItems: activeCart, subtotal, subTotalWithoutOffer };
 
   } catch (err) {

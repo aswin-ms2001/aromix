@@ -13,7 +13,7 @@ export const userCartFront = async (req,res)=>{
     try{
         const userId = req.user._id;
         const {cartItems,subtotal} = await cartService.getUserCartFunction(userId);
-        // console.log(cartItems,subtotal);
+        
         return res.render("user-views/user-account/user-profile/user-cart.ejs",{
           cart:cartItems,
           subtotal,
@@ -149,7 +149,7 @@ export const updateCartQuantity = async (req, res) => {
       select: "blocked categoryId variants",
       populate: { path: "categoryId", select: "blocked" }
     });
-    // console.log(cartItem.productId._id,cartItem.productId.categoryId._id);
+    
     if (!cartItem) {
       return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Cart item not found" });
     }
@@ -198,28 +198,7 @@ export const updateCartQuantity = async (req, res) => {
       itemTotal = variant.price * newQuantity;
     }
     
-    // const userCart = await Cart.find({ userId }).populate({
-    //   path: "productId",
-    //   select: "variants blocked categoryId",
-    //   populate: {
-    //     path:"categoryId",
-    //     select:"blocked"
-    //   }
 
-    // });
-    // let subtotal = 0;
-    // for (const item of userCart) {
-    //   // console.log(item)
-    //   if(item.productId.blocked||item.productId.categoryId.blocked){
-    //     continue;
-    //   }
-    //   const cartVariant = item.productId.variants.id(item.variantId);
-    //   if (cartVariant) {
-    //     const offer = await productOfferFinder()
-    //     subtotal += cartVariant.price * item.quantity;
-    //   }
-    // }
-    // console.log(userId);
     const {subtotal} = await cartService.getUserCartFunction(userId)
 
     return res.json({
@@ -268,25 +247,7 @@ export const deleteCart = async (req, res) => {
     await Cart.findByIdAndDelete(cartId);
 
     
-    // const userCart = await Cart.find({ userId }).populate({
-    //   path: "productId",
-    //   select: "variants blocked categoryId",
-    //   populate: {
-    //     path: "categoryId",
-    //     select: "blocked"
-    //   }
-    // });
 
-    // let subtotal = 0;
-    // for (const item of userCart) {
-    //   if (item.productId.blocked || item.productId.categoryId.blocked) {
-    //     continue;
-    //   }
-    //   const variant = item.productId.variants.id(item.variantId);
-    //   if (variant) {
-    //     subtotal += variant.price * item.quantity;
-    //   }
-    // }
 
     const {cartItems, subtotal} = await cartService.getUserCartFunction(userId)
     

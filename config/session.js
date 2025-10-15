@@ -38,4 +38,3 @@ export const adminSessionMiddleware = session({
   },
 });
 
-// export = { userSessionMiddleware, adminSessionMiddleware };

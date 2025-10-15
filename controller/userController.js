@@ -104,9 +104,9 @@ export const landingPageView = async (req, res) => {
         }
       }
     ]);
-    // console.log(perfumes);
+    
     const perfumes = await productActiveOfferLinker(perfumesToLink);
-    // console.log(perfumes);
+    
     res.render("user-views/landingPage", { perfumes,currentUser: req.user || null });
   } catch (error) {
     console.error('Error loading landing page perfumes:', error);
@@ -121,7 +121,7 @@ export const signupPage = (req,res)=>{
 export const signup = async (req,res)=>{
     const {fullname,email,password}= req.body;
     let code = req.body.code;
-    console.log(code);
+    
     const existing = await User.findOne({email})
     if(existing && existing.isVerified){
         return res.render("user-views/login.ejs",

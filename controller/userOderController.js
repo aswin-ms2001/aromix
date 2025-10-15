@@ -16,7 +16,7 @@ import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 export const userCheckOut = async (req,res)=>{
     try {
-        console.log("Enterd")
+        
         const userId = req.user._id;
         const {cartItems,subtotal} = await cartService.getUserCartFunction(userId);
         if(!cartItems[0]) return res.redirect("/users-cart/user-cart-front")
@@ -188,7 +188,7 @@ export const userOrder = async (req, res) => {
 export const userOrderSuccessPage = async (req,res)=>{
     try{
         const id = req.params.id;
-        console.log(id)
+        
         const order = await Order.findById(id); 
         if(!order || String(order.userId) !== String(req.user._id)) {
             return res.render("error.ejs");
@@ -274,7 +274,7 @@ export const getOrderDetails = async (req, res) => {
             return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
         }
 
-        console.log(order.items[0].productId.variants);
+        
         // Add variant details to each item
         order.items.forEach(item => {
             if (item.productId && item.productId.variants) {
@@ -544,12 +544,7 @@ export const cancelOrderItem = async (req, res) => {
                 item.cancelReason = reason;
             });
 
-            // for (let item of order.items) {
-            //     await Product.updateOne(
-            //         { _id: item.productId, "variants._id": item.variantId },
-            //         { $inc: { "variants.$.stock": item.quantity } }
-            //     );
-            // };
+
 
             await order.save();
 
@@ -584,7 +579,7 @@ export const cancelOrderItem = async (req, res) => {
                 wallet = new Wallet({ userId: order.userId, balance: 0 });
             }
 
-            // const refundAmount = activeItemsCount === 0 ? itemToCancel.finalPrice * itemToCancel.quantity + 50:itemToCancel.finalPrice * itemToCancel.quantity ; // This is already item.total (price * quantity)
+            
             const refundAmount =  itemToCancel.finalPrice * itemToCancel.quantity;
             wallet.balance += refundAmount;
             wallet.transactions.push({
@@ -614,7 +609,7 @@ export const cancelOrderItem = async (req, res) => {
                 order.grandTotal = newSubtotal + order.shippingCharge ;
             }else{
                 order.subtotal = newSubtotal;
-                // order.shippingCharge = newSubtotal > 1000 ? 0 : 50;
+                
                 order.grandTotal = newSubtotal + order.shippingCharge ;  
             }
 

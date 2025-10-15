@@ -49,7 +49,7 @@ export const userPasswordVerification = async (req,res)=>{
         const id = req.params.id;
         const {otp,currentPassword, newPassword} = req.body;
 
-        // console.log(otp,currentPassword, newPassword);
+        
         const user = await User.findById(id);
         if(!user){
            return res.status(HTTP_STATUS.NOT_FOUND).json({success:false,message:"User Not Found"});
@@ -58,15 +58,13 @@ export const userPasswordVerification = async (req,res)=>{
             return res.status(HTTP_STATUS.CONFLICT).json({success:false,message:"New password And Old Password are Same"});
         };
         if(user.resetOtpExpires < Date.now()) return res.status(410).json({success:false,message:"Otp Expired"});
-        // console.log(user.resetOtp);
-        // console.log(typeof otp);
-        // console.log(typeof user.resetOtp);
+
         if(otp!=user.resetOtp) return res.status(HTTP_STATUS.BAD_REQUEST).json({success:false,message:"Invalid Otp"});
-        // console.log("hai")
+    
         const valid = await user.comparePassword(currentPassword);
-        // console.log(valid);
+        
         if(!valid) return res.status(HTTP_STATUS.UNAUTHORIZED).json({success:false,message:"The Password you given as Old password is incorrect"});
-        // console.log("wrong")
+      
         user.password = await bcrypt.hash(newPassword,10);
         user.resetOtp = undefined;
         user.resetOtpExpires = undefined;
@@ -82,15 +80,13 @@ export const userPasswordVerification = async (req,res)=>{
 export const userEmailVerification = async (req,res)=>{
     const id = req.params.id;
     const {email} = req.body;
-    console.log(email)
+    
     try{
         const user = await User.findById(id);
         if(!user) return res.status(HTTP_STATUS.NOT_FOUND).json({success:false,message:"User Not Found"});
         if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(HTTP_STATUS.BAD_REQUEST).json({success:false,message:"Email is not valid"});
         const duplicate = await User.find({email});
-        // console.log(unique);
-        // console.log(unique[0]);
-        // console.log(!unique[0]);
+
         if(duplicate[0]) return res.status(HTTP_STATUS.CONFLICT).json({success:false,message:"Already Have an Account on this Email"});
         const otp = otpGenerator();
         console.log(otp);
@@ -109,10 +105,10 @@ export const userEmailVerification = async (req,res)=>{
 export const updateUserEmail = async (req,res)=>{
     const {otp,email} = req.body;
     const id = req.params.id;
-    // console.log(otp,email,id)
+
     try{
         const user = await User.findById(id);
-        // console.log(user)
+  
         if(!user) return res.status(HTTP_STATUS.NOT_FOUND).json({success:false,message:"User Not Found"});
         if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(HTTP_STATUS.BAD_REQUEST).json({success:false,message:"Email is not valid"});
         const duplicate = await User.find({email});

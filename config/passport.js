@@ -45,35 +45,35 @@ passport.use(new GoogleStrategy({
 
 
 },async(accessToken,refreshToken,profile,done)=>{
-    // console.log("Google OAuth Profile:", profile);
+
     try{
         const email = profile.emails[0].value;
         let user = await User.findOne({email});
         if(user){
             if(user.authType != "google"){
-                // console.log("Error: This email is registered with local Authentication.");
+      
                 return done(null,false,{message:"User is not Registered Using Google Auth"});
             }
 
             if (user.blocked) return done(null, false,{message:"User is Blocked"});
             
-            // console.log("User logged in:", user);
+            
             return done(null, user); // user login
         }
 
         //new Google signup
-        // console.log("Creating new Google user...");
+       
         user = await User.create({
             name:profile.displayName,
             email:email,
             authType:"google",
             isVerified:true
         });
-        // console.log("New user created:", user);
+        
         return done(null,user);
 
     }catch(err){
-        // console.error("Error in Google authentication:", err);
+        
         done(err, null)
     }
 
@@ -81,17 +81,17 @@ passport.use(new GoogleStrategy({
 ))
 
 passport.serializeUser((user,done)=>{
-    // console.log("Serializing user:", user);
+    
     done(null,user.id)
 })
 
 passport.deserializeUser(async (id,done)=>{
     try{
         const user = await User.findById(id);
-        // console.log("Deserialized user:", user);
+        
         done(null,user)
     }catch(err){
-        // console.error("Error during deserialization:", err);
+       
         done(err,null)
     }
 

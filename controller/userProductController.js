@@ -7,7 +7,7 @@ import { getRelatedProducts } from "./services/userServices/relatedProductServic
 import { getWishlistVariantIds } from "./services/userServices/wishlistServices.js";
 import { productActiveOfferLinker,productOfferFinder } from "./services/userServices/userOfferService.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
-// import { productDetails } from "./adminController.js";
+
 
 export const discoverPage = async (req, res) => {
   try {
@@ -42,9 +42,7 @@ export const discoverPage = async (req, res) => {
 
     const isPriceSort = sort === 'lowToHigh' || sort === 'highToLow';
     const variantSortDirection = sort === 'lowToHigh' ? 1 : -1;
-    console.log(variantSortDirection);
-    console.log(isPriceSort);
-    console.log(matchStage);
+
     const products = await Product.aggregate([
       {
         $lookup: {
@@ -206,7 +204,7 @@ export const discoverPage = async (req, res) => {
       { $limit: limit }
     ]);
 
-    console.log(products)
+
     const totalCountAgg = await Product.aggregate([
       {
         $lookup: {
@@ -309,14 +307,14 @@ export const discoverPage = async (req, res) => {
       { $count: "total" }
     ]);
 
-    // const products = await productActiveOfferLinker(productsToLink)
-    console.log(products)
+  
+
     const user = await User.findById(id);
     const totalProducts = totalCountAgg[0]?.total || 0;
     const totalPages = Math.ceil(totalProducts / limit);
 
     const categories = await Category.find({ blocked: false });
-    // console.log(products)
+
     res.render("user-views/discover.ejs", {
       user,
       products,
@@ -341,7 +339,7 @@ export const productDetails = async (req, res) => {
     const userId = req.user._id;
     const productId = req.params.id;
     const variantId = req.query.variantId || null;
-    // console.log(variantId)
+
     const productAggregation = await Product.aggregate([
       {
         $match: { _id: new mongoose.Types.ObjectId(productId), blocked: false }
@@ -382,9 +380,9 @@ export const productDetails = async (req, res) => {
     const wishlistVariantIds = await getWishlistVariantIds(userId,productId);
     const productOffer =await productOfferFinder(productId,categoryId);
     product.offer = productOffer;
-    // console.log(product);
+ 
     const relatedProducts = await productActiveOfferLinker(relatedProductsToLink);
-    // console.log(relatedProducts);
+  
     res.render("user-views/productDetails", {
       product,
       relatedProducts,

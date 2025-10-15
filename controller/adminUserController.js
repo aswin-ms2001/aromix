@@ -2,9 +2,7 @@ import express from "express";
 import Admin from "../model/admin.js";
 import User from "../model/user.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
-// import upload from "../middleware/uploads/multer.js";
-// import cloudinary from '../config/cloudinary.js'; 
-// import Product from "../model/product.js"
+
 
 export const showUsers = async (req, res) => {
   try {
