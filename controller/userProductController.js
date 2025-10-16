@@ -9,6 +9,13 @@ import { productActiveOfferLinker,productOfferFinder } from "./services/userServ
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 
+/**
+ * @async
+ * @function discoverPage
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const discoverPage = async (req, res) => {
   try {
     const id = req.user._id;
@@ -334,6 +341,13 @@ export const discoverPage = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function productDetails
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const productDetails = async (req, res) => {
   try {
     const userId = req.user._id;

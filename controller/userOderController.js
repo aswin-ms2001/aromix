@@ -14,6 +14,13 @@ import Coupon from "../model/coupon.js";
 import Wallet from "../model/wallet.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 
+/**
+ * @async
+ * @function userCheckOut
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const userCheckOut = async (req,res)=>{
     try {
         
@@ -36,6 +43,13 @@ export const userCheckOut = async (req,res)=>{
     }
 }
 
+/**
+ * @async
+ * @function userOrder
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const userOrder = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -185,6 +199,13 @@ export const userOrder = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function userOrderSuccessPage
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const userOrderSuccessPage = async (req,res)=>{
     try{
         const id = req.params.id;
@@ -203,6 +224,13 @@ export const userOrderSuccessPage = async (req,res)=>{
     }
 }
 
+/**
+ * @async
+ * @function orderFrontPage
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const orderFrontPage = async (req,res)=>{
     try{
         const userId = req.user._id;
@@ -261,6 +289,13 @@ export const orderFrontPage = async (req,res)=>{
     }
 }
 
+/**
+ * @async
+ * @function getOrderDetails
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getOrderDetails = async (req, res) => {
     try {
         const orderId = req.params.id;
@@ -436,6 +471,13 @@ export const getOrderDetails = async (req, res) => {
     }
 };
 
+/**
+ * @async
+ * @function cancelOrder
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const cancelOrder = async (req, res) => {
     try {
         const orderId = req.params.id;
@@ -504,6 +546,13 @@ export const cancelOrder = async (req, res) => {
     }
 };
 
+/**
+ * @async
+ * @function cancelOrderItem
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const cancelOrderItem = async (req, res) => {
     try {
         const orderId = req.params.orderId;
@@ -635,6 +684,13 @@ export const cancelOrderItem = async (req, res) => {
     }
 };
 
+/**
+ * @async
+ * @function requestReturn
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const requestReturn = async (req, res) => {
     try {
         const orderId = req.params.orderId;
@@ -686,6 +742,13 @@ export const requestReturn = async (req, res) => {
     }
 };
 
+/**
+ * @async
+ * @function downloadInvoice
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const downloadInvoice = async (req, res) => {
     try {
         const orderId = req.params.id;
@@ -794,6 +857,13 @@ export const downloadInvoice = async (req, res) => {
     }
 };
 
+/**
+ * @async
+ * @function userCoupon
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const userCoupon = async (req, res) => {
   try {
     const userId = req.user._id;

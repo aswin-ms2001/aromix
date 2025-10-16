@@ -2,6 +2,13 @@ import User from "../model/user.js";
 import Address from "../model/address.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 
+/**
+ * @async
+ * @function userAddressFront
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const userAddressFront = async (req,res)=>{
  try {
     const id = req.params.id;
@@ -30,6 +37,13 @@ export const userAddressFront = async (req,res)=>{
 };
 
 
+/**
+ * @async
+ * @function createNewAddress
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const createNewAddress = async (req, res) => {
 
   try {
@@ -91,6 +105,13 @@ export const createNewAddress = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function setDefaultAddress
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const setDefaultAddress = async (req, res) => {
   try {
     const userId = req.params.id;
@@ -129,6 +150,13 @@ export const setDefaultAddress = async (req, res) => {
 };
 
 
+/**
+ * @async
+ * @function editAddress
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const editAddress = async (req, res) => {
   try {
     const userId = req.params.id;
@@ -166,6 +194,13 @@ export const editAddress = async (req, res) => {
 };
 
 
+/**
+ * @async
+ * @function deleteAddress
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const deleteAddress = async (req, res) => {
   try {
     const userId = req.params.id;

@@ -3,6 +3,13 @@ import PDFDocument from "pdfkit";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 // Render sales report page
+/**
+ * @async
+ * @function renderSalesReport
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const renderSalesReport = async (req, res) => {
     try {
         const {
@@ -37,6 +44,13 @@ export const renderSalesReport = async (req, res) => {
 };
 
 // JSON data (optional for dynamic reloads)
+/**
+ * @async
+ * @function getSalesReportData
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getSalesReportData = async (req, res) => {
     try {
         const {
@@ -59,6 +73,13 @@ export const getSalesReportData = async (req, res) => {
 };
 
 // Download full period data as PDF
+/**
+ * @async
+ * @function downloadSalesReportPdf
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const downloadSalesReportPdf = async (req, res) => {
     try {
         const { range = "day", startDate, endDate } = req.query;
@@ -165,6 +186,13 @@ export const downloadSalesReportPdf = async (req, res) => {
 };
 
 // Download full period data as CSV (Excel compatible)
+/**
+ * @async
+ * @function downloadSalesReportExcel
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const downloadSalesReportExcel = async (req, res) => {
     try {
         const { range = "day", startDate, endDate } = req.query;

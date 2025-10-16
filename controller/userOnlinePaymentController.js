@@ -15,6 +15,13 @@ import Coupon from "../model/coupon.js";
 import { createRazorpayOrder, verifyRazorpaySignature } from "./services/paymentServices/paymentServices.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 
+/**
+ * @async
+ * @function createRazorpayOrderForUser
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const createRazorpayOrderForUser = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -170,6 +177,13 @@ export const createRazorpayOrderForUser = async (req, res) => {
 };
 
 
+/**
+ * @async
+ * @function verifyRazorpayPayment
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const verifyRazorpayPayment = async (req, res) => {
   try {
     const { orderId, paymentId, signature, tempOrderId } = req.body;
@@ -200,6 +214,13 @@ export const verifyRazorpayPayment = async (req, res) => {
 };
 
 
+/**
+ * @async
+ * @function updateOrderFailedStatus
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const updateOrderFailedStatus = async (req,res)=>{
   try{
     const id = req.params.id;
@@ -221,6 +242,13 @@ export const updateOrderFailedStatus = async (req,res)=>{
   }
 }
 
+/**
+ * @async
+ * @function userOrderFailurePage
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const userOrderFailurePage = async(req,res)=>{
   try{
       const id = req.params.id;
@@ -239,6 +267,13 @@ export const userOrderFailurePage = async(req,res)=>{
   }
 };
 
+/**
+ * @async
+ * @function retryPayment
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const retryPayment = async (req, res) => {
   try {
     const orderId = req.params.id;
@@ -292,6 +327,13 @@ export const retryPayment = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function walletPayment
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const walletPayment = async(req,res)=>{
   try {
     const userId = req.user._id;

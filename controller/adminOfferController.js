@@ -4,6 +4,13 @@ import Category from "../model/category.js";
 import { validateOfferPayload } from "./services/adminServices/adminOfferService.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 
+/**
+ * @async
+ * @function adminOfferFront
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const adminOfferFront = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -64,6 +71,13 @@ export const adminOfferFront = async (req, res) => {
 
 
 
+/**
+ * @async
+ * @function createOffer
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const createOffer = async (req, res) => {
   try {
     const { errors, start, end, percent } = validateOfferPayload(req.body, false);
@@ -101,6 +115,13 @@ export const createOffer = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function updateOffer
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const updateOffer = async (req, res) => {
   try {
     const offerId = req.params.id;
@@ -143,6 +164,13 @@ export const updateOffer = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function toggleOfferActive
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const toggleOfferActive = async (req, res) => {
   try {
     const offerId = req.params.id;
@@ -171,6 +199,13 @@ export const toggleOfferActive = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function searchTargets
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const searchTargets = async (req, res) => {
   try {
     const type = req.query.type; // PRODUCT | CATEGORY

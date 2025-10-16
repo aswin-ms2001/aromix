@@ -9,6 +9,13 @@ import * as cartService from "./services/userServices/cartServices.js";
 import { productOfferFinder } from "./services/userServices/userOfferService.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 
+/**
+ * @async
+ * @function userCartFront
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const userCartFront = async (req,res)=>{
     try{
         const userId = req.user._id;
@@ -26,6 +33,13 @@ export const userCartFront = async (req,res)=>{
 }
 
 
+/**
+ * @async
+ * @function addToCart
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const addToCart = async (req, res) => {
   try {
     const { variantId, productId } = req.params;
@@ -63,6 +77,13 @@ export const addToCart = async (req, res) => {
 };
 
 
+/**
+ * @async
+ * @function addToCartDeleteFromWishlist
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const addToCartDeleteFromWishlist = async (req, res) => {
   try {
     const { productId, variantId } = req.body;
@@ -133,6 +154,13 @@ export const addToCartDeleteFromWishlist = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function updateCartQuantity
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const updateCartQuantity = async (req, res) => {
   try {
     const { action } = req.body;
@@ -217,6 +245,13 @@ export const updateCartQuantity = async (req, res) => {
 };
 
 
+/**
+ * @async
+ * @function deleteCart
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const deleteCart = async (req, res) => {
   try {
     const userId = req.user._id;

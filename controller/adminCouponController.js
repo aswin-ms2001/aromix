@@ -2,6 +2,13 @@ import Coupon from "../model/coupon.js";
 import { validateCouponPayload, generateCouponCode } from "./services/adminServices/adminCouponService.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 
+/**
+ * @async
+ * @function adminCouponFront
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const adminCouponFront = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -45,6 +52,13 @@ export const adminCouponFront = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function createCoupon
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const createCoupon = async (req, res) => {
   try {
     const { errors, start, end } = validateCouponPayload(req.body, false);
@@ -75,6 +89,13 @@ export const createCoupon = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function updateCoupon
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const updateCoupon = async (req, res) => {
   try {
     const couponId = req.params.id;
@@ -107,6 +128,13 @@ export const updateCoupon = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function toggleCouponActive
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const toggleCouponActive = async (req, res) => {
   try {
     const couponId = req.params.id;
@@ -132,6 +160,12 @@ export const toggleCouponActive = async (req, res) => {
   }
 };
 
+/**
+ * @function generateCode
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {void}
+ */
 export const generateCode = (req, res) => {
   try {
     const code = generateCouponCode();

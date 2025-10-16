@@ -4,6 +4,13 @@ import Wallet from "../model/wallet.js";
 import User from "../model/user.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 
+/**
+ * @async
+ * @function adminOrderFront
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const adminOrderFront = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -83,6 +90,13 @@ export const adminOrderFront = async (req, res) => {
     }
 };
 
+/**
+ * @async
+ * @function getOrderDetails
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getOrderDetails = async (req, res) => {
     try {
         const orderId = req.params.id;
@@ -298,6 +312,13 @@ export const getOrderDetails = async (req, res) => {
     }
 };
 
+/**
+ * @async
+ * @function updateOrderStatus
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const updateOrderStatus = async (req, res) => {
     try {
         const orderId = req.params.id;
@@ -388,6 +409,13 @@ export const updateOrderStatus = async (req, res) => {
     }
 };
 
+/**
+ * @async
+ * @function verifyReturn
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const verifyReturn = async (req, res) => {
     try {
         const orderId = req.params.orderId;

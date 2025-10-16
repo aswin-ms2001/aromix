@@ -7,6 +7,13 @@ import { isProductAndCategoryActive } from "./services/userServices/productActiv
 import * as wishlistService from "./services/userServices/wishlistServices.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 
+/**
+ * @async
+ * @function addToWishlist
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const addToWishlist = async (req, res) => {
   try {
     const { productId, variantId } = req.params;
@@ -62,6 +69,13 @@ export const addToWishlist = async (req, res) => {
 };
 
 
+/**
+ * @async
+ * @function deleteFromWishlist
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const deleteFromWishlist = async (req, res) => {
     try {
         const userId = req.user?._id;
@@ -106,6 +120,13 @@ export const deleteFromWishlist = async (req, res) => {
     }
 };
 
+/**
+ * @async
+ * @function userWishlist
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const userWishlist = async (req,res)=>{
   try{
     const userId = req.user._id;

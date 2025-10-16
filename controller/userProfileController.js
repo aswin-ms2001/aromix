@@ -8,6 +8,13 @@ import { otpGenerator } from "../utils/otpGenerator.js";
 import bcrypt from "bcrypt";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 
+/**
+ * @async
+ * @function userProfileFront
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const userProfileFront = async (req,res)=>{
     try{
         const id = req.params.id;
@@ -18,6 +25,13 @@ export const userProfileFront = async (req,res)=>{
     }
 }
 
+/**
+ * @async
+ * @function userPasswordOtp
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const userPasswordOtp = async (req,res)=>{
     try{
         const id = req.params.id;
@@ -44,6 +58,13 @@ export const userPasswordOtp = async (req,res)=>{
     }
 }
 
+/**
+ * @async
+ * @function userPasswordVerification
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const userPasswordVerification = async (req,res)=>{
     try{
         const id = req.params.id;
@@ -77,6 +98,13 @@ export const userPasswordVerification = async (req,res)=>{
     }
 }
 
+/**
+ * @async
+ * @function userEmailVerification
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const userEmailVerification = async (req,res)=>{
     const id = req.params.id;
     const {email} = req.body;
@@ -102,6 +130,13 @@ export const userEmailVerification = async (req,res)=>{
 
 }
 
+/**
+ * @async
+ * @function updateUserEmail
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const updateUserEmail = async (req,res)=>{
     const {otp,email} = req.body;
     const id = req.params.id;
@@ -131,6 +166,13 @@ export const updateUserEmail = async (req,res)=>{
     }
 }
 
+/**
+ * @async
+ * @function updateUserNameAndPhone
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const updateUserNameAndPhone = async (req, res) => {
   try {
     const { name, phone } = req.body;

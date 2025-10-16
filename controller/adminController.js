@@ -8,6 +8,12 @@ import Order from "../model/oder.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 import fs from 'fs'; 
 
+/**
+ * @function loginPage
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {void}
+ */
 export const loginPage = (req,res)=>{
     const errorMessage = req.flash("error");
     res.render("admin-views/adminLogin",{
@@ -15,6 +21,13 @@ export const loginPage = (req,res)=>{
     })
 }
 
+/**
+ * @async
+ * @function login
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const login = async (req,res)=>{
     const {email,password} = req.body;
     try{
@@ -41,6 +54,13 @@ export const login = async (req,res)=>{
 
 }
 
+/**
+ * @async
+ * @function dashboard
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const dashboard = async (req,res)=>{
     try {
         const { 
@@ -272,6 +292,13 @@ export const dashboard = async (req,res)=>{
     }
 }
 
+/**
+ * @async
+ * @function addProduct
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const addProduct = async (req,res)=>{
     try{
         const categories = await Category.find();
@@ -284,10 +311,22 @@ export const addProduct = async (req,res)=>{
 }
 
 
+/**
+ * @function logout
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {void}
+ */
 export const logout = (req, res) => {
   res.render('admin-views/logoutConfirm');
 }
 
+/**
+ * @function logoutConfirm
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {void}
+ */
 export const logoutConfirm =  (req, res) => {
   req.session.destroy(err => {
     if (err) {
@@ -299,6 +338,11 @@ export const logoutConfirm =  (req, res) => {
   });
 }
 
+/**
+ * @typedef {import("express").RequestHandler} RequestHandler
+ * @constant uploader
+ * @type {RequestHandler[]}
+ */
 export const uploader = [
     upload.single('image'),
     (req, res) => {
@@ -310,6 +354,13 @@ export const uploader = [
   ];
 
 
+/**
+ * @async
+ * @function productDetails
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const productDetails = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -345,6 +396,11 @@ export const productDetails = async (req, res) => {
   }
 };
 
+/**
+ * @typedef {import("express").RequestHandler} RequestHandler
+ * @constant addProductPost
+ * @type {RequestHandler[]}
+ */
 export const addProductPost = [
   upload.fields([
     { name: "variantImages", maxCount: 100 }, 
@@ -420,10 +476,15 @@ export const addProductPost = [
   },
 ];
 
-// export const categoryFront = (req,res)=>{
-//   res.render("admin-views/categoryFront.ejs")
-// }
+ 
 
+/**
+ * @async
+ * @function categoryFront
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const categoryFront = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -459,10 +520,23 @@ export const categoryFront = async (req, res) => {
 };
 
 
+/**
+ * @function addCategory
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {void}
+ */
 export const addCategory = (req,res)=>{
   res.render("admin-views/categoryAdding.ejs")
 }
 
+/**
+ * @async
+ * @function addCategoryPost
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const addCategoryPost = async (req, res) => {
   try {
     const { categoryName } = req.body;
@@ -500,6 +574,13 @@ export const addCategoryPost = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function blockProduct
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const blockProduct = async (req, res) => {
   try {
     const { blocked } = req.body;
@@ -511,6 +592,13 @@ export const blockProduct = async (req, res) => {
   }
 }
 
+/**
+ * @async
+ * @function blockCategory
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const blockCategory = async (req, res) => {
   try {
     const { id } = req.params;
@@ -524,6 +612,13 @@ export const blockCategory = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function editProduct
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const editProduct = async (req,res)=>{
   try {
     const productId = req.params.id;
@@ -548,6 +643,13 @@ export const editProduct = async (req,res)=>{
 }
 
 
+/**
+ * @async
+ * @function getEditCategory
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getEditCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id).lean();
@@ -562,6 +664,13 @@ export const getEditCategory = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function getEditCategoryPost
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const getEditCategoryPost =  async (req, res) => {
   try {
     const { categoryName } = req.body;
@@ -598,6 +707,11 @@ export const getEditCategoryPost =  async (req, res) => {
 }
 
 
+/**
+ * @typedef {import("express").RequestHandler} RequestHandler
+ * @constant editProductPost
+ * @type {RequestHandler[]}
+ */
 export const editProductPost = [
   upload.fields([{ name: "variantImages", maxCount: 100 }]),
 
@@ -739,6 +853,11 @@ export const editProductPost = [
 ];
 
 
+/**
+ * @typedef {import("express").RequestHandler} RequestHandler
+ * @constant addNewVariants
+ * @type {RequestHandler[]}
+ */
 export const addNewVariants = [
   // Accept any file field 
   upload.any(),

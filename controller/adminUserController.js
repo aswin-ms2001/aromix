@@ -4,6 +4,13 @@ import User from "../model/user.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 
+/**
+ * @async
+ * @function showUsers
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const showUsers = async (req, res) => {
   try {
     const perPage = 4;
@@ -40,6 +47,13 @@ export const showUsers = async (req, res) => {
 };
 
 
+/**
+ * @async
+ * @function block
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const block = async (req, res) => {
   try {
     const userId = req.params.id;

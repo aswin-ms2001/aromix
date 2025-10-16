@@ -1,6 +1,13 @@
 import Wallet from "../model/wallet.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 
+/**
+ * @async
+ * @function userWalletFront
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const userWalletFront = async (req,res)=>{
   try {
     const userId = req.user._id; // Assuming user is authenticated and stored in req.user
@@ -47,6 +54,13 @@ export const userWalletFront = async (req,res)=>{
   }
 }
 
+/**
+ * @async
+ * @function userReferralFront
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const userReferralFront = async (req, res) => {
   try {
     const user = req.user;

@@ -9,6 +9,12 @@ import Wallet from "../model/wallet.js";
 import { productActiveOfferLinker } from "./services/userServices/userOfferService.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
 
+/**
+ * @function userloginPage
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {void}
+ */
 export const userloginPage = (req,res)=>{
     const errorMessage = req.flash("error")
     res.render("user-views/login.ejs",{
@@ -22,6 +28,12 @@ export const postLogin = passport.authenticate('local', {
     failureFlash: true,
 });
 
+/**
+ * @function logout
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {void}
+ */
 export const logout = (req, res) => {
   
   if (!req.isAuthenticated()) {
@@ -47,6 +59,12 @@ export const logout = (req, res) => {
 };
 
 
+/**
+ * @function logoutPage
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {void}
+ */
 export const logoutPage = (req,res)=>{
   try{
     res.render("user-views/userLogout")
@@ -64,10 +82,23 @@ export const googleRedirect = passport.authenticate("google",{
     failureFlash: true,
 })
 
+/**
+ * @function userDashboard
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {void}
+ */
 export const userDashboard = (req,res)=>{
     res.render("user-views/dashboard.ejs")
 }
 
+/**
+ * @async
+ * @function landingPageView
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const landingPageView = async (req, res) => {
   try {
     const perfumesToLink = await Product.aggregate([
@@ -114,10 +145,23 @@ export const landingPageView = async (req, res) => {
   }
 };
 
+/**
+ * @function signupPage
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {void}
+ */
 export const signupPage = (req,res)=>{
     res.render("user-views/userSignupPage.ejs")
 }
 
+/**
+ * @async
+ * @function signup
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const signup = async (req,res)=>{
     const {fullname,email,password}= req.body;
     let code = req.body.code;
@@ -160,6 +204,13 @@ export const signup = async (req,res)=>{
 
 }
 
+/**
+ * @async
+ * @function verifyOtp
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const verifyOtp = async (req, res) => {
   const { otp, email } = req.body;
   const user = await User.findOne({ email });
@@ -233,6 +284,13 @@ export const verifyOtp = async (req, res) => {
   });
 };
 
+/**
+ * @async
+ * @function resentOtp
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const resentOtp = async (req,res)=>{
     const { email } = req.body;
 
@@ -253,11 +311,24 @@ export const resentOtp = async (req,res)=>{
 }
 
 
+/**
+ * @function forgotPasswordGet
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {void}
+ */
 export const forgotPasswordGet = (req,res)=>{
   res.render("user-views/forgotPassword",{error:null,email:""})
 
 }
 
+/**
+ * @async
+ * @function forgotPasswordPost
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const forgotPasswordPost = async (req, res) => {
   const { email } = req.body;
 
@@ -297,6 +368,13 @@ export const forgotPasswordPost = async (req, res) => {
 };
 
 
+/**
+ * @async
+ * @function verifyResetOtp
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const verifyResetOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -339,6 +417,13 @@ export const verifyResetOtp = async (req, res) => {
 
 
 
+/**
+ * @async
+ * @function updatePassword
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const updatePassword = async (req, res) => {
   try {
     const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[a-zA-Z\d\W_]{8,}$/;
@@ -383,6 +468,13 @@ export const updatePassword = async (req, res) => {
   }
 };
 
+/**
+ * @async
+ * @function resendResetOtp
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {Promise<void>}
+ */
 export const resendResetOtp = async (req, res) => {
   try {
     const { email } = req.body;
